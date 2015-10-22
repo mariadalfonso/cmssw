@@ -380,6 +380,11 @@ namespace pat {
     float puppiWeight() const;                          /// Weight from full PUPPI
     float puppiWeightNoLep() const;                     /// Weight from PUPPI removing leptons
     
+    // for teh neutral fraction
+    void setHcalFraction(float p);                      /// Set the fraction of Ecal and Hcal needed for HF and neutral hadrons
+    float hcalFraction() const { return hcalFraction_; }    /// Fraction of Ecal and Hcal for HF and neutral hadrons
+
+
   protected:
     uint16_t packedPt_, packedEta_, packedPhi_, packedM_;
     uint16_t packedDxy_, packedDz_, packedDPhi_;
@@ -396,6 +401,8 @@ namespace pat {
 
     int8_t packedPuppiweight_;
     int8_t packedPuppiweightNoLepDiff_; // storing the DIFFERENCE of (all - "no lep") for compression optimization
+    int8_t hcalFraction_;
+
     /// the four vector                                                 
     mutable PolarLorentzVector p4_;
     mutable LorentzVector p4c_;
