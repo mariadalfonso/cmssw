@@ -237,7 +237,7 @@ def miniAOD_customizeCommon(process):
     )
 
     addJetCollection(process, postfix   = "", labelName = 'Puppi', jetSource = cms.InputTag('ak4PFJetsPuppi'),
-                    jetCorrections = ('AK4PFchs', ['L2Relative', 'L3Absolute'], ''),
+                    jetCorrections = ('AK4PFPuppi', ['L2Relative', 'L3Absolute'], ''),
                     algo= 'AK', rParam = 0.4, btagDiscriminators = map(lambda x: x.value() ,process.patJets.discriminatorSources)
                     )
     
@@ -246,7 +246,7 @@ def miniAOD_customizeCommon(process):
     process.patJetsPuppi.userData.userFloats.src = cms.VInputTag(cms.InputTag(""))
     process.patJetsPuppi.jetChargeSource = cms.InputTag("patJetPuppiCharge")
 
-    process.selectedPatJetsPuppi.cut = cms.string("pt > 20")
+    process.selectedPatJetsPuppi.cut = cms.string("pt > 15")
 
     process.load('PhysicsTools.PatAlgos.slimming.slimmedJets_cfi')
     process.slimmedJetsPuppi = process.slimmedJets.clone()
