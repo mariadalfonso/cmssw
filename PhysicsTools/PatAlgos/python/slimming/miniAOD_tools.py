@@ -223,6 +223,11 @@ def miniAOD_customizeCommon(process):
     process.puppiNoLep = process.puppi.clone()
     process.puppiNoLep.candName = cms.InputTag('pfNoLepPUPPI') 
 
+    process.load('CommonTools.PileupAlgos.PhotonPuppi_cff')
+#    from CommonTools.PileupAlgos.PhotonPuppi_cff import setupPuppiPhoton    
+#    setupPuppiPhoton(process)
+#    process.puppiPhoton.puppiCandName    = 'puppiNoLep'
+
     from RecoJets.JetAssociationProducers.j2tParametersVX_cfi import j2tParametersVX
     process.ak4PFJetsPuppiTracksAssociatorAtVertex = cms.EDProducer("JetTracksAssociatorAtVertex",
         j2tParametersVX,
@@ -235,7 +240,7 @@ def miniAOD_customizeCommon(process):
     )
 
     addJetCollection(process, postfix   = "", labelName = 'Puppi', jetSource = cms.InputTag('ak4PFJetsPuppi'),
-                    jetCorrections = ('AK4PFPuppi', ['L2Relative', 'L3Absolute'], ''),
+                    jetCorrections = ('AK4PFchs', ['L2Relative', 'L3Absolute'], ''),
                     algo= 'AK', rParam = 0.4, btagDiscriminators = map(lambda x: x.value() ,process.patJets.discriminatorSources)
                     )
     
@@ -259,13 +264,15 @@ def miniAOD_customizeCommon(process):
 
     process.pfMetPuppi = process.pfMet.clone()
     process.pfMetPuppi.src = cms.InputTag("puppiForMET")
+    # process.pfMetPuppi.src = cms.InputTag('puppiPhoton')
     process.pfMetPuppi.alias = cms.string('pfMetPuppi')
+
     # type1 correction, from puppi jets
     process.corrPfMetType1Puppi = process.corrPfMetType1.clone(
         src = 'ak4PFJetsPuppi',
-        jetCorrLabel = 'ak4PFPUPPIL1L2L3Corrector',
+        jetCorrLabel = 'ak4PFCHSL2L3Corrector',
     )
-    # del process.corrPfMetType1Puppi.offsetCorrLabel # no L1 for PUPPI jets
+    del process.corrPfMetType1Puppi.offsetCorrLabel # no L1 for PUPPI jets
     process.pfMetT1Puppi = process.pfMetT1.clone(
         src = 'pfMetPuppi',
         srcCorrections = [ cms.InputTag("corrPfMetType1Puppi","type1") ]

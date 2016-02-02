@@ -125,6 +125,39 @@ if not useHFCandidates:
                                postfix="NoHF"
                                )
 
+
+##if usePuppi:
+if True:
+
+  process.load('CommonTools.PileupAlgos.PhotonPuppi_cff')
+  from CommonTools.PileupAlgos.PhotonPuppi_cff import setupPuppiPhoton
+
+  process.load("CommonTools.PileupAlgos.Puppi_cff")
+  process.puppi.candName       = cms.InputTag('packedPFCandidates')
+  process.puppi.vertexName     = cms.InputTag('offlineSlimmedPrimaryVertices')
+  process.puppi.useExistingWeights = cms.bool(True)
+  process.puppi.useWeightsNoLep    = cms.bool(True)
+  process.pfCandNoLep = cms.EDFilter("CandPtrSelector", src = cms.InputTag("packedPFCandidates"), cut =  cms.string("abs(pdgId) != 13 && abs(pdgId) != 11 && abs(pdgId) != 15"))
+  process.pfCandLep   = cms.EDFilter("CandPtrSelector", src = cms.InputTag("packedPFCandidates"), cut = cms.string("abs(pdgId) == 13 || abs(pdgId) == 11 || abs(pdgId) == 15"))
+  process.puppinolep = process.puppi.clone()
+  process.puppinolep.candName = 'pfCandNoLep'
+
+  setupPuppiPhoton(process)
+  process.puppiForMET = cms.EDProducer("CandViewMerger",src = cms.VInputTag( 'puppinolep','pfCandLep'))
+  process.puppiPhoton.puppiCandName    = 'puppiForMET'
+
+
+  runMetCorAndUncFromMiniAOD(process,
+                             isData=runOnData,
+                             pfCandColl=cms.InputTag("puppiForMET"),
+#                             pfCandColl=cms.InputTag("puppiPhoton"),
+                             reclusterJets=True, #needed for NoHF                                                                                                                                                                         
+                             recoMetFromPFCs=True, #needed for NoHF                                                                                                                                                                       
+                             postfix="Puppi"
+                             )
+  del process.slimmedMETsPuppi.caloMET
+
+
 ### -------------------------------------------------------------------
 ### the lines below remove the L2L3 residual corrections when processing data
 ### -------------------------------------------------------------------
