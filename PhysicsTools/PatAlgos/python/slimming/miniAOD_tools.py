@@ -263,7 +263,7 @@ def miniAOD_customizeCommon(process):
     # type1 correction, from puppi jets
     process.corrPfMetType1Puppi = process.corrPfMetType1.clone(
         src = 'ak4PFJetsPuppi',
-        jetCorrLabel = 'ak4PFCHSL2L3Corrector',
+        jetCorrLabel = 'ak4PFPUPPIL1L2L3Corrector',
     )
     # del process.corrPfMetType1Puppi.offsetCorrLabel # no L1 for PUPPI jets
     process.pfMetT1Puppi = process.pfMetT1.clone(
