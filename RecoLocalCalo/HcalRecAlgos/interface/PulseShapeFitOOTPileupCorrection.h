@@ -60,7 +60,7 @@ namespace FitterFuncs{
      std::vector<float> acc25nsVec, diff25nsItvlVec;
      std::vector<float> accVarLenIdxZEROVec, diffVarItvlIdxZEROVec;
      std::vector<float> accVarLenIdxMinusOneVec, diffVarItvlIdxMinusOneVec;
-     void funcHPDShape(std::array<float,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew);
+     void funcHPDShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew);
      double psFit_x[HcalConst::maxSamples], psFit_y[HcalConst::maxSamples], psFit_erry[HcalConst::maxSamples], psFit_erry2[HcalConst::maxSamples], psFit_slew[HcalConst::maxSamples];
      
      bool pedestalConstraint_;
@@ -77,8 +77,8 @@ namespace FitterFuncs{
 
      double inverttimeSig_, inverttimeSig2_;
      double invertpedSig_, invertpedSig2_;
-     std::array<float,HcalConst::maxSamples> pulse_shape_;
-     std::array<float,HcalConst::maxSamples> pulse_shape_sum_;
+     std::array<double,HcalConst::maxSamples> pulse_shape_;
+     std::array<double,HcalConst::maxSamples> pulse_shape_sum_;
 
    };
    
@@ -91,16 +91,13 @@ public:
     ~PulseShapeFitOOTPileupCorrection();
 
     void phase1Apply(const HBHEChannelInfo& channelData,
-                     const HcalCalibrations& calibs,
-                     float* reconstructedEnergy,
-                     float* reconstructedTime,
-                     bool* usedTripleTemplate) const;
+		     std::vector<double> & correctedOutput) const;
 
     void apply(const CaloSamples & cs, const std::vector<int> & capidvec, const HcalCalibrations & calibs, std::vector<double> & correctedOutput) const;
     void setPUParams(bool   iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iUnConstrainedFit,bool iApplyTimeSlew,
 		     double iTS4Min, double iTS4Max, double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
-		     double iNoise,double iTMin,double iTMax,
-		     double its3Chi2,double its4Chi2,double its345Chi2,double iChargeThreshold,HcalTimeSlew::BiasSetting slewFlavor, int iFitTimes);
+		     double iNoise, double iTMin,double iTMax,
+		     double its4Chi2, double iChargeThreshold,HcalTimeSlew::BiasSetting slewFlavor, int iFitTimes);
     
     void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps);
     void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps);
@@ -124,8 +121,6 @@ private:
     int TSMin_;
     int TSMax_;
     double ts4Chi2_;
-    double ts3Chi2_;
-    double ts345Chi2_;
     bool pedestalConstraint_;
     bool timeConstraint_;
     bool addPulseJitter_;
