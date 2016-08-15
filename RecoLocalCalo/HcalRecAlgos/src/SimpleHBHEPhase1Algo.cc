@@ -17,6 +17,11 @@
 // pulse containment correction
 constexpr float PulseContainmentFractionalError = 0.002f;
 
+constexpr int HPDShapev3DataNum = 105;
+constexpr int HPDShapev3MCNum = 105;
+constexpr int SiPMShapev3DataNum = 203;
+constexpr int SiPMShapev3MCNum = 203;
+
 
 SimpleHBHEPhase1Algo::SimpleHBHEPhase1Algo(
     const int firstSampleShift,
@@ -74,12 +79,31 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
 
     // Run "Method 2"
     float m2t = 0.f, m2E = 0.f;
+
     bool useTriple = false;
+
     const PulseShapeFitOOTPileupCorrection* method2 = psFitOOTpuCorr_.get();
     if (method2)
     {
-        method2->phase1Apply(info, calibs, &m2E, &m2t, &useTriple);
-        m2E *= hbminusCorrectionFactor(channelId, m2E, isData);
+
+      // set the pulse shape
+      if(isData) {
+	if(info.id().subdet() == HcalSubdetector::HcalBarrel) psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(HPDShapev3DataNum));
+	if(info.id().subdet() == HcalSubdetector::HcalEndcap) psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(SiPMShapev3DataNum));
+      } else {
+	if(info.id().subdet() == HcalSubdetector::HcalBarrel) psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(HPDShapev3MCNum));
+	if(info.id().subdet() == HcalSubdetector::HcalEndcap) psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(SiPMShapev3MCNum));
+      }
+
+      std::vector<double> correctedOutput;
+      method2->phase1Apply(info, correctedOutput);
+
+      m2E = correctedOutput[0];
+      m2t = correctedOutput[1];
+      //      useTriple=correctedOutput[4];
+
+      m2E *= hbminusCorrectionFactor(channelId, m2E, isData); // not sure what this does
+
     }
 
     // Run "Method 3"
@@ -87,8 +111,14 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     const HcalDeterministicFit* method3 = hltOOTpuCorr_.get();
     if (method3)
     {
-        method3->phase1Apply(info, calibs, &m3E, &m3t);
-        m3E *= hbminusCorrectionFactor(channelId, m3E, isData);
+
+      std::vector<double> hltCorrOutput;
+
+      method3->phase1Apply(info, hltCorrOutput);
+      m3t = hltCorrOutput[1]; m3E = hltCorrOutput[0];
+
+      m3E *= hbminusCorrectionFactor(channelId, m3E, isData); // not sure what this does
+
     }
 
     // Finally, construct the rechit
