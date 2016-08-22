@@ -60,11 +60,15 @@ void HcalSimpleRecAlgo::setpuCorrParams(bool   iPedestalConstraint, bool iTimeCo
 					double its4Chi2, int iFitTimes) {
   if( iPedestalConstraint ) assert ( iPedSig );
   if( iTimeConstraint ) assert( iTimeSig );
+
   psFitOOTpuCorr_->setPUParams(iPedestalConstraint,iTimeConstraint,iAddPulseJitter,iApplyTimeSlew,
 			       iTS4Min, iTS4Max, iPulseJitter,iTimeMean,iTimeSig,iTimeSigSiPM,iPedMean,iPedSig,iPedSigSiPM,iNoise,iNoiseSiPM,iTMin,iTMax,its4Chi2,
 			       HcalTimeSlew::Medium, iFitTimes);
 
   psFitOOTpuCorr_->setChi2Term(1); // isHPD all the time
+
+  //psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv"); // this is the NEW things from JAY
+
 
 //  int shapeNum = HPDShapev3MCNum;
 //  psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum));
