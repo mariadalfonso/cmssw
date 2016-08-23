@@ -296,9 +296,15 @@ void HBHEPhase1Reconstructor::processData(const Collection& coll,
 
         // Basic ADC decoding tools
         const HcalCalibrations& calib = cond.getHcalCalibrations(cell);
+        const HcalCalibrationWidths& calibWidth = cond.getHcalCalibrationWidths(cell);
         const HcalQIECoder* channelCoder = cond.getHcalCoder(cell);
         const HcalQIEShape* shape = cond.getHcalShape(channelCoder);
         HcalCoderDb coder(*channelCoder, *shape);
+
+	/// placeholder /// need to find out how to get from the GT
+	int pulseShapeID=-1;
+	if(cell.subdet() == HcalSubdetector::HcalBarrel) pulseShapeID=105;
+	if(cell.subdet() == HcalSubdetector::HcalEndcap) pulseShapeID=203;
 
         // ADC to fC conversion
         CaloSamples cs;
@@ -315,18 +321,22 @@ void HBHEPhase1Reconstructor::processData(const Collection& coll,
         {
             auto s(frame[ts]);
             const int capid = s.capid();
+
             const double pedestal = calib.pedestal(capid);
+	    const double pedestalWidth = calibWidth.pedestal(capid);
             const double gain = calib.respcorrgain(capid);
             const double rawCharge = getRawChargeFromSample(s, cs[ts], calib);
             const float t = getTDCTimeFromSample(s);
-            channelInfo->setSample(ts, s.adc(), rawCharge, pedestal, gain, t);
+            channelInfo->setSample(ts, s.adc(), rawCharge, pedestal, pedestalWidth, gain, t);
             if (ts == soi)
                 soiCapid = capid;
         }
 
         // Fill the overall channel info items
         const std::pair<bool,bool> hwerr = findHWErrors(frame, maxTS);
-        channelInfo->setChannelInfo(cell, maxTS, soi, soiCapid,
+
+
+        channelInfo->setChannelInfo(cell, pulseShapeID, maxTS, soi, soiCapid,
                                     hwerr.first, hwerr.second,
                                     taggedBadByDb || dropByZS);
 
