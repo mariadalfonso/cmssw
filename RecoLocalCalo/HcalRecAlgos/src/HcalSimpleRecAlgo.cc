@@ -16,6 +16,8 @@ constexpr double MaximumFractionalError = 0.002; // 0.2% error allowed from this
 constexpr int HPDShapev3DataNum = 105;
 constexpr int HPDShapev3MCNum = 105;
 
+constexpr bool useMiaoPulse=true;
+
 HcalSimpleRecAlgo::HcalSimpleRecAlgo(bool correctForTimeslew, bool correctForPulse, float phaseNS) : 
   correctForTimeslew_(correctForTimeslew),
   correctForPulse_(correctForPulse),
@@ -67,9 +69,6 @@ void HcalSimpleRecAlgo::setpuCorrParams(bool   iPedestalConstraint, bool iTimeCo
 
   psFitOOTpuCorr_->setChi2Term(1); // isHPD all the time
 
-  //psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv"); // this is the NEW things from JAY
-
-
 //  int shapeNum = HPDShapev3MCNum;
 //  psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum));
 }
@@ -88,7 +87,19 @@ void HcalSimpleRecAlgo::setForData (int runnum) {
          shapeNum = HPDShapev3DataNum;
       }
       bool isHPD=true;
-      psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum),isHPD);
+
+      if (useMiaoPulse == false) {
+
+	//	std::cout << "setting up the old pulse" << std::endl;
+	psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum),isHPD);
+
+      }
+      else {
+	//	std::cout << "setting up the new pulse" << std::endl;
+	psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv",isHPD); // this is the NEW things from JAY
+
+      }
+
    }
 }
 
