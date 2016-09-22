@@ -291,8 +291,17 @@ void HcalSimpleReconstructor::processUpgrade(edm::Event& e, const edm::EventSetu
 void HcalSimpleReconstructor::produce(edm::Event& e, const edm::EventSetup& eventSetup)
 {
   // HACK related to HB- corrections
-  if(e.isRealData()) reco_.setForData(e.run());
- 
+  // not this is for the pulse as well
+  if (subdet_==HcalBarrel) {
+    if(e.isRealData()) reco_.setForData(e.run(),true);
+    if(!e.isRealData()) reco_.setForData(0,true);
+  } 
+
+  if (subdet_==HcalEndcap) {
+    if(e.isRealData()) reco_.setForData(e.run(),false);
+    if(!e.isRealData()) reco_.setForData(0,true);
+  } 
+
   // What to produce, better to avoid the same subdet Upgrade and regular 
   // rechits "clashes"
   if(upgradeHBHE_ || upgradeHF_ || HFQIE10_) {

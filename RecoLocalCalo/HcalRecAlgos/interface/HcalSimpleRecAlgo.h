@@ -53,7 +53,7 @@ public:
   void setRecoParams(bool correctForTimeslew, bool correctForPulse, bool setLeakCorrection, int pileupCleaningID, float phaseNS);
 
   // ugly hack related to HB- e-dependent corrections
-  void setForData (int runnum);
+  void setForData (int runnum, bool isBarrel);
 
   // usage of leak correction 
   void setLeakCorrection();

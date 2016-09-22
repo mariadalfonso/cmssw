@@ -79,14 +79,16 @@ void HcalSimpleRecAlgo::setMeth3Params( float iPedSubThreshold, int iTimeSlewPar
   hltOOTpuCorr_->init((HcalTimeSlew::ParaSource)iTimeSlewParsType, HcalTimeSlew::Medium, *pedSubFxn_, iTimeSlewPars,irespCorrM3);
 }
 
-void HcalSimpleRecAlgo::setForData (int runnum) { 
-   runnum_ = runnum;
+void HcalSimpleRecAlgo::setForData (int runnumm , bool isBarrel) { 
+   runnum_ = runnumm;
    if( puCorrMethod_ ==2 ){
       int shapeNum = HPDShapev3MCNum;
       if( runnum_ > 0 ){
          shapeNum = HPDShapev3DataNum;
       }
+
       bool isHPD=true;
+
 
       if (useMiaoPulse == false) {
 
@@ -96,7 +98,17 @@ void HcalSimpleRecAlgo::setForData (int runnum) {
       }
       else {
 	//	std::cout << "setting up the new pulse" << std::endl;
-	psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv",isHPD); // this is the NEW things from JAY
+	
+	if( runnum_ == 0 ){
+	  // this means MC
+	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_MC.csv",isHPD); // this is the LAG, MC
+	  if(!isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_MC.csv",isHPD); // this is the LAG, MC
+	}
+	if( runnum_ > 0 ){
+	  // this means data
+	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_new_HB.csv",isHPD); // this is the LAG, Data
+	  if(!isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_new_HE.csv",isHPD); // this is the LAG, Data
+	}
 
       }
 
