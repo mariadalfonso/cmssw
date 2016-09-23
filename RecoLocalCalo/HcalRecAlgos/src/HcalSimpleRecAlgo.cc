@@ -5,6 +5,7 @@
 #include "RecoLocalCalo/HcalRecAlgos/interface/rawEnergy.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalCorrectionFunctions.h"
 #include "DataFormats/METReco/interface/HcalCaloFlagLabels.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/DoMahiAlgo.h"
 
 #include <algorithm>
 #include <cmath>
@@ -441,7 +442,9 @@ namespace HcalSimpleRecAlgoImpl {
 			 const HcalTimeSlew::BiasSetting slewFlavor,
 			 const int runnum, const bool useLeak,
 			 const AbsOOTPileupCorrection* pileupCorrection,
-			 const BunchXParameter* bxInfo, const unsigned lenInfo, const int puCorrMethod, const PulseShapeFitOOTPileupCorrection * psFitOOTpuCorr, HcalDeterministicFit * hltOOTpuCorr, PedestalSub * hltPedSub)// const on end
+			 const BunchXParameter* bxInfo, const unsigned lenInfo, 
+			 const int puCorrMethod, const PulseShapeFitOOTPileupCorrection * psFitOOTpuCorr, const HcalDeterministicFit * hltOOTpuCorr,
+			 PedestalSub * hltPedSub)// const on end
   {
     double fc_ampl =0, ampl =0, uncorr_ampl =0, m3_ampl =0, maxA = -1.e300;
     int nRead = 0, maxI = -1;
@@ -476,7 +479,30 @@ namespace HcalSimpleRecAlgoImpl {
 	
 	time=time-calibs.timecorr(); // time calibration
       }
-    
+
+    //  THIS IS MAHI
+    if( puCorrMethod == 10 ){
+      // FIXME: need to remove those std::vector<double> correctedOutput
+      std::vector<double> correctedOutput;
+
+      DoMahiAlgo psFitMAHIOOTpuCorr;
+
+      CaloSamples cs;
+      coder.adc2fC(digi,cs);
+      std::vector<int> capidvec;
+      for(int ip=0; ip<cs.size(); ip++){
+	const int capid = digi[ip].capid();
+	capidvec.push_back(capid);
+      }
+      const HcalDetId& detID = digi.id();
+      psFitMAHIOOTpuCorr.Apply(cs, capidvec, detID, calibs, correctedOutput);
+
+      if( correctedOutput.size() >1 ){
+	time = correctedOutput[1]; ampl = correctedOutput[0];
+      }
+
+    }
+
     // Note that uncorr_ampl is always set from outside of method 2!
     if( puCorrMethod == 2 ){
 
