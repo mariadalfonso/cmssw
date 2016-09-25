@@ -30,7 +30,7 @@ class DoMahiAlgo
   // FIXME: need to convert the correctedOutput to memory free
   void Apply(const CaloSamples & cs, const std::vector<int> & capidvec, const HcalDetId & detID, const HcalCalibrations & calibs, std::vector<double> & correctedOutput);
 
-  bool DoFit(SampleVector amplitudes, std::vector<double> &correctedOutput);
+  bool DoFit(SampleVector amplitudes, SampleVector gains, std::vector<double> &correctedOutput);
 
  private:
   

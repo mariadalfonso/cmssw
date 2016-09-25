@@ -34,7 +34,7 @@ void DoMahiAlgo::Apply(const CaloSamples & cs, const std::vector<int> & capidvec
 
   bool status =false;
   if(tstrig >= 0) {
-    status = DoFit(charges, fitParsVec);
+    status = DoFit(charges, gains, fitParsVec);
   }
 
   if (!status) {
@@ -49,7 +49,7 @@ void DoMahiAlgo::Apply(const CaloSamples & cs, const std::vector<int> & capidvec
 
 }  
 
-bool DoMahiAlgo::DoFit(SampleVector amplitudes, std::vector<double> &correctedOutput){
+bool DoMahiAlgo::DoFit(SampleVector amplitudes, SampleVector gains, std::vector<double> &correctedOutput){
 
   _nP = 0;
   //ECAL does it better -- to be fixed
@@ -165,8 +165,11 @@ bool DoMahiAlgo::DoFit(SampleVector amplitudes, std::vector<double> &correctedOu
   //return true;
   */
 
+  double gain=gains.coeff(4); // this is the same for each TS
+
   correctedOutput.clear();
-  correctedOutput.push_back(_ampVec.coeff(ipulseintime)); //charge
+  //  correctedOutput.push_back(_ampVec.coeff(ipulseintime)); //charge
+  correctedOutput.push_back(_ampVec.coeff(ipulseintime)*gain); //energy
   correctedOutput.push_back(-999); //time
   correctedOutput.push_back(-999); //pedestal
   correctedOutput.push_back(_chiSq); //chi2
