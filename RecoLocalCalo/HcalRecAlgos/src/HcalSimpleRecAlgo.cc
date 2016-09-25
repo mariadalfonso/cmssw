@@ -17,7 +17,8 @@ constexpr double MaximumFractionalError = 0.002; // 0.2% error allowed from this
 constexpr int HPDShapev3DataNum = 105;
 constexpr int HPDShapev3MCNum = 105;
 
-constexpr bool useMiaoPulse=true;
+constexpr bool useMiaoPulse=false;
+constexpr bool useCsv=false;
 
 HcalSimpleRecAlgo::HcalSimpleRecAlgo(bool correctForTimeslew, bool correctForPulse, float phaseNS) : 
   correctForTimeslew_(correctForTimeslew),
@@ -93,13 +94,18 @@ void HcalSimpleRecAlgo::setForData (int runnumm , bool isBarrel) {
 
       if (useMiaoPulse == false) {
 
-	//	std::cout << "setting up the old pulse" << std::endl;
-	psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum),isHPD);
+	if(useCsv == true) {
+	  // these are standard pulses
+	  psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv",isHPD); // this is the NEW things from JAY
+	} else {
+	  //std::cout << "setting up the old pulse" << std::endl;
+	  psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum),isHPD);
+	}
 
       }
       else {
+
 	//	std::cout << "setting up the new pulse" << std::endl;
-	
 	if( runnum_ == 0 ){
 	  // this means MC
 	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_MC.csv",isHPD); // this is the LAG, MC
