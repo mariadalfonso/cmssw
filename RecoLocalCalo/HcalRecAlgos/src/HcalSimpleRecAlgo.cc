@@ -84,6 +84,7 @@ void HcalSimpleRecAlgo::setMeth3Params( float iPedSubThreshold, int iTimeSlewPar
 
 void HcalSimpleRecAlgo::setForData (int runnumm , bool isBarrel) { 
    runnum_ = runnumm;
+   char *cmssw = getenv("CMSSW_BASE");
    if( puCorrMethod_ ==2 ){
       int shapeNum = HPDShapev3MCNum;
       if( runnum_ > 0 ){
@@ -93,18 +94,18 @@ void HcalSimpleRecAlgo::setForData (int runnumm , bool isBarrel) {
       bool isHPD=true;
 
       if(pulseShapeType_==1) psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(shapeNum),isHPD); // this is the standard 105
-      if(pulseShapeType_==2) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv",isHPD); // this is the CSV 105
+      if(pulseShapeType_==2) psFitOOTpuCorr_->newSetPulseShapeTemplate(((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv").c_str(),isHPD); // this is the CSV 105
       if(pulseShapeType_==3) {
 	//	std::cout << "setting up the new pulse type=" << pulseShapeType_ << std::endl;
 	if( runnum_ == 0 ){
 	  // this means MC
-	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_MC.csv",isHPD); // this is the LAG, MC
-	  if(!isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_MC_HPD.csv",isHPD); // this is the LAG, MC
+	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate(((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_MC.csv").c_str(),isHPD); // this is the LAG, MC
+	  if(!isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate(((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_MC_HPD.csv").c_str(),isHPD); // this is the LAG, MC
 	}
 	if( runnum_ > 0 ){
 	  // this means data
-	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_Dat.csv",isHPD); // this is the LAG, Data
-	  if(!isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate("CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_Dat_HPD.csv",isHPD); // this is the LAG, Data
+	  if(isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate(((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_Dat.csv").c_str(),isHPD); // this is the LAG, Data
+	  if(!isBarrel) psFitOOTpuCorr_->newSetPulseShapeTemplate(((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_Dat_HPD.csv").c_str(),isHPD); // this is the LAG, Data
 	}
 
       } // end pulse shape 2
@@ -114,16 +115,16 @@ void HcalSimpleRecAlgo::setForData (int runnumm , bool isBarrel) {
 
      if(pulseShapeType_==2) {
 
-       psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, "CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv"); // this is the CSV 105
+       psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, ((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HBHE.csv").c_str()); // this is the CSV 105
 
      } else if(pulseShapeType_==3) {
        if ( runnum_ == 0) {
-	 if (isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, "CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_MC.csv"); // this is the LAG, MC
-	 if (!isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, "CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_MC_HPD.csv"); // this is the LAG, MC
+	 if (isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, ((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_MC.csv").c_str()); // this is the LAG, MC
+	 if (!isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, ((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_MC_HPD.csv").c_str()); // this is the LAG, MC
        }
        if ( runnum_ >0 ) {
-	 if (isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, "CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_Dat.csv"); // this is the LAG, Data
-	 if (!isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, "CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_Dat_HPD.csv"); // this is the LAG, Data
+	 if (isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, ((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HB_Dat.csv").c_str()); // this is the LAG, Data
+	 if (!isBarrel) psFitMAHIOOTpuCorr_->setPulseShapeTemplate(true, ((std::string)cmssw+"/src/CalibCalorimetry/HcalAlgos/data/pulse_shape_HE_Dat_HPD.csv").c_str()); // this is the LAG, Data
        }
      }
 
