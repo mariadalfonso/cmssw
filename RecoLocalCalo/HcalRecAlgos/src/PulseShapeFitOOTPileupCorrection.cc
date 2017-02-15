@@ -1,8 +1,14 @@
 #include <iostream>
+#include <fstream> 
 #include <cmath>
 #include <climits>
 #include "RecoLocalCalo/HcalRecAlgos/interface/PulseShapeFitOOTPileupCorrection.h"
 #include "FWCore/Utilities/interface/isFinite.h"
+
+double pulse_temp[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};// TEST
+double digi_temp[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};// TEST
+double noise_temp[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};// TEST
+bool doPrint=false;
 
 namespace FitterFuncs{
 
@@ -15,6 +21,9 @@ namespace FitterFuncs{
     acc25nsVec(HcalConst::maxPSshapeBin), diff25nsItvlVec(HcalConst::maxPSshapeBin),
     accVarLenIdxZEROVec(HcalConst::nsPerBX), diffVarItvlIdxZEROVec(HcalConst::nsPerBX), 
     accVarLenIdxMinusOneVec(HcalConst::nsPerBX), diffVarItvlIdxMinusOneVec(HcalConst::nsPerBX) {
+
+    isNew_ = false;
+
     //The raw pulse
     for(int i=0;i<HcalConst::maxPSshapeBin;++i) pulse_hist[i] = pulse(i);
     // Accumulate 25ns for each starting point of 0, 1, 2, 3...
@@ -62,7 +71,66 @@ namespace FitterFuncs{
     invertpedSig2_ = invertpedSig_*invertpedSig_;
   }
 
+
+  PulseShapeFunctor::PulseShapeFunctor(std::string filename,
+				       bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
+				       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
+				       double iNoise) {
+
+    isNew_ = true;
+
+    std::ifstream ifs;
+    ifs.open(filename.c_str());
+    assert(ifs.is_open());
+    std::string line;
+
+    int i = 0;
+    while(getline(ifs,line)) {
+      if(line[0]=='#') continue;
+
+      std::string tmpStr;
+      std::stringstream ss(line);
+      ss >> tmpStr; 
+      minCharge_[i] = std::atoi(tmpStr.c_str());
+      ss >> tmpStr;
+      maxCharge_[i] = std::atoi(tmpStr.c_str());
+      for (int k=0; k<10; k++) { ss >> tmpStr; pulseFrac_[i][k] = std::atof(tmpStr.c_str()); }
+      for (int k=0; k<10; k++) { ss >> tmpStr; pulseFracDeriv_[i][k] = std::atof(tmpStr.c_str()); }
+
+      i++;
+
+    }
+
+    if(doPrint) std::cout << "found templates for " << minCharge_[0] << " < Q < " << maxCharge_[57] << std::endl;
+
+    for(int i = 0; i < HcalConst::maxSamples; i++) { 
+      psFit_x[i]      = 0;
+      psFit_y[i]      = 0;
+      psFit_erry[i]   = 1.;
+      psFit_erry2[i]  = 1.;
+      psFit_slew [i]  = 0.;
+    }
+    //Constraints
+    pedestalConstraint_ = iPedestalConstraint;
+    timeConstraint_     = iTimeConstraint;
+    addPulseJitter_     = iAddPulseJitter;
+    pulseJitter_        = iPulseJitter;
+    timeMean_           = iTimeMean;
+    timeSig_            = iTimeSig;
+    pedMean_            = iPedMean;
+    pedSig_             = iPedSig;
+    noise_              = iNoise;
+    timeShift_          = 100.;
+    timeShift_ += 12.5;//we are trying to get BX 
+
+    inverttimeSig_ = 1./timeSig_;
+    inverttimeSig2_ = inverttimeSig_*inverttimeSig_;
+    invertpedSig_ = 1./pedSig_;
+    invertpedSig2_ = invertpedSig_*invertpedSig_;
+  }
+
   void PulseShapeFunctor::funcHPDShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew) { 
+
     // pulse shape components over a range of time 0 ns to 255 ns in 1 ns steps
     constexpr int ns_per_bx = HcalConst::nsPerBX;
     constexpr int num_ns = HcalConst::nsPerBX*HcalConst::maxSamples;
@@ -103,6 +171,23 @@ namespace FitterFuncs{
     return;
   }
 
+  void PulseShapeFunctor::funcNewShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight) {
+    ntmpbin = { {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f} };
+
+    int chargeBin = -1;
+    for (int i=0; i<58; i++) {
+      if (pulseHeight>minCharge_[i] && pulseHeight<maxCharge_[i]) chargeBin=i;
+    }
+    if (pulseHeight>maxCharge_[57]) chargeBin=57;
+
+    if (chargeBin==-1) chargeBin=0;
+
+    for (int i=0; i<10; i++) {
+      ntmpbin[i] = pulseHeight * ( pulseFrac_[chargeBin][i] + pulseTime*pulseFracDeriv_[chargeBin][i] );
+    }
+    return;
+  }
+
   PulseShapeFunctor::~PulseShapeFunctor() {
   }
 
@@ -120,9 +205,14 @@ namespace FitterFuncs{
       if(addPulseJitter_) {
 	int time = (pars[0]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
 	//Interpolate the fit (Quickly)
-	funcHPDShape(pulse_shape_, pars[0],pars[1],psFit_slew[time]);
+	if (isNew_ == false) {
+	  funcHPDShape(pulse_shape_, pars[0],pars[1],psFit_slew[time]);
+	}
+	else {
+	  funcNewShape(pulse_shape_, pars[0],pars[1]);
+	}
 	for (j=0; j<nbins; ++j) {
-	  psFit_erry2[j]  = psFit_erry[j]*psFit_erry[j] + pulse_shape_[j]*pulse_shape_[j]*pulseJitter_;
+	  psFit_erry2[j]  = psFit_erry2[j] + pulse_shape_[j]*pulse_shape_[j]*pulseJitter_;
 	  pulse_shape_sum_[j] = pulse_shape_[j] + pars[nPars-1];
 	}
 
@@ -130,7 +220,12 @@ namespace FitterFuncs{
 	while (i<parBy2) {  
 	  time = (pars[i*2]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
 	  //Interpolate the fit (Quickly)
-	  funcHPDShape(pulse_shape_, pars[i+2],pars[i*2+1],psFit_slew[time]);
+	  if (isNew_ == false) {
+	    funcHPDShape(pulse_shape_, pars[i*2],pars[i*2+1],psFit_slew[time]);
+	  } 
+	  else {
+	    funcNewShape(pulse_shape_, pars[i*2],pars[i*2+1]);
+	  }
 	  // add an uncertainty from the pulse (currently noise * pulse height =>Ecal uses full cov)
 	 /////
 	  for (j=0; j<nbins; ++j) {
@@ -143,7 +238,12 @@ namespace FitterFuncs{
       else{
 	int time = (pars[0]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
 	//Interpolate the fit (Quickly)
-	funcHPDShape(pulse_shape_, pars[0],pars[1],psFit_slew[time]);
+	if (isNew_ == false) {
+	  funcHPDShape(pulse_shape_, pars[0],pars[1],psFit_slew[time]);
+	}
+	else {
+	  funcNewShape(pulse_shape_, pars[0],pars[1]);
+	}
 	for(j=0; j<nbins; ++j)
 	  pulse_shape_sum_[j] = pulse_shape_[j] + pars[nPars-1];
 
@@ -151,7 +251,13 @@ namespace FitterFuncs{
 	while (i<parBy2) {  
 	  time = (pars[i*2]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
 	  //Interpolate the fit (Quickly)
-	  funcHPDShape(pulse_shape_, pars[i*2],pars[i*2+1],psFit_slew[time]);
+	  if (isNew_ == false) {
+	    funcHPDShape(pulse_shape_, pars[i*2],pars[i*2+1],psFit_slew[time]);
+	  }
+	  else {
+	    funcNewShape(pulse_shape_, pars[i*2],pars[i*2+1]);
+	  }
+
 	  // add an uncertainty from the pulse (currently noise * pulse height =>Ecal uses full cov)
 	  for(j=0; j<nbins; ++j)
 	    pulse_shape_sum_[j] += pulse_shape_[j];
@@ -159,8 +265,12 @@ namespace FitterFuncs{
 	}
       }
 
-      for (i=0;i<nbins; ++i) 
+      for (i=0;i<nbins; ++i) {
         chisq += (psFit_y[i]- pulse_shape_sum_[i])*(psFit_y[i]- pulse_shape_sum_[i])/psFit_erry2[i];
+	digi_temp[i] = psFit_y[i];
+	pulse_temp[i] = pulse_shape_sum_[i];
+	noise_temp[i] = psFit_erry[i];
+      }
 
       if(pedestalConstraint_) {
 	 //Add the pedestal Constraint to chi2
@@ -297,6 +407,28 @@ void PulseShapeFitOOTPileupCorrection::resetPulseShapeTemplate(const HcalPulseSh
    dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);
    tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
 }
+
+
+void PulseShapeFitOOTPileupCorrection::newSetPulseShapeTemplate(std::string filename, bool isHPD) {
+
+  if( cntsetPulseShape ) return;
+
+   // set the M2 parameters before defining the shape
+   setChi2Term(isHPD);
+
+   newResetPulseShapeTemplate(filename);
+
+}
+
+void PulseShapeFitOOTPileupCorrection::newResetPulseShapeTemplate(std::string filename) { 
+  ++ cntsetPulseShape;
+  psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
+						   pulseJitter_,timeMean_,timeSig_,pedMean_,pedSig_,noise_));
+  spfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::singlePulseShapeFunc, 3);
+  dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);
+  tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
+}
+
 
 void PulseShapeFitOOTPileupCorrection::apply(const CaloSamples & cs,
 					     const std::vector<int> & capidvec,
@@ -449,10 +581,11 @@ void PulseShapeFitOOTPileupCorrection::fit(int iFit,float &timevalfit,float &cha
 
    double step[n];
    for(int i = 0; i < n; i++) step[i] = 0.1;
-      
+
    if(iFit == 1) hybridfitter->SetFunction(*spfunctor_);
    if(iFit == 2) hybridfitter->SetFunction(*dpfunctor_);
    if(iFit == 3) hybridfitter->SetFunction(*tpfunctor_);
+
    hybridfitter->Clear();
    //Times and amplitudes
    for(int i = 0; i < int((n-1)/2); i++) {
@@ -522,6 +655,7 @@ void PulseShapeFitOOTPileupCorrection::phase1Apply(const HBHEChannelInfo& channe
   double noiseADCArr[HcalConst::maxSamples]={};
   double noiseDCArr[HcalConst::maxSamples]={};
   double noiseArrSq[HcalConst::maxSamples]={};
+  double noisePHArr[HcalConst::maxSamples]={};
   double tsTOT = 0, tstrig = 0; // in fC
   double tsTOTen = 0; // in GeV
 
@@ -554,12 +688,30 @@ void PulseShapeFitOOTPileupCorrection::phase1Apply(const HBHEChannelInfo& channe
       noiseDCArr[ip] = psfPtr_->getSiPMDarkCurrent(channelData.darkCurrent(),channelData.fcByPE(),channelData.lambda());
     }
 
+    // Photo statistics uncertainties
+    //      sigmaFC/FC = 1/sqrt(Ne);
+    noisePHArr[ip] = 0;
+    if(channelData.hasTimeInfo() && (charge-ped)>channelData.tsPedestalWidth(ip)) {
+      noisePHArr[ip] = (charge-ped)/sqrt((charge-ped)/channelData.fcByPE());
+    }
+
+    // FIXME: in the future switch the photostatistics on also for the HPD
+    if(!channelData.hasTimeInfo() && (charge-ped)>channelData.tsPedestalWidth(ip)) {
+
+      // Note1. the fcByPE is not in the DB, but is hard coded in python
+      // https://github.com/cms-sw/cmssw/blob/CMSSW_8_1_0/SimCalorimetry/HcalSimProducers/python/hcalSimParameters_cfi.py#L62
+
+      // Note2. (from kPedro): the output number of photoelectrons after smearing is treated very differently for SiPMs: *each* pe is assigned a different time based on a random generation from the Y11 pulse plus the SimHit time. In HPDs, the overall pulse is shaped all at once using just the SimHit time.
+
+      noisePHArr[ip] = (charge-ped)/sqrt((charge-ped)/0.3305);
+    }
+
     // sum all in quadrature
     if(channelData.hasTimeInfo()) {
-      noiseArrSq[ip]= noiseADCArr[ip]*noiseADCArr[ip] + noiseDCArr[ip]*noiseDCArr[ip] + channelData.tsPedestalWidth(ip)*channelData.tsPedestalWidth(ip);
+      noiseArrSq[ip]= noiseADCArr[ip]*noiseADCArr[ip] + noiseDCArr[ip]*noiseDCArr[ip] + channelData.tsPedestalWidth(ip)*channelData.tsPedestalWidth(ip) +  noisePHArr[ip]*noisePHArr[ip];
     } else {
       // FIXME: in the future switch the HPDnoise from the DB
-      noiseArrSq[ip]= noiseADCArr[ip]*noiseADCArr[ip] + noiseDCArr[ip]*noiseDCArr[ip] + noise_*noise_;
+      noiseArrSq[ip]= noiseADCArr[ip]*noiseADCArr[ip] + noiseDCArr[ip]*noiseDCArr[ip] + noisePHArr[ip]*noisePHArr[ip] + noise_*noise_;
     }
 
     tsTOT += charge - ped;
@@ -601,5 +753,34 @@ void PulseShapeFitOOTPileupCorrection::phase1Apply(const HBHEChannelInfo& channe
   reconstructedTime = fitParsVec[1];
   chi2 = fitParsVec[3];
   useTriple = fitParsVec[4];
+
+
+  std::vector<float> correctedOutput;
+  correctedOutput.swap(fitParsVec);
+
+  if(doPrint && tsTOTen>20) std::cout << " --> (iEta, iPhi, Depth) = " << channelData.id() << "\n" << "TS        FittedPulse (GeV)        Digi (GeV)" << std::endl;
+
+  for(unsigned int ip=0; ip<cssize; ++ip){
+    if( ip >= (unsigned) HcalConst::maxSamples ) continue; // Too many samples than what we wanna fit (10 is enough...) -> skip them
+
+    //      double chi2TS=(digi_temp[ip]-pulse_temp[ip])*(digi_temp[ip]-pulse_temp[ip])/(noise_temp[ip]*noise_temp[ip]);
+    if(doPrint && tsTOTen>20) std::cout << ip << "         " << pulse_temp[ip] << "                " << digi_temp[ip] << std::endl;
+
+    /*
+	if(tsTOTen>20) std::cout << "TS=" << ip << " == fittedPulsep[ip](GeV)=" << pulse_temp[ip] << " digi[ip](GeV)=" << digi_temp[ip] <<
+	"( charge-ped)Arr[ip](GeV)= " << energyArr[ip] <<
+	" noiseTotal[ip](GeV)=" << noise_temp[ip] <<
+	" ( noiseDCArr[ip](GeV)=" << noiseDCArr[ip]*channelData.tsGain(ip) << " noiseADCArr[ip](GeV)=" << noiseADCArr[ip]*channelData.tsGain(ip) <<
+	" channelData.tsPedestalWidth(ip)=" << channelData.tsPedestalWidth(ip)*channelData.tsGain(ip) <<
+	" ) " << " 1/channelData.tsGain(ip)=" << 1./channelData.tsGain(ip) << " ==> chi2+="<< chi2TS << std::endl;
+	if(tsTOTen>20) std::cout << "     same in fC TS=" <<
+	" chargeArr[ip](fC)= " << chargeArr[ip] << " pedArr[ip](fC)" << pedArr[ip] <<
+	" ( noiseDCArr[ip](fC)=" << noiseDCArr[ip] << " noiseADCArr[ip](fC)=" << noiseADCArr[ip] << " channelData.tsPedestalWidth(ip)=" << channelData.tsPedestalWidth(ip) <<
+	" ) " << std::endl;
+	if(tsTOTen>20 && chi2TS>100) std::cout << "  +++ TS with high chi2 +++" << std::endl;
+      */
+
+  }
+
 
 }

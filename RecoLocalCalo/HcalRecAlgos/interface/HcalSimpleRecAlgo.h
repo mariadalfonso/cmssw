@@ -22,6 +22,7 @@
 
 #include "RecoLocalCalo/HcalRecAlgos/interface/PulseShapeFitOOTPileupCorrection.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalDeterministicFit.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/DoMahiAlgo.h"
 
 #include "RecoLocalCalo/HcalRecAlgos/interface/PedestalSub.h"
 
@@ -52,7 +53,7 @@ public:
   void setRecoParams(bool correctForTimeslew, bool correctForPulse, bool setLeakCorrection, int pileupCleaningID, float phaseNS);
 
   // ugly hack related to HB- e-dependent corrections
-  void setForData (int runnum);
+  void setForData (int runnum, bool isBarrel);
 
   // usage of leak correction 
   void setLeakCorrection();
@@ -79,6 +80,14 @@ public:
     puCorrMethod_ = method;
     if( puCorrMethod_ == 2 )
         psFitOOTpuCorr_ = std::make_unique<PulseShapeFitOOTPileupCorrection>();
+    else if ( puCorrMethod_ == 10 )
+      psFitMAHIOOTpuCorr_ = std::make_unique<DoMahiAlgo>();
+    else if ( puCorrMethod_ == 3 )
+      hltOOTpuCorr_ = std::make_unique<HcalDeterministicFit>();
+  }
+
+  void setPulseShape(int shape){
+    pulseShapeType_ = shape;
   }
 
   void setpuCorrParams(bool   iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iApplyTimeSlew,
@@ -107,6 +116,7 @@ private:
   HcalPulseShapes theHcalPulseShapes_;
 
   int puCorrMethod_;
+  int pulseShapeType_;
 
   std::unique_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorr_;
   
@@ -114,6 +124,8 @@ private:
 
   // S.Brandt Feb19 : Add a pointer to the HLT algo
   std::unique_ptr<HcalDeterministicFit> hltOOTpuCorr_;
+
+  std::unique_ptr<DoMahiAlgo> psFitMAHIOOTpuCorr_;
 };
 
 #endif
