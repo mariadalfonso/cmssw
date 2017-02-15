@@ -70,7 +70,7 @@ class HcalDeterministicFit {
   float maxCharge_[58];
   float pulseFrac_[58][10];
   float pulseFracDeriv_[58][10];
-
+  float timeSlew_[58];
 };
 
 template<class Digi>
@@ -155,18 +155,19 @@ void HcalDeterministicFit::apply(const CaloSamples & cs, const std::vector<int> 
         }
         if (ch5<negThresh[0] && ch4>negThresh[1]) 
         {
-            double ratio = (corrCharge[4]-ch3*i3)/(corrCharge[5]-negThresh[0]*i5);
-            if (ratio < 5 && ratio > 0.5) 
-            {
-                //double invG = invGpar[0]+invGpar[1]*std::sqrt(2*std::log(invGpar[2]/ratio));
-                float iG=0;
-                //getLandauFrac(-invG,-invG+tsWidth,iG);
-                if (iG != 0 ) 
-                {
-                    ch4=(corrCharge[4]-ch3*n3)/(iG);
-                    //tsShift4=invG;
-	            }
-	        }   
+	  float newTS = (corrCharge[5]-negThresh[0]*i5)/(corrCharge[4]-ch3*i3);
+	  int newBin=0;
+	  for (int k=0; k<58; k++) {
+	    if (newTS < timeSlew_[k]) newBin=k;
+	  }
+	  float i4_new = pulseFrac_[newBin][4];
+
+	  if (i4_new!=0) 
+	    {
+	      std::cout << ch4 << ", " << (corrCharge[4]-ch3*n3)/(i4_new) << std::endl;
+	      ch5=negThresh[0];
+	      ch4=(corrCharge[4]-ch3*n3)/(i4_new);
+	    }
         }
     }
 
@@ -222,19 +223,19 @@ void HcalDeterministicFit::apply(const CaloSamples & cs, const std::vector<int> 
             }
             if (ch5<negThresh[0] && ch4>negThresh[1]) 
             {
-                double ratio = (corrCharge[4]-ch3*i3)/(corrCharge[5]-negThresh[0]*i5);
-                if (ratio < 5 && ratio > 0.5) 
-                {
-                    double invG = invGpar[0]+invGpar[1]*std::sqrt(2*std::log(invGpar[2]/ratio));
-                    float iG=0;
-                    getLandauFrac(-invG,-invG+tsWidth,iG);
-                    if (iG != 0 ) 
-                    {
-                        ch4=(corrCharge[4]-ch3*n3)/(iG);
-                        tsShift4=invG;
-                    }
-                }
-            }
+	      float newTS = (corrCharge[5]-negThresh[0]*i5)/(corrCharge[4]-ch3*i3);
+	      int newBin=0;
+	      for (int k=0; k<58; k++) {
+		if (newTS < timeSlew_[k]) newBin=k;
+	      }
+	      float i4_new = pulseFrac_[newBin][4];
+
+	      if (i4_new!=0)
+		{
+		  ch5=negThresh[0];
+		  ch4=(corrCharge[4]-ch3*n3)/(i4_new);
+		}
+	    }
       }
 
       if (ch4<1) {
