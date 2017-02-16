@@ -290,6 +290,7 @@ g4SimHits = cms.EDProducer("OscarMTProducer",
         UsePMTHits                = cms.bool(False),
         UseFibreBundleHits        = cms.bool(False),
         TestNumberingScheme       = cms.bool(False),
+        doNeutralDensityFilter    = cms.bool(True),
         EminHitHB                 = cms.double(0.0),
         EminHitHE                 = cms.double(0.0),
         EminHitHO                 = cms.double(0.0),
@@ -466,3 +467,10 @@ g4SimHits = cms.EDProducer("OscarMTProducer",
 ##
 from Configuration.Eras.Modifier_run2_common_cff import run2_common
 run2_common.toModify( g4SimHits.HFShowerLibrary, FileName = 'SimG4CMS/Calo/data/HFShowerLibrary_npmt_noatt_eta4_16en_v4.root' )
+from Configuration.Eras.Modifier_run2_HCAL_2017_cff import run2_HCAL_2017
+run2_HCAL_2017.toModify( g4SimHits, HCalSD = dict( TestNumberingScheme = True ) )
+from Configuration.Eras.Modifier_phase2_timing_cff import phase2_timing
+phase2_timing.toModify( g4SimHits.ECalSD,
+                             StoreLayerTimeSim = cms.untracked.bool(True),
+                             TimeSliceUnit = cms.double(0.001) )
+
