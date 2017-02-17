@@ -42,7 +42,9 @@ void HcalDeterministicFit::init(HcalTimeSlew::ParaSource tsParam, HcalTimeSlew::
   pulseFrac_[0][6] = landauFrac[ int( ceil( -tstart0 + 75 ) ) ];
   for (int j = 7; j < 10; j++) pulseFrac_[0][j] = 0;
   for (int j = 0; j < 10; j++) pulseFracDeriv_[0][j] = 0;
-  timeSlew_[0] = pulseFrac_[0][5]/pulseFrac_[0][4];
+  if (pulseFrac_[0][4] != 0) 
+      timeSlew_[0] = pulseFrac_[0][5]/pulseFrac_[0][4];
+  else timeSlew_[0] = 0;
 
   minCharge_[57] = 580;
   maxCharge_[57] = 600;
@@ -53,7 +55,9 @@ void HcalDeterministicFit::init(HcalTimeSlew::ParaSource tsParam, HcalTimeSlew::
   pulseFrac_[57][6] = landauFrac[ int( ceil( -tstart1 + 75 ) ) ];
   for (int j = 7; j < 10; j++) pulseFrac_[57][j] = 0;
   for (int j = 0; j < 10; j++) pulseFracDeriv_[57][j] = 0;
-  timeSlew_[57] = pulseFrac_[57][5]/pulseFrac_[57][4];
+  if (pulseFrac_[57][4] != 0) 
+      timeSlew_[57] = pulseFrac_[57][5]/pulseFrac_[57][4];
+  else timeSlew_[57] = 0;
 
   int k = 1; 
   for (int i=25; i<580; i+=10) 
@@ -67,7 +71,9 @@ void HcalDeterministicFit::init(HcalTimeSlew::ParaSource tsParam, HcalTimeSlew::
     pulseFrac_[k][6] = landauFrac[ int( ceil( -tstart + 75 ) ) ];
     for (int j = 7; j < 10; j++) pulseFrac_[k][j] = 0;
     for (int j = 0; j < 10; j++) pulseFracDeriv_[k][j] = 0;
-    timeSlew_[i] = pulseFrac_[k][5]/pulseFrac_[k][4];
+    if (pulseFrac_[k][4] != 0) 
+        timeSlew_[k] = pulseFrac_[k][5]/pulseFrac_[k][4];
+    else timeSlew_[k] = 0;
     k++;
   }
 }
