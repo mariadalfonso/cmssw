@@ -231,7 +231,7 @@ void SimpleNtuplizer::setPhotonVariables(const reco::Photon& photon,
   full5x5_eTop_p.push_back(EcalClusterToolsT<true>::eTop(cluster, ecalRecHits.product(), topology_));
   full5x5_eBottom_p.push_back(EcalClusterToolsT<true>::eBottom(cluster, ecalRecHits.product(), topology_));
   full5x5_eLeft_p.push_back(EcalClusterToolsT<true>::eLeft(cluster, ecalRecHits.product(), topology_));
-  full5x5_eRight_e.push_back(EcalClusterToolsT<true>::eRight(cluster, ecalRecHits.product(), topology_));
+  full5x5_eRight_p.push_back(EcalClusterToolsT<true>::eRight(cluster, ecalRecHits.product(), topology_));
   full5x5_e2x5Max_p.push_back(EcalClusterToolsT<true>::e2x5Max(cluster, ecalRecHits.product(), topology_));
   full5x5_e2x5Top_p.push_back(EcalClusterToolsT<true>::e2x5Top(cluster, ecalRecHits.product(), topology_));
   full5x5_e2x5Bottom_p.push_back(EcalClusterToolsT<true>::e2x5Bottom(cluster, ecalRecHits.product(), topology_));
