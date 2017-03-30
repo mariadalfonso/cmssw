@@ -7,17 +7,14 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   using namespace std;
   
   ////clear all teh vector elements
-  nClus_ = 0;
-  clusE_.clear();
-  clusPt_.clear();
-  clusVx_.clear();
-  clusVy_.clear();
-  clusVz_.clear();
-  clusEta_.clear();
-  clusRho_.clear();
-  clusPhi_.clear();
-  clusLayer_.clear();
-  clusNrecHits_.clear();
+  nClus_pf        = 0;
+  clusE_pf      = -99;
+  clusPt_pf     = -99;
+  clusEta_pf      = -99;
+  clusRho_pf      = -99;
+  clusPhi_pf      = -99;
+  clusLayer_pf    = -99;
+  clusSize_pf = -99;
   
   
   //std::cout<<"inside FlatTreeMaker"<<std::endl;
@@ -33,19 +30,17 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
     for (reco::PFClusterCollection::const_iterator pfc=(*clustersH).begin(); pfc!=(*clustersH).end(); pfc++){
       
       ///energy
-      double energy = (*pfc).energy();
-      //cout<<"Energy is "<<energy<<endl;
       
-      clusE_.push_back(energy);
+      clusE_pf = pfc->energy();
       
       
       ///pt
-      clusPt_.push_back( (*pfc).pt() );
+      clusPt_pf = pfc->pt();
       
       ///layer number
       int layerNum = 0;
       
-      PFLayer::Layer layer = (*pfc).layer();
+      PFLayer::Layer layer = pfc->layer();
       if(layer==PFLayer::PS2) layerNum = -12;
       if(layer==PFLayer::PS1) layerNum = -11;
       if(layer==PFLayer::ECAL_ENDCAP) layerNum = -2;
@@ -61,32 +56,42 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
        
        //cout<<"layerNum is "<<layerNum<<endl;
        
-       clusLayer_.push_back(layerNum);
+       clusLayer_pf = layerNum;
        
        ///position
-       auto const & crep = (*pfc).positionREP();
+       auto const & crep = pfc->positionREP();
        double eta = crep.eta();
        double phi = crep.phi();
        double rho = crep.rho();
        
-       clusEta_.push_back(eta);
-       clusPhi_.push_back(phi);
-       clusRho_.push_back(rho);
+       clusEta_pf = eta;
+       clusPhi_pf = phi;
+       clusRho_pf = rho;
        
-       ///vertex
-       double vx = (*pfc).vx();
-       double vy = (*pfc).vy();
-       double vz = (*pfc).vz();
+
+       ///ieta, iphi
+       //find seed crystal indices
+       bool iseb = pfc->layer() == PFLayer::ECAL_BARREL;
+
+       if (iseb) {
+	 EBDetId ebseed(pfc->seed());
+	 clusIetaIx_pf = ebseed.ieta();
+	 clusIphiIy_pf = ebseed.iphi();
+       }
+       else {
+	 EEDetId eeseed(pfc->seed());
+	 clusIetaIx_pf = eeseed.ix();
+	 clusIphiIy_pf = eeseed.iy();      
+       }
        
-       clusVx_.push_back(vx);
-       clusVy_.push_back(vy);
-       clusVz_.push_back(vz);
+
+       ///lazy tools
+       EcalClusterLazyTools lazyTool(iEvent, iSetup, ecalRecHitEBToken_, ecalRecHitEEToken_);
+       clusSize_pf = lazyTool.n5x5(*pfc);
        
-       ///no. of rechits
-       int nhits = (*pfc).hitsAndFractions().size();
-       clusNrecHits_.push_back(nhits);
-       
-       nClus_++;
+
+
+       nClus_pf++;
        
     }//for (reco::PFClusterCollection::const_iterator pfc=(....))
     

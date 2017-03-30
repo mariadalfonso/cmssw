@@ -64,7 +64,8 @@ process.een_analyzer = cms.EDAnalyzer(
     doPhotonTree        = cms.bool(False),
     doSuperClusterTree  = cms.bool(False),
     doPFClusterTree     = cms.bool(True),
-    saveUnmatched       = cms.bool(False)
+    saveUnmatched       = cms.bool(False),
+    doVertex            = cms.bool(False)
 
 
     )

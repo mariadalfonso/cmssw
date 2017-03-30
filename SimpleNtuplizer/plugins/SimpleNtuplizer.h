@@ -63,6 +63,8 @@
 
 #include "DataFormats/ParticleFlowReco/interface/PFLayer.h"
 
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+
 //######################################
 //# Class declaration
 //######################################
@@ -92,7 +94,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   bool doSuperClusterTree;
   bool saveUnmatched;
   bool doPFTree;
-  
+  bool doVertex;
   
   // =====================================
   // Setting tokens
@@ -261,17 +263,16 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   // H/E
 
   ////PFCluster
-  Int_t          nClus_;
-  std::vector<Float_t>    clusE_;
-  std::vector<Float_t>    clusPt_;
-  std::vector<Float_t> clusVx_;
-  std::vector<Float_t> clusVy_;
-  std::vector<Float_t> clusVz_;
-  std::vector<Float_t> clusEta_;
-  std::vector<Float_t> clusPhi_;
-  std::vector<Float_t> clusRho_;
-  std::vector<Float_t> clusLayer_;
-  std::vector<Float_t> clusNrecHits_;
+  Int_t      nClus_pf;
+  Float_t    clusE_pf;
+  Float_t    clusPt_pf;
+  Float_t    clusEta_pf;
+  Float_t    clusPhi_pf;
+  Float_t    clusRho_pf;
+  Float_t    clusLayer_pf;
+  Int_t      clusSize_pf;
+  Int_t      clusIetaIx_pf;
+  Int_t      clusIphiIy_pf;
 
 
   // Now only for the seed 5x5

@@ -46,7 +46,8 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   saveUnmatched = iConfig.getParameter<bool>("saveUnmatched");
 
   doPFTree = iConfig.getParameter<bool>("doPFClusterTree");
-
+  doVertex = iConfig.getParameter<bool>("doVertex");
+  
   std::cout << ">>>> Inside SimpleNtuplizer::constructor" << std::endl;
 
   edm::Service<TFileService> fs;
@@ -60,7 +61,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   eventTree_->Branch("run", &run_);
   eventTree_->Branch("weight", &weight_);
   eventTree_->Branch("trueNumInteractions", &trueNumInteractions_);	
-  eventTree_->Branch("nPV", &nPV_);
+  if(doVertex) eventTree_->Branch("nPV", &nPV_);
   eventTree_->Branch("nElectrons", &nElectrons_);
   eventTree_->Branch("nElectronsMatched", &nElectronsMatched_);
   eventTree_->Branch("nPhotons", &nPhotons_);
@@ -447,18 +448,17 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   if(doPFTree){
 
     pfTree_    = fs->make<TTree>("PfTree", "PF Cluster tree");
-    pfTree_->Branch("nClus_",   &nClus_);
+    pfTree_->Branch("nClus",   &nClus_pf);
     
-    pfTree_->Branch("clusE_",   &clusE_);
-    pfTree_->Branch("clusPt_",   &clusPt_);
-    pfTree_->Branch("clusVx_",   &clusVx_);
-    pfTree_->Branch("clusVy_",   &clusVy_);
-    pfTree_->Branch("clusVz_",   &clusVz_);
-    pfTree_->Branch("clusEta_",   &clusEta_);
-    pfTree_->Branch("clusRho_",   &clusRho_);
-    pfTree_->Branch("clusPhi_",   &clusPhi_);
-    pfTree_->Branch("clusLayer_",   &clusLayer_);
-    pfTree_->Branch("clusNrecHits_",   &clusNrecHits_);
+    pfTree_->Branch("clusE",   &clusE_pf);
+    pfTree_->Branch("clusPt",   &clusPt_pf);
+    pfTree_->Branch("clusEta",   &clusEta_pf);
+    pfTree_->Branch("clusRho",   &clusRho_pf);
+    pfTree_->Branch("clusPhi",   &clusPhi_pf);
+    pfTree_->Branch("clusLayer",   &clusLayer_pf);
+    pfTree_->Branch("clusSize",   &clusSize_pf);
+    pfTree_->Branch("clusIetaIx_pf",   &clusIetaIx_pf);
+    pfTree_->Branch("clusIphiIy_pf",   &clusIphiIy_pf);
     
   }
 
@@ -486,7 +486,7 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
 
   // Get vertex collection
   edm::Handle<reco::VertexCollection> vertices;
-  if(!doPFTree) iEvent.getByToken(vtxToken_, vertices);
+  if(doVertex) iEvent.getByToken(vtxToken_, vertices);
 
   // Get electron collection
   edm::Handle<reco::GsfElectronCollection> electrons;  // For AODSIM
@@ -543,7 +543,7 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
   }
   
   // Determine number of primary vertices
-  if(!doPFTree){
+  if(doVertex){
     if (vertices->empty()) nPV_ = 0;
     else nPV_ = vertices->size();
   }
