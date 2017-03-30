@@ -52,6 +52,7 @@ process.een_analyzer = cms.EDAnalyzer(
     photons             = cms.InputTag("gedPhotons", ""),
     superClustersEB     = cms.InputTag("particleFlowSuperClusterECAL", "particleFlowSuperClusterECALBarrel"),
     superClustersEE     = cms.InputTag("particleFlowSuperClusterECAL", "particleFlowSuperClusterECALEndcapWithPreshower"),
+    pfLabel = cms.InputTag("particleFlowClusterECALMatchedToPhotons"),
     rho                 = cms.InputTag("fixedGridRhoFastjetAll", ""),
     genparticles        = cms.InputTag("genParticles", ""),
     PUInfoInputTag      = cms.InputTag("addPileupInfo", ""),
@@ -61,6 +62,7 @@ process.een_analyzer = cms.EDAnalyzer(
     doElectronTree      = cms.bool(True),
     doPhotonTree        = cms.bool(True),
     doSuperClusterTree  = cms.bool(True),
+    doPFClusterTree     = cms.bool(True),
     saveUnmatched       = cms.bool(False)
 
 
