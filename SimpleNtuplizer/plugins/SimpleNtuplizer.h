@@ -58,6 +58,11 @@
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
 
+#include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
+#include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
+
+#include "DataFormats/ParticleFlowReco/interface/PFLayer.h"
+
 //######################################
 //# Class declaration
 //######################################
@@ -71,6 +76,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   void setPhotonVariables        (const reco::Photon&,       const edm::Event&, const edm::EventSetup&);
   void setSuperClusterVariables  (const reco::SuperCluster&, const edm::Event&, const edm::EventSetup&, bool isEB);
 
+  void setPFVariables(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  
   bool matchElectronToGenParticle       (const reco::GsfElectron&);
   bool matchPhotonToGenParticle         (const reco::Photon&);
   bool matchSuperClusterToGenParticle   (const reco::SuperCluster&);
@@ -84,7 +91,9 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   bool doPhotonTree;
   bool doSuperClusterTree;
   bool saveUnmatched;
-
+  bool doPFTree;
+  
+  
   // =====================================
   // Setting tokens
         
@@ -100,7 +109,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::EDGetTokenT<reco::SuperClusterCollection>      superClustersEEToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ecalRecHitEBToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ecalRecHitEEToken_;
-	
+
+  
   const CaloTopology *topology_;
   const CaloGeometry *geometry_;
 
@@ -113,6 +123,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::Handle<std::vector<PileupSummaryInfo> >   puInfoH_;
   edm::Handle<GenEventInfoProduct>               genEvtInfo_;
 	       
+  edm::EDGetTokenT<reco::PFClusterCollection> pfLabel_;
+
   // =====================================
   // Event variables
 
@@ -120,6 +132,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   TTree *electronTree_;
   TTree *superClusterTree_;
   TTree *photonTree_;
+  TTree *pfTree_;
 
   // Central event counter (specific to this output tree)
   Int_t NtupID_;
@@ -246,6 +259,20 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   std::vector<Float_t> full5x5_e2x5Top_e;
   std::vector<Float_t> full5x5_e2x5Bottom_e;
   // H/E
+
+  ////PFCluster
+  Int_t          nClus_;
+  std::vector<Float_t>    clusE_;
+  std::vector<Float_t>    clusPt_;
+  std::vector<Float_t> clusVx_;
+  std::vector<Float_t> clusVy_;
+  std::vector<Float_t> clusVz_;
+  std::vector<Float_t> clusEta_;
+  std::vector<Float_t> clusPhi_;
+  std::vector<Float_t> clusRho_;
+  std::vector<Float_t> clusLayer_;
+  std::vector<Float_t> clusNrecHits_;
+
 
   // Now only for the seed 5x5
   Float_t hadronicOverEm_e;
