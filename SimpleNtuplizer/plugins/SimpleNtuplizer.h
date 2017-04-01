@@ -65,6 +65,9 @@
 
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
+#include <algorithm>
+#include <vector>
+
 //######################################
 //# Class declaration
 //######################################
@@ -95,6 +98,9 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   bool saveUnmatched;
   bool doPFTree;
   bool doVertex;
+
+
+  //typedef std::vector<std::pair<unsigned long,edm::Ptr<reco::PFCluster> > > EEtoPSAssociation;
   
   // =====================================
   // Setting tokens
@@ -126,6 +132,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::Handle<GenEventInfoProduct>               genEvtInfo_;
 	       
   edm::EDGetTokenT<reco::PFClusterCollection> pfLabel_;
+  edm::EDGetTokenT<reco::PFCluster::EEtoPSAssociation> pspfLabel_;
 
   // =====================================
   // Event variables
@@ -264,7 +271,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
 
   ////PFCluster
   Int_t      nClus_pf;
-  Float_t    clusE_pf;
+  Float_t    clusrawE_pf;
+  Float_t    cluscorrE_pf;
   Float_t    clusPt_pf;
   Float_t    clusEta_pf;
   Float_t    clusPhi_pf;
@@ -273,7 +281,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Int_t      clusSize_pf;
   Int_t      clusIetaIx_pf;
   Int_t      clusIphiIy_pf;
-
+  Float_t    clusPS1_pf;
+  Float_t    clusPS2_pf;
 
   // Now only for the seed 5x5
   Float_t hadronicOverEm_e;

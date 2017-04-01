@@ -1,5 +1,13 @@
 #include "SimpleNtuplizer.h"
 
+
+namespace {
+  typedef reco::PFCluster::EEtoPSAssociation::value_type EEPSPair;
+  bool sortByKey(const EEPSPair& a, const EEPSPair& b) {
+    return a.first < b.first;
+  } 
+}
+
 void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent, 
 				     const edm::EventSetup& iSetup)
 {
@@ -8,13 +16,15 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   
   ////clear all teh vector elements
   nClus_pf        = 0;
-  clusE_pf      = -99;
+  clusrawE_pf      = -99;
+  cluscorrE_pf      = -99;
   clusPt_pf     = -99;
   clusEta_pf      = -99;
   clusRho_pf      = -99;
   clusPhi_pf      = -99;
   clusLayer_pf    = -99;
-  clusSize_pf = -99;
+  clusPS1_pf = -99;
+  clusPS2_pf = -99;
   
   
   //std::cout<<"inside FlatTreeMaker"<<std::endl;
@@ -22,6 +32,12 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   edm::Handle<reco::PFClusterCollection> clustersH;
   iEvent.getByToken(pfLabel_,clustersH);
   
+  edm::Handle<reco::PFCluster::EEtoPSAssociation> clusterpairH;
+  iEvent.getByToken(pspfLabel_,clusterpairH);
+
+  
+  
+
   if (clustersH.isValid()) {
     double size = (*clustersH).size();
     //if(size>0) cout<<"size is "<<size<<endl;
@@ -29,10 +45,11 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
     
     for (reco::PFClusterCollection::const_iterator pfc=(*clustersH).begin(); pfc!=(*clustersH).end(); pfc++){
       
-      ///energy
+      ///raw energy
+      clusrawE_pf = pfc->energy();
       
-      clusE_pf = pfc->energy();
-      
+      ///corrected energy
+      cluscorrE_pf = pfc->correctedEnergy();
       
       ///pt
       clusPt_pf = pfc->pt();
@@ -69,9 +86,10 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
        clusRho_pf = rho;
        
 
+
        ///ieta, iphi
        //find seed crystal indices
-       bool iseb = pfc->layer() == PFLayer::ECAL_BARREL;
+       bool iseb = (pfc->layer()) == (PFLayer::ECAL_BARREL);
 
        if (iseb) {
 	 EBDetId ebseed(pfc->seed());
@@ -90,8 +108,37 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
        clusSize_pf = lazyTool.n5x5(*pfc);
        
 
+       ///////PS energy
+       //compute preshower energies for endcap clusters
+       double ePS1=0, ePS2=0;
+       if(!iseb) {
+	 auto ee_key_val = std::make_pair(nClus_pf,edm::Ptr<reco::PFCluster>());
+            const auto clustops = std::equal_range(clusterpairH->begin(),
+						   clusterpairH->end(),
+						   ee_key_val,
+						   sortByKey);
+	    for( auto i_ps = clustops.first; i_ps != clustops.second; ++i_ps) {
+	      edm::Ptr<reco::PFCluster> psclus(i_ps->second);
+	      switch( psclus->layer() ) {
+		
+	      case PFLayer::PS1:
+		ePS1 += psclus->energy();
+		break;
+	      case PFLayer::PS2:
+		ePS2 += psclus->energy();
+		break;
+	      default:
+		break;
+	      }
+	    }//for( auto i_ps = clustops.first; i_ps !=..)
+	    
+	    clusPS1_pf = ePS1;
+	    clusPS2_pf = ePS2;
+	    
+       }//if(!iseb)
 
        nClus_pf++;
+       
        
     }//for (reco::PFClusterCollection::const_iterator pfc=(....))
     

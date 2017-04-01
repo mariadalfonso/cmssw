@@ -38,7 +38,8 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   superClustersEEToken_(consumes<reco::SuperClusterCollection>(iConfig.getParameter<edm::InputTag>("superClustersEE"))),
   ecalRecHitEBToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEB"))),
   ecalRecHitEEToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEE"))),
-  pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel")))
+  pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
+  pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pspfLabel")))
 {
   doElectronTree = iConfig.getParameter<bool>("doElectronTree");
   doPhotonTree = iConfig.getParameter<bool>("doPhotonTree");
@@ -450,7 +451,8 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_    = fs->make<TTree>("PfTree", "PF Cluster tree");
     pfTree_->Branch("nClus",   &nClus_pf);
     
-    pfTree_->Branch("clusE",   &clusE_pf);
+    pfTree_->Branch("clusrawE",   &clusrawE_pf);
+    pfTree_->Branch("cluscorrE",   &cluscorrE_pf);
     pfTree_->Branch("clusPt",   &clusPt_pf);
     pfTree_->Branch("clusEta",   &clusEta_pf);
     pfTree_->Branch("clusRho",   &clusRho_pf);
@@ -459,7 +461,9 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("clusSize",   &clusSize_pf);
     pfTree_->Branch("clusIetaIx_pf",   &clusIetaIx_pf);
     pfTree_->Branch("clusIphiIy_pf",   &clusIphiIy_pf);
-    
+    pfTree_->Branch("clusPS1",   &clusPS1_pf);
+    pfTree_->Branch("clusPS2",   &clusPS2_pf);
+
   }
 
 
@@ -515,11 +519,6 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
   edm::ESHandle<CaloTopology> pTopology;
   iSetup.get<CaloTopologyRecord>().get(pTopology);
   topology_ = pTopology.product();
-
-  ///get PFClusters
-  edm::Handle<reco::PFClusterCollection> pfclustersH;
-  if(doPFTree) iEvent.getByToken(pfLabel_,pfclustersH);
-  
 
 
   //######################################
