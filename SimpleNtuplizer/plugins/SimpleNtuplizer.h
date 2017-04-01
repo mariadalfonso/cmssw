@@ -65,6 +65,18 @@
 
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
+#include "DataFormats/EcalDigi/interface/EBSrFlag.h"
+#include "DataFormats/EcalDigi/interface/EESrFlag.h"
+#include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
+#include "Geometry/CaloTopology/interface/EcalTrigTowerConstituentsMap.h"
+#include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
+#include "Geometry/CaloTopology/interface/EcalTrigTowerConstituentsMap.h"
+#include "DataFormats/EcalDetId/interface/EcalScDetId.h"
+#include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
+#include "Geometry/EcalMapping/interface/EcalMappingRcd.h"
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h"
+
 #include <algorithm>
 #include <vector>
 
@@ -82,6 +94,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   void setSuperClusterVariables  (const reco::SuperCluster&, const edm::Event&, const edm::EventSetup&, bool isEB);
 
   void setPFVariables(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  EcalTrigTowerDetId readOutUnitOf(const EBDetId& xtalId) const;
+  EcalScDetId readOutUnitOf(const EEDetId& xtalId) const;
   
   bool matchElectronToGenParticle       (const reco::GsfElectron&);
   bool matchPhotonToGenParticle         (const reco::Photon&);
@@ -117,7 +131,9 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::EDGetTokenT<reco::SuperClusterCollection>      superClustersEEToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ecalRecHitEBToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ecalRecHitEEToken_;
-
+  //required for reading SR flags
+  const EcalTrigTowerConstituentsMap * triggerTowerMap_;
+  const EcalElectronicsMapping* elecMap_;
   
   const CaloTopology *topology_;
   const CaloGeometry *geometry_;
@@ -133,6 +149,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
 	       
   edm::EDGetTokenT<reco::PFClusterCollection> pfLabel_;
   edm::EDGetTokenT<reco::PFCluster::EEtoPSAssociation> pspfLabel_;
+  edm::EDGetTokenT<EBSrFlagCollection> ebSrFlagToken_; 
+  edm::EDGetTokenT<EESrFlagCollection> eeSrFlagToken_; 
 
   // =====================================
   // Event variables
@@ -283,7 +301,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Int_t      clusIphiIy_pf;
   Float_t    clusPS1_pf;
   Float_t    clusPS2_pf;
-
+  Int_t    clusFlag_pf;
+  
   // Now only for the seed 5x5
   Float_t hadronicOverEm_e;
   Float_t hadronic1OverEm_e;

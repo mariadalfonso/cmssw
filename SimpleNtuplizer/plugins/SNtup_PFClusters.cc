@@ -35,8 +35,24 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   edm::Handle<reco::PFCluster::EEtoPSAssociation> clusterpairH;
   iEvent.getByToken(pspfLabel_,clusterpairH);
 
+
+  // Selective Readout Flags
+  edm::Handle<EBSrFlagCollection> ebSrFlags;
+  iEvent.getByToken(ebSrFlagToken_, ebSrFlags );
+  edm::Handle<EESrFlagCollection> eeSrFlags;
+  iEvent.getByToken(eeSrFlagToken_, eeSrFlags );
+
+  ///needed for reading the SR flag
+  edm::ESHandle<EcalTrigTowerConstituentsMap> hTriggerTowerMap;
+  iSetup.get<IdealGeometryRecord>().get(hTriggerTowerMap);
+  triggerTowerMap_ = hTriggerTowerMap.product(); 
   
-  
+
+  //electronics map
+  edm::ESHandle< EcalElectronicsMapping > ecalmapping;
+  iSetup.get< EcalMappingRcd >().get(ecalmapping);
+  elecMap_ = ecalmapping.product();
+
 
   if (clustersH.isValid()) {
     double size = (*clustersH).size();
@@ -137,6 +153,23 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 	    
        }//if(!iseb)
 
+
+       ////SR flags
+       if(iseb){
+
+	 EBSrFlagCollection::const_iterator srf
+	   = ebSrFlags->find(readOutUnitOf((EBDetId) pfc->seed()));
+	 
+	 clusFlag_pf = srf->value();
+       }
+
+       if(!iseb){
+	 EESrFlagCollection::const_iterator srf
+	   = eeSrFlags->find(readOutUnitOf((EEDetId)pfc->seed()));
+	 
+	 clusFlag_pf = srf->value();   
+       }
+
        nClus_pf++;
        
        
@@ -153,3 +186,29 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   
   
 }//void SimpleNtuplizer::setPFVariables
+
+///http://cmslxr.fnal.gov/source/Validation/EcalDigis/src/EcalSelectiveReadoutValidation.cc#0668
+
+/*
+ http://cmsdoxygen.web.cern.ch/cmsdoxygen/CMSSW_9_0_0/doc/html/de/d38/classEcalSrFlag.html
+SRF_FORCED_MASK = 0x4
+SRF_FULL = 3
+SRF_SUPPRESS = 0
+SRF_ZS1 = 1
+SRF_ZS2 = 2
+*/ 
+
+
+EcalTrigTowerDetId SimpleNtuplizer::readOutUnitOf(const EBDetId& xtalId) const{
+  return triggerTowerMap_->towerOf(xtalId);
+}
+
+
+EcalScDetId SimpleNtuplizer::readOutUnitOf(const EEDetId& xtalId) const{
+  const EcalElectronicsId& EcalElecId = elecMap_->getElectronicsId(xtalId);
+  int iDCC= EcalElecId.dccId();
+  int iDccChan = EcalElecId.towerId();
+  const bool ignoreSingle = true;
+  const std::vector<EcalScDetId> id = elecMap_->getEcalScDetId(iDCC, iDccChan, ignoreSingle);
+  return id.size()>0?id[0]:EcalScDetId();
+}

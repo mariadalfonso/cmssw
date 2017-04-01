@@ -39,7 +39,11 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   ecalRecHitEBToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEB"))),
   ecalRecHitEEToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEE"))),
   pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
-  pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pspfLabel")))
+  pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pspfLabel"))),
+  // SRP collections
+  ebSrFlagToken_(consumes<EBSrFlagCollection>(iConfig.getParameter<edm::InputTag>("ebSrFlagCollection"))),
+  eeSrFlagToken_(consumes<EESrFlagCollection>(iConfig.getParameter<edm::InputTag>("eeSrFlagCollection")))
+
 {
   doElectronTree = iConfig.getParameter<bool>("doElectronTree");
   doPhotonTree = iConfig.getParameter<bool>("doPhotonTree");
@@ -463,6 +467,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("clusIphiIy_pf",   &clusIphiIy_pf);
     pfTree_->Branch("clusPS1",   &clusPS1_pf);
     pfTree_->Branch("clusPS2",   &clusPS2_pf);
+    pfTree_->Branch("clusFlag",   &clusFlag_pf);
 
   }
 
