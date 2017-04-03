@@ -37,13 +37,21 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   superClustersEBToken_(consumes<reco::SuperClusterCollection>(iConfig.getParameter<edm::InputTag>("superClustersEB"))),
   superClustersEEToken_(consumes<reco::SuperClusterCollection>(iConfig.getParameter<edm::InputTag>("superClustersEE"))),
   ecalRecHitEBToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEB"))),
-  ecalRecHitEEToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEE")))    
+  ecalRecHitEEToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEE"))),
+  pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
+  pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
+  // SRP collections
+  ebSrFlagToken_(consumes<EBSrFlagCollection>(iConfig.getParameter<edm::InputTag>("ebSrFlagCollection"))),
+  eeSrFlagToken_(consumes<EESrFlagCollection>(iConfig.getParameter<edm::InputTag>("eeSrFlagCollection")))
 {
   doElectronTree = iConfig.getParameter<bool>("doElectronTree");
   doPhotonTree = iConfig.getParameter<bool>("doPhotonTree");
   doSuperClusterTree = iConfig.getParameter<bool>("doSuperClusterTree");
   saveUnmatched = iConfig.getParameter<bool>("saveUnmatched");
 
+  doPFTree = iConfig.getParameter<bool>("doPFClusterTree");
+  doVertex = iConfig.getParameter<bool>("doVertex");
+  
   std::cout << ">>>> Inside SimpleNtuplizer::constructor" << std::endl;
 
   edm::Service<TFileService> fs;
@@ -57,13 +65,17 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   eventTree_->Branch("run", &run_);
   eventTree_->Branch("weight", &weight_);
   eventTree_->Branch("trueNumInteractions", &trueNumInteractions_);	
-  eventTree_->Branch("nPV", &nPV_);
+  if(doVertex) eventTree_->Branch("nPV", &nPV_);
   eventTree_->Branch("nElectrons", &nElectrons_);
   eventTree_->Branch("nElectronsMatched", &nElectronsMatched_);
   eventTree_->Branch("nPhotons", &nPhotons_);
   eventTree_->Branch("nPhotonsMatched", &nPhotonsMatched_);
   eventTree_->Branch("nClusters", &nClusters_);
   eventTree_->Branch("nClustersMatched", &nClustersMatched_);
+
+
+
+
 
   if (doElectronTree) {
     electronTree_ = fs->make<TTree> ("ElectronTree", "Electron data");
@@ -438,6 +450,31 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     photonTree_->Branch("genPdgId", &genPdgId_p);
     photonTree_->Branch("genStatus", &genStatus_p);
   }
+
+
+  ////PFtree
+  if(doPFTree){
+
+    pfTree_    = fs->make<TTree>("PfTree", "PF Cluster tree");
+    pfTree_->Branch("nClus",   &nClus_pf);
+    
+    pfTree_->Branch("clusrawE",   &clusrawE_pf);
+    pfTree_->Branch("cluscorrE",   &cluscorrE_pf);
+    pfTree_->Branch("clusPt",   &clusPt_pf);
+    pfTree_->Branch("clusEta",   &clusEta_pf);
+    pfTree_->Branch("clusRho",   &clusRho_pf);
+    pfTree_->Branch("clusPhi",   &clusPhi_pf);
+    pfTree_->Branch("clusLayer",   &clusLayer_pf);
+    pfTree_->Branch("clusSize",   &clusSize_pf);
+    pfTree_->Branch("clusIetaIx_pf",   &clusIetaIx_pf);
+    pfTree_->Branch("clusIphiIy_pf",   &clusIphiIy_pf);
+    pfTree_->Branch("clusPS1",   &clusPS1_pf);
+    pfTree_->Branch("clusPS2",   &clusPS2_pf);
+    pfTree_->Branch("clusFlag",   &clusFlag_pf);
+    pfTree_->Branch("rho",                  &rho_pf);
+  }
+
+
 }
 
 
@@ -461,7 +498,7 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
 
   // Get vertex collection
   edm::Handle<reco::VertexCollection> vertices;
-  iEvent.getByToken(vtxToken_, vertices);
+  if(doVertex) iEvent.getByToken(vtxToken_, vertices);
 
   // Get electron collection
   edm::Handle<reco::GsfElectronCollection> electrons;  // For AODSIM
@@ -492,6 +529,7 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
   topology_ = pTopology.product();
 
 
+
   //######################################
   //# Event specific quantities (not used in regression)
   //######################################
@@ -511,11 +549,12 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
       break;
     }
   }
-      
+  
   // Determine number of primary vertices
-  if (vertices->empty()) nPV_ = 0;
-  else nPV_ = vertices->size();
-
+  if(doVertex){
+    if (vertices->empty()) nPV_ = 0;
+    else nPV_ = vertices->size();
+  }
 
   //######################################
   //# Analyze electrons and photons
@@ -562,6 +601,13 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
     }
   }
     
+
+  ///doPFTree
+  if(doPFTree){
+    setPFVariables(iEvent, iSetup );
+  }
+
+  
   // Fill in the event specific variables
   eventTree_->Fill();
 
