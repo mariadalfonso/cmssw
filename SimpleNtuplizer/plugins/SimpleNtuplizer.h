@@ -36,6 +36,7 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/EcalRecHit/interface/EcalRecHit.h"
 #include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
@@ -151,6 +152,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
 	       
   edm::EDGetTokenT<reco::PFClusterCollection> pfLabel_;
   edm::EDGetTokenT<reco::PFCluster::EEtoPSAssociation> pspfLabel_;
+  edm::EDGetTokenT<edm::ValueMap<reco::GenParticleRef> > genpfLabel_;
   edm::EDGetTokenT<EBSrFlagCollection> ebSrFlagToken_; 
   edm::EDGetTokenT<EESrFlagCollection> eeSrFlagToken_; 
 
@@ -292,7 +294,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   // H/E
 
   ////PFCluster
-  Float_t rho_pf;
+  Float_t    rho_pf;
   Int_t      nClus_pf;
   Float_t    clusrawE_pf;
   Float_t    cluscorrE_pf;
@@ -306,7 +308,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Int_t      clusIphiIy_pf;
   Float_t    clusPS1_pf;
   Float_t    clusPS2_pf;
-  Int_t    clusFlag_pf;
+  Int_t      clusFlag_pf;
+  Int_t      nvtx_pf;
   
   // Now only for the seed 5x5
   Float_t hadronicOverEm_e;

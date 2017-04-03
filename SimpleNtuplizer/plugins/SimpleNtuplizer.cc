@@ -40,6 +40,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   ecalRecHitEEToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEE"))),
   pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
+  genpfLabel_(consumes<edm::ValueMap<reco::GenParticleRef> >(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   // SRP collections
   ebSrFlagToken_(consumes<EBSrFlagCollection>(iConfig.getParameter<edm::InputTag>("ebSrFlagCollection"))),
   eeSrFlagToken_(consumes<EESrFlagCollection>(iConfig.getParameter<edm::InputTag>("eeSrFlagCollection")))
@@ -456,22 +457,23 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   if(doPFTree){
 
     pfTree_    = fs->make<TTree>("PfTree", "PF Cluster tree");
-    pfTree_->Branch("nClus",   &nClus_pf);
-    
-    pfTree_->Branch("clusrawE",   &clusrawE_pf);
-    pfTree_->Branch("cluscorrE",   &cluscorrE_pf);
-    pfTree_->Branch("clusPt",   &clusPt_pf);
-    pfTree_->Branch("clusEta",   &clusEta_pf);
-    pfTree_->Branch("clusRho",   &clusRho_pf);
-    pfTree_->Branch("clusPhi",   &clusPhi_pf);
-    pfTree_->Branch("clusLayer",   &clusLayer_pf);
-    pfTree_->Branch("clusSize",   &clusSize_pf);
+
+    pfTree_->Branch("nClus",           &nClus_pf);    
+    pfTree_->Branch("clusrawE",        &clusrawE_pf);
+    pfTree_->Branch("cluscorrE",       &cluscorrE_pf);
+    pfTree_->Branch("clusPt",          &clusPt_pf);
+    pfTree_->Branch("clusEta",         &clusEta_pf);
+    pfTree_->Branch("clusRho",         &clusRho_pf);
+    pfTree_->Branch("clusPhi",         &clusPhi_pf);
+    pfTree_->Branch("clusLayer",       &clusLayer_pf);
+    pfTree_->Branch("clusSize",        &clusSize_pf);
     pfTree_->Branch("clusIetaIx_pf",   &clusIetaIx_pf);
     pfTree_->Branch("clusIphiIy_pf",   &clusIphiIy_pf);
-    pfTree_->Branch("clusPS1",   &clusPS1_pf);
-    pfTree_->Branch("clusPS2",   &clusPS2_pf);
-    pfTree_->Branch("clusFlag",   &clusFlag_pf);
-    pfTree_->Branch("rho",                  &rho_pf);
+    pfTree_->Branch("clusPS1",         &clusPS1_pf);
+    pfTree_->Branch("clusPS2",         &clusPS2_pf);
+    pfTree_->Branch("clusFlag",        &clusFlag_pf);
+    pfTree_->Branch("rho",             &rho_pf);
+    pfTree_->Branch("nvtx",            &nvtx_pf);
   }
 
 
