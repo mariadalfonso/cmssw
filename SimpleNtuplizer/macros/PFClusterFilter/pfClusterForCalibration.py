@@ -33,18 +33,19 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 # This is where users have some control.
 # Define which collections to save and which dataformat we are using
 savedCollections = cms.untracked.vstring('drop *',
-                                         'keep EcalRecHitsSorted_*_*_*',
-                                         'keep recoPFClusters_*_*_*',
-                                         'keep recoCaloClusters_*_*_*',
-                                         'keep recoSuperClusters_*_*_*', 
-                                         'keep recoGsfElectron*_*_*_*',
-                                         'keep recoPhoton*_*_*_*',
+#                                         'keep EcalRecHitsSorted_*_*_*',
+#                                         'keep recoPFClusters_*_*_*',
+#                                         'keep recoCaloClusters_*_*_*',
+#                                         'keep recoSuperClusters_*_*_*', 
+#                                         'keep recoGsfElectron*_*_*_*',
+#                                         'keep recoPhoton*_*_*_*',
                                          'keep double_fixedGridRho*_*_*',
                                          'keep recoGenParticles_*_*_*',
                                          'keep GenEventInfoProduct_*_*_*',
                                          'keep PileupSummaryInfos_*_*_*',
                                          'keep *_ecalDigis_*_*',
-                                         'keep *_mix_MergedTrackTruth_*',
+#                                         'keep *_mix_MergedTrackTruth_*',
+                                         'keep *_offlinePrimaryVertices_*_*',
                                          'keep *_particleFlowClusterECAL*_*_*')
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(15))
