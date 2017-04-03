@@ -39,11 +39,10 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   ecalRecHitEBToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEB"))),
   ecalRecHitEEToken_(consumes<edm::SortedCollection<EcalRecHit>>(iConfig.getParameter<edm::InputTag>("ecalrechitsEE"))),
   pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
-  pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pspfLabel"))),
+  pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   // SRP collections
   ebSrFlagToken_(consumes<EBSrFlagCollection>(iConfig.getParameter<edm::InputTag>("ebSrFlagCollection"))),
   eeSrFlagToken_(consumes<EESrFlagCollection>(iConfig.getParameter<edm::InputTag>("eeSrFlagCollection")))
-
 {
   doElectronTree = iConfig.getParameter<bool>("doElectronTree");
   doPhotonTree = iConfig.getParameter<bool>("doPhotonTree");
@@ -73,6 +72,10 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   eventTree_->Branch("nPhotonsMatched", &nPhotonsMatched_);
   eventTree_->Branch("nClusters", &nClusters_);
   eventTree_->Branch("nClustersMatched", &nClustersMatched_);
+
+
+
+
 
   if (doElectronTree) {
     electronTree_ = fs->make<TTree> ("ElectronTree", "Electron data");
@@ -468,7 +471,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("clusPS1",   &clusPS1_pf);
     pfTree_->Branch("clusPS2",   &clusPS2_pf);
     pfTree_->Branch("clusFlag",   &clusFlag_pf);
-
+    pfTree_->Branch("rho",                  &rho_pf);
   }
 
 
@@ -524,6 +527,7 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
   edm::ESHandle<CaloTopology> pTopology;
   iSetup.get<CaloTopologyRecord>().get(pTopology);
   topology_ = pTopology.product();
+
 
 
   //######################################

@@ -131,6 +131,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::EDGetTokenT<reco::SuperClusterCollection>      superClustersEEToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ecalRecHitEBToken_;
   edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ecalRecHitEEToken_;
+
+
   //required for reading SR flags
   const EcalTrigTowerConstituentsMap * triggerTowerMap_;
   const EcalElectronicsMapping* elecMap_;
@@ -169,7 +171,9 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Int_t run_;
   Float_t weight_;
   Float_t trueNumInteractions_;
-	
+
+
+  
   Int_t nPV_;
   Int_t nElectrons_;
   Int_t nElectronsMatched_;
@@ -288,6 +292,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   // H/E
 
   ////PFCluster
+  Float_t rho_pf;
   Int_t      nClus_pf;
   Float_t    clusrawE_pf;
   Float_t    cluscorrE_pf;

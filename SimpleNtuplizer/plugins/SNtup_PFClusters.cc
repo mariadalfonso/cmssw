@@ -53,6 +53,11 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   iSetup.get< EcalMappingRcd >().get(ecalmapping);
   elecMap_ = ecalmapping.product();
 
+  ///rho
+  edm::Handle< double > rhoH;
+  iEvent.getByToken(rhoToken_,rhoH);
+  rho_pf = *rhoH;
+
 
   if (clustersH.isValid()) {
     double size = (*clustersH).size();

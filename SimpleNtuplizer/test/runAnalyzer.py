@@ -55,7 +55,6 @@ process.een_analyzer = cms.EDAnalyzer(
     superClustersEB     = cms.InputTag("particleFlowSuperClusterECAL", "particleFlowSuperClusterECALBarrel"),
     superClustersEE     = cms.InputTag("particleFlowSuperClusterECAL", "particleFlowSuperClusterECALEndcapWithPreshower"),
     pfLabel             = cms.InputTag("particleFlowClusterECALMatchedToPhotons"),
-    pspfLabel             = cms.InputTag("particleFlowClusterECALMatchedToPhotons"),
     rho                 = cms.InputTag("fixedGridRhoFastjetAll", ""),
     genparticles        = cms.InputTag("genParticles", ""),
     PUInfoInputTag      = cms.InputTag("addPileupInfo", ""),
