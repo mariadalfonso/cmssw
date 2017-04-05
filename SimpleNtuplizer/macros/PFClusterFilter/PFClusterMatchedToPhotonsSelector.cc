@@ -105,11 +105,12 @@ void PFClusterMatchedToPhotonsSelector::produce(edm::Event& iEvent, const edm::E
   for (auto&& pfCluster : *particleFlowClusterECALHandle_) {
 
     bool isMatched = false;
-    reco::GenParticleRef::key_type matchedKey = 0;
+    reco::GenParticleRef::key_type matchedKey;
 
     for (auto&& trackingParticle : *trackingParticleHandle_) {
       if (trackingParticle.pdgId() != 22) continue;
       if (trackingParticle.status() != 1) continue;
+      matchedKey = trackingParticle.genParticles().at(0).key();
       if (reco::deltaR(trackingParticle, pfCluster.position()) > matchMaxDR_) continue; 
 
       bool isConversion = false;
@@ -117,7 +118,6 @@ void PFClusterMatchedToPhotonsSelector::produce(edm::Event& iEvent, const edm::E
 	if (vertRef->position().rho() > 123.8 && std::abs(vertRef->position().z()) < 304.5) continue; //EB
 	if (std::abs(vertRef->position().z()) > 317.0) continue; // EE
 	
-	matchedKey = trackingParticle.genParticles().at(0).key();
 	for(auto&& tpRef: vertRef->daughterTracks()) {
 	  if(std::abs(tpRef->pdgId()) == 11) isConversion = true;
 	  break;

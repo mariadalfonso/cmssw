@@ -292,24 +292,6 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   std::vector<Float_t> full5x5_e2x5Top_e;
   std::vector<Float_t> full5x5_e2x5Bottom_e;
   // H/E
-
-  ////PFCluster
-  Float_t    rho_pf;
-  Int_t      nClus_pf;
-  Float_t    clusrawE_pf;
-  Float_t    cluscorrE_pf;
-  Float_t    clusPt_pf;
-  Float_t    clusEta_pf;
-  Float_t    clusPhi_pf;
-  Float_t    clusRho_pf;
-  Float_t    clusLayer_pf;
-  Int_t      clusSize_pf;
-  Int_t      clusIetaIx_pf;
-  Int_t      clusIphiIy_pf;
-  Float_t    clusPS1_pf;
-  Float_t    clusPS2_pf;
-  Int_t      clusFlag_pf;
-  Int_t      nvtx_pf;
   
   // Now only for the seed 5x5
   Float_t hadronicOverEm_e;
@@ -621,6 +603,29 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Int_t   genPdgId_p;
   Int_t   genStatus_p;
 
+  /////////////////////////
+  // PF cluster tree
+  // 
+  Float_t    rho_pf;
+  Int_t      nClus_pf;
+  Float_t    clusrawE_pf;
+  Float_t    cluscorrE_pf;
+  Float_t    clusPt_pf;
+  Float_t    clusEta_pf;
+  Float_t    clusPhi_pf;
+  Float_t    clusRho_pf;
+  Float_t    clusLayer_pf;
+  Int_t      clusSize_pf;
+  Int_t      clusIetaIx_pf;
+  Int_t      clusIphiIy_pf;
+  Float_t    clusPS1_pf;
+  Float_t    clusPS2_pf;
+  Int_t      clusFlag_pf;
+  Int_t      nvtx_pf;
+  Float_t    genEnergy_pf;
+  Float_t    genPt_pf;
+  Float_t    genEta_pf;
+  Float_t    genPhi_pf;
 		
 };
 

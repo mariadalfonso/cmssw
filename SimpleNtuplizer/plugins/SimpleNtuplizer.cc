@@ -474,6 +474,10 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("clusFlag",        &clusFlag_pf);
     pfTree_->Branch("rho",             &rho_pf);
     pfTree_->Branch("nvtx",            &nvtx_pf);
+    pfTree_->Branch("genEnergy",       &genEnergy_pf);
+    pfTree_->Branch("genPt",           &genPt_pf);
+    pfTree_->Branch("genEta",          &genEta_pf);
+    pfTree_->Branch("genPhi",          &genPhi_pf);
   }
 
 
@@ -504,20 +508,27 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
 
   // Get electron collection
   edm::Handle<reco::GsfElectronCollection> electrons;  // For AODSIM
-  iEvent.getByToken(electronToken_, electrons);
+  if (doElectronTree)
+    iEvent.getByToken(electronToken_, electrons);
 
   // Get photon collection
   edm::Handle<reco::PhotonCollection> photons;
-  iEvent.getByToken(photonToken_, photons);
+  if (doPhotonTree)
+    iEvent.getByToken(photonToken_, photons);
 
-  // Get clusters
+  // Get clusters  
   edm::Handle<reco::SuperClusterCollection> superClustersEB;    
   edm::Handle<reco::SuperClusterCollection> superClustersEE;    
-  iEvent.getByToken( superClustersEBToken_, superClustersEB);
-  iEvent.getByToken( superClustersEEToken_, superClustersEE);
+  if (doSuperClusterTree) {
+    iEvent.getByToken( superClustersEBToken_, superClustersEB);
+    iEvent.getByToken( superClustersEEToken_, superClustersEE);
+  }
+  
+  if (doElectronTree || doPhotonTree || doSuperClusterTree) {
+    iEvent.getByToken( ecalRecHitEBToken_, ecalRecHitsEB_ );
+    iEvent.getByToken( ecalRecHitEEToken_, ecalRecHitsEE_ );
+  }
 
-  iEvent.getByToken( ecalRecHitEBToken_, ecalRecHitsEB_ );
-  iEvent.getByToken( ecalRecHitEEToken_, ecalRecHitsEE_ );
   iEvent.getByToken( genParticleToken_, genParticles_ );
   iEvent.getByToken( PUInfoToken_,      puInfoH_ );
   iEvent.getByToken( genEvtInfoToken_,  genEvtInfo_ );      

@@ -1,6 +1,5 @@
 #include "SimpleNtuplizer.h"
 
-
 namespace {
   typedef reco::PFCluster::EEtoPSAssociation::value_type EEPSPair;
   bool sortByKey(const EEPSPair& a, const EEPSPair& b) {
@@ -26,9 +25,11 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   clusPS1_pf      = -99;
   clusPS2_pf      = -99;
   nvtx_pf         = -99;
-  
-  //std::cout<<"inside FlatTreeMaker"<<std::endl;
-  
+  genEnergy_pf    = -99;
+  genPt_pf        = -99;
+  genEta_pf       = -99;
+  genPhi_pf       = -99;
+    
   edm::Handle<reco::PFClusterCollection> clustersH;
   iEvent.getByToken(pfLabel_,clustersH);
   
@@ -66,27 +67,25 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   iEvent.getByToken(rhoToken_,rhoH);
   rho_pf = *rhoH;
 
-
   if (clustersH.isValid()) {
     // double size = (*clustersH).size();
-    // if(size>0) cout<<"size is "<<size<<endl;
-    // cout<<clustersH.isValid()<<endl;
-    
-    for (reco::PFClusterCollection::const_iterator pfc=(*clustersH).begin(); pfc!=(*clustersH).end(); pfc++){
+
+    size_t iP(0);
+    for (auto&& pfc : *clustersH) {
       
       ///raw energy
-      clusrawE_pf = pfc->energy();
+      clusrawE_pf = pfc.energy();
       
       ///corrected energy
-      cluscorrE_pf = pfc->correctedEnergy();
+      cluscorrE_pf = pfc.correctedEnergy();
       
       ///pt
-      clusPt_pf = pfc->pt();
+      clusPt_pf = pfc.pt();
       
       ///layer number
       int layerNum = 0;
       
-      PFLayer::Layer layer = pfc->layer();
+      PFLayer::Layer layer = pfc.layer();
       if(layer==PFLayer::PS2) layerNum = -12;
       if(layer==PFLayer::PS1) layerNum = -11;
       if(layer==PFLayer::ECAL_ENDCAP) layerNum = -2;
@@ -99,13 +98,11 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       if(layer==PFLayer::HF_EM) layerNum = 11;
       if(layer==PFLayer::HF_HAD) layerNum = 12;
       if(layer==PFLayer::HGCAL) layerNum = 13;
-       
-      //cout<<"layerNum is "<<layerNum<<endl;
-       
+              
       clusLayer_pf = layerNum;
        
       ///position
-      auto const & crep = pfc->positionREP();
+      auto const & crep = pfc.positionREP();
       double eta = crep.eta();
       double phi = crep.phi();
       double rho = crep.rho();
@@ -113,30 +110,25 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       clusEta_pf = eta;
       clusPhi_pf = phi;
       clusRho_pf = rho;
-       
-
-
+      
       ///ieta, iphi
       //find seed crystal indices
-      bool iseb = (pfc->layer()) == (PFLayer::ECAL_BARREL);
+      bool iseb = (pfc.layer()) == (PFLayer::ECAL_BARREL);
 
       if (iseb) {
-	EBDetId ebseed(pfc->seed());
+	EBDetId ebseed(pfc.seed());
 	clusIetaIx_pf = ebseed.ieta();
 	clusIphiIy_pf = ebseed.iphi();
-      }
-      else {
-	EEDetId eeseed(pfc->seed());
+      } else {
+	EEDetId eeseed(pfc.seed());
 	clusIetaIx_pf = eeseed.ix();
 	clusIphiIy_pf = eeseed.iy();      
       }
        
-
       ///lazy tools
       EcalClusterLazyTools lazyTool(iEvent, iSetup, ecalRecHitEBToken_, ecalRecHitEEToken_);
-      clusSize_pf = lazyTool.n5x5(*pfc);
+      clusSize_pf = lazyTool.n5x5(pfc);
        
-
       ///////PS energy
       //compute preshower energies for endcap clusters
       double ePS1=0, ePS2=0;
@@ -167,24 +159,32 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       }//if(!iseb)
 
 
+
        ////SR flags
       if(iseb){
 
 	EBSrFlagCollection::const_iterator srf
-	  = ebSrFlags->find(readOutUnitOf((EBDetId) pfc->seed()));
+	  = ebSrFlags->find(readOutUnitOf((EBDetId) pfc.seed()));
 	 
 	clusFlag_pf = srf->value();
       }
 
+
       if(!iseb){
 	EESrFlagCollection::const_iterator srf
-	  = eeSrFlags->find(readOutUnitOf((EEDetId)pfc->seed()));
+	  = eeSrFlags->find(readOutUnitOf((EEDetId)pfc.seed()));
 	 
 	clusFlag_pf = srf->value();   
       }
+      // gen matching
+      auto clusterref = edm::Ref<reco::PFClusterCollection>(clustersH, iP++);
+      auto genpart = (*clustergenH)[clusterref];
+      genEnergy_pf = genpart->energy();
+      genPt_pf = genpart->pt();
+      genEta_pf = genpart->eta();
+      genPhi_pf = genpart->phi();
 
       nClus_pf++;
-       
        
     }//for (reco::PFClusterCollection::const_iterator pfc=(....))
     
@@ -194,14 +194,11 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   else{
     cout<<"Handle now found!!!"<<endl;
   }
-  
-  
-  
+     
   
 }//void SimpleNtuplizer::setPFVariables
 
 ///http://cmslxr.fnal.gov/source/Validation/EcalDigis/src/EcalSelectiveReadoutValidation.cc#0668
-
 /*
   http://cmsdoxygen.web.cern.ch/cmsdoxygen/CMSSW_9_0_0/doc/html/de/d38/classEcalSrFlag.html
   SRF_FORCED_MASK = 0x4
@@ -215,7 +212,6 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 EcalTrigTowerDetId SimpleNtuplizer::readOutUnitOf(const EBDetId& xtalId) const{
   return triggerTowerMap_->towerOf(xtalId);
 }
-
 
 EcalScDetId SimpleNtuplizer::readOutUnitOf(const EEDetId& xtalId) const{
   const EcalElectronicsId& EcalElecId = elecMap_->getElectronicsId(xtalId);
