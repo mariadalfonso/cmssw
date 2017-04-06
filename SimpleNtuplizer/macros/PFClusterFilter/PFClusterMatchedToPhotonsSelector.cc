@@ -23,7 +23,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -43,7 +43,7 @@ bool sortByKey(const EEPSPair& a, const EEPSPair& b) {
   return a.first < b.first;
 }
 
-class PFClusterMatchedToPhotonsSelector : public edm::EDProducer {
+class PFClusterMatchedToPhotonsSelector : public edm::stream::EDProducer<> {
 public:
   PFClusterMatchedToPhotonsSelector(const edm::ParameterSet&);
   static void fillDescriptions(edm::ConfigurationDescriptions&);
@@ -55,9 +55,12 @@ private:
   edm::EDGetTokenT<reco::PFClusterCollection> particleFlowClusterECALToken_;
   edm::EDGetTokenT<reco::PFCluster::EEtoPSAssociation> associationToken_;
   edm::EDGetTokenT<TrackingParticleCollection> trackingParticleToken_;
-  double matchMaxDR_;
-  double matchMaxDEDR_;
+  double matchMaxDR2_;
+  double matchMaxDEDR2_;
 
+  double volumeZ_EB_;
+  double volumeRadius_EB_;
+  double volumeZ_EE_;
 };
 
 PFClusterMatchedToPhotonsSelector::PFClusterMatchedToPhotonsSelector(const edm::ParameterSet& iConfig) {
@@ -66,7 +69,12 @@ PFClusterMatchedToPhotonsSelector::PFClusterMatchedToPhotonsSelector(const edm::
   associationToken_ = consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pfClustersTag"));
   trackingParticleToken_ = consumes<TrackingParticleCollection>(iConfig.getParameter<edm::InputTag>("trackingParticleTag"));
   genParticleToken_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("genParticleTag"));
-  matchMaxDR_ = iConfig.getParameter<double>("maxDR");
+
+  matchMaxDR2_     = iConfig.getParameter<double>("maxDR2");
+  matchMaxDEDR2_   = iConfig.getParameter<double>("maxDEDR2");
+  volumeZ_EB_      = iConfig.getParameter<double>("volumeZ_EB");
+  volumeRadius_EB_ = iConfig.getParameter<double>("volumeRadius_EB");
+  volumeZ_EE_      = iConfig.getParameter<double>("volumeZ_EE");
 
   produces<reco::PFClusterCollection>();
   produces<reco::PFCluster::EEtoPSAssociation>();
@@ -79,8 +87,13 @@ void PFClusterMatchedToPhotonsSelector::fillDescriptions(edm::ConfigurationDescr
   desc.add<edm::InputTag>("pfClustersTag", edm::InputTag("particleFlowClusterECAL"));
   desc.add<edm::InputTag>("trackingParticleTag", edm::InputTag("mix", "MergedTrackTruth"));
   desc.add<edm::InputTag>("genParticleTag", edm::InputTag("genParticles"));
-  desc.add<double>("maxDR", 0.3);
+  desc.add<double>("maxDR2", 0.1*0.1);
+  desc.add<double>("maxDEDR2", 0.5*0.5);
+  desc.add<double>("volumeZ_EB", 304.5);
+  desc.add<double>("volumeRadius_EB", 123.8);
+  desc.add<double>("volumeZ_EE", 317.0);
   descriptions.add("pfClusterMatchedToPhotonsSelector", desc);
+
 }
 
 void PFClusterMatchedToPhotonsSelector::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -111,12 +124,15 @@ void PFClusterMatchedToPhotonsSelector::produce(edm::Event& iEvent, const edm::E
       if (trackingParticle.pdgId() != 22) continue;
       if (trackingParticle.status() != 1) continue;
       matchedKey = trackingParticle.genParticles().at(0).key();
-      if (reco::deltaR(trackingParticle, pfCluster.position()) > matchMaxDR_) continue; 
+      float DR2 = reco::deltaR2(trackingParticle, pfCluster.position());
+      float DE = 1. - trackingParticle.genParticles().at(0)->energy()/pfCluster.energy();
+      if (DR2 > matchMaxDR2_) continue; 
+      if ((DR2 + DE*DE) > matchMaxDEDR2_) continue; 
 
       bool isConversion = false;
       for (auto&& vertRef : trackingParticle.decayVertices()) {
-	if (vertRef->position().rho() > 123.8 && std::abs(vertRef->position().z()) < 304.5) continue; //EB
-	if (std::abs(vertRef->position().z()) > 317.0) continue; // EE
+	if (vertRef->position().rho() > volumeRadius_EB_ && std::abs(vertRef->position().z()) < volumeZ_EB_) continue;
+	if (std::abs(vertRef->position().z()) > volumeZ_EE_) continue;
 	
 	for(auto&& tpRef: vertRef->daughterTracks()) {
 	  if(std::abs(tpRef->pdgId()) == 11) isConversion = true;
