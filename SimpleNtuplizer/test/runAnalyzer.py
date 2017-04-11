@@ -17,14 +17,15 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.load("RecoEcal.EgammaCoreTools.EcalNextToDeadChannelESProducer_cff")
 
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc'   , '')
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.options = cms.untracked.PSet( allowUnscheduled = cms.untracked.bool(True) )
 
 readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring() 
 
 readFiles.extend([
-        '/store/data/Run2016B/SingleElectron/AOD/23Sep2016-v2/80000/0220DA0C-648C-E611-A9AA-0CC47A78A2F6.root',
+        'file:0220DA0C-648C-E611-A9AA-0CC47A78A2F6.root'
+        #'/store/data/Run2016B/SingleElectron/AOD/23Sep2016-v2/80000/0220DA0C-648C-E611-A9AA-0CC47A78A2F6.root',
         #'/store/mc/RunIISpring16DR80/DoubleElectron_FlatPt-300To6500/AODSIM/PUFlat0to50_80X_mcRun2_asymptotic_2016_v3-v1/00000/0A240112-4406-E611-9A29-20CF3027A5CE.root',
         #'/store/mc/RunIISpring16DR80/DoubleElectron_FlatPt-1To300/AODSIM/PUFlat0to50_80X_mcRun2_asymptotic_2016_v3-v1/00000/0054673A-0306-E611-A949-0025905C2CD0.root'
         #'/store/user/rcoelhol/GluGluHToGG_M-125_13TeV_powheg_pythia8/crab_HggClusters/170327_193908/0000/skimEGMobjects_fromRAW_1.root'
@@ -64,13 +65,13 @@ process.een_analyzer = cms.EDAnalyzer(
     eeSrFlagCollection  = cms.InputTag("ecalDigis"),
     
     doElectronTree      = cms.bool(True),
-    doPhotonTree        = cms.bool(True),
-    doSuperClusterTree  = cms.bool(True),
+    doPhotonTree        = cms.bool(False),
+    doSuperClusterTree  = cms.bool(False),
     doPFClusterTree     = cms.bool(False),
     doVertex            = cms.bool(True),
     doTagAndProbe       = cms.bool(True),
-    saveUnmatched       = cms.bool(False)
-
+    saveUnmatched       = cms.bool(False),
+    isData              = cms.bool(True)
 
     )
     

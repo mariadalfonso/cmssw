@@ -14,10 +14,11 @@ void SimpleNtuplizer::setElectronVariables(
   nElectrons_++;
 
   // Try to match to genParticle; quit function if electron is not matched
-  isMatched_e = matchElectronToGenParticle(electron);
-  if (!isMatched_e && !saveUnmatched) return;
-  else nElectronsMatched_ += isMatched_e ? 1 : 0;
-    
+  if (!isData) {
+    isMatched_e = matchElectronToGenParticle(electron);
+    if (!isMatched_e && !saveUnmatched) return;
+    else nElectronsMatched_ += isMatched_e ? 1 : 0;
+  }
 
   // Get the right ecalRecHits collection (different for barrel and encap)
   edm::Handle<SortedCollection<EcalRecHit>> ecalRecHits;

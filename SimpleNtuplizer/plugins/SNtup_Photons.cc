@@ -13,10 +13,11 @@ void SimpleNtuplizer::setPhotonVariables(const reco::Photon& photon,
   nPhotons_++;
 
   // Try to match to genParticle; quit function if photon is not matched
-  isMatched_p = matchPhotonToGenParticle(photon);    
-  if (!isMatched_p && !saveUnmatched) return;
-  else nPhotonsMatched_ += isMatched_p ? 1 : 0;
-    
+  if (!isData) {
+    isMatched_p = matchPhotonToGenParticle(photon);    
+    if (!isMatched_p && !saveUnmatched) return;
+    else nPhotonsMatched_ += isMatched_p ? 1 : 0;
+  }
 
   // Get the right ecalRecHits collection (different for barrel and encap)
   edm::Handle<SortedCollection<EcalRecHit>> ecalRecHits;

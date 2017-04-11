@@ -53,7 +53,8 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   doPFTree = iConfig.getParameter<bool>("doPFClusterTree");
   doVertex = iConfig.getParameter<bool>("doVertex");
   doTagAndProbe = iConfig.getParameter<bool>("doTagAndProbe");
-  
+  isData = iConfig.getParameter<bool>("isData");
+
   std::cout << ">>>> Inside SimpleNtuplizer::constructor" << std::endl;
 
   edm::Service<TFileService> fs;
@@ -548,9 +549,11 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
     iEvent.getByToken( ecalRecHitEEToken_, ecalRecHitsEE_ );
   }
 
-  iEvent.getByToken( genParticleToken_, genParticles_ );
-  iEvent.getByToken( PUInfoToken_,      puInfoH_ );
-  iEvent.getByToken( genEvtInfoToken_,  genEvtInfo_ );      
+  if (!isData) {
+    iEvent.getByToken( genParticleToken_, genParticles_ );
+    iEvent.getByToken( PUInfoToken_,      puInfoH_ );
+    iEvent.getByToken( genEvtInfoToken_,  genEvtInfo_ );      
+  }
 
   edm::ESHandle<CaloGeometry> pGeometry;
   iSetup.get<CaloGeometryRecord>().get(pGeometry);
@@ -574,11 +577,13 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
   luminosityBlock_ = iEvent.id().luminosityBlock();
   run_             = iEvent.id().run();
 
-  weight_ = genEvtInfo_->weight();
-  for (std::vector<PileupSummaryInfo>::const_iterator puinfo = puInfoH_->begin(); puinfo != puInfoH_->end(); ++puinfo) {
-    if (puinfo->getBunchCrossing() == 0) {
-      trueNumInteractions_ = puinfo->getTrueNumInteractions();
-      break;
+  if (!isData) {
+    weight_ = genEvtInfo_->weight();
+    for (std::vector<PileupSummaryInfo>::const_iterator puinfo = puInfoH_->begin(); puinfo != puInfoH_->end(); ++puinfo) {
+      if (puinfo->getBunchCrossing() == 0) {
+	trueNumInteractions_ = puinfo->getTrueNumInteractions();
+	break;
+      }
     }
   }
   
@@ -601,9 +606,9 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
     luminosityBlock_e = iEvent.id().luminosityBlock();
     run_e             = iEvent.id().run();
     for (const auto &electron : *electrons) {
-      setElectronVariables(electron, iEvent, iSetup);	
       if (doTagAndProbe) 
-	findTag(electron, iEvent, iSetup);
+	if (!findTag(electron, iEvent, iSetup)) return;
+      setElectronVariables(electron, iEvent, iSetup);	
     }
   }
 
@@ -616,9 +621,9 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
     run_p             = iEvent.id().run();
 
     for (const auto &photon : *photons) {
-      setPhotonVariables( photon, iEvent, iSetup );
       if (doTagAndProbe) 
-	findTag(photon, iEvent, iSetup);
+	if (!findTag(photon, iEvent, iSetup)) return;
+      setPhotonVariables( photon, iEvent, iSetup );
     }
   }
 
@@ -633,13 +638,13 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
       setSuperClusterVariables( superCluster, iEvent, iSetup, true );
     }
     for (const auto &superCluster : *superClustersEE) {
-      setSuperClusterVariables( superCluster, iEvent, iSetup, false );
       if (doTagAndProbe) { // Some gymnastics needed here
 	math::XYZPoint v(0, 0, 0);
 	math::XYZVector p = superCluster.energy() * (superCluster.position() - v).unit();
 	reco::RecoEcalCandidate recoSuperCluster(1, reco::Candidate::LorentzVector(p.x(), p.y(), p.z(), sqrt(p.mag2())), v, 11, 1);
-	findTag(recoSuperCluster, iEvent, iSetup);
+	if (!findTag(recoSuperCluster, iEvent, iSetup)) return;
       }
+      setSuperClusterVariables( superCluster, iEvent, iSetup, false );
     }
   }
     

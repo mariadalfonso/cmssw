@@ -16,6 +16,8 @@ bool SimpleNtuplizer::findTag(
         const edm::Event& iEvent,
         const edm::EventSetup& iSetup ){
 
+  using namespace std;
+
   tp_mll = -1;
   tp_ptll = -1;
   tp_tagpt = -1;

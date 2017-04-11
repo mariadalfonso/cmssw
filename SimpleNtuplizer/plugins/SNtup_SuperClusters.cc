@@ -15,9 +15,11 @@ void SimpleNtuplizer::setSuperClusterVariables(
   nClusters_++;
 
   // Try to match to genParticle; quit function if superCluster is not matched
-  isMatched_c = matchSuperClusterToGenParticle(superCluster);    
-  if (!isMatched_c && !saveUnmatched) return;
-  else nClustersMatched_ += isMatched_c ? 1 : 0;
+  if (!isData) {
+    isMatched_c = matchSuperClusterToGenParticle(superCluster);    
+    if (!isMatched_c && !saveUnmatched) return;
+    else nClustersMatched_ += isMatched_c ? 1 : 0;
+  }
 
   // Get the right ecalRecHits collection (different for barrel and encap)
   edm::Handle<SortedCollection<EcalRecHit>> ecalRecHits;

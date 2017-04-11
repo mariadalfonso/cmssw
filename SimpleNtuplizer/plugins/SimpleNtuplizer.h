@@ -107,7 +107,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   bool doPFTree;
   bool doVertex;
   bool doTagAndProbe;
-
+  bool isData;
 
   //typedef std::vector<std::pair<unsigned long,edm::Ptr<reco::PFCluster> > > EEtoPSAssociation;
   
