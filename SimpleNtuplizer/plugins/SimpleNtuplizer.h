@@ -17,7 +17,6 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
@@ -41,31 +40,22 @@
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 #include "PhysicsTools/HepMCCandAlgos/interface/MCTruthHelper.h"
-
 #include "TTree.h"
 #include "Math/VectorUtil.h"
-
 #include "RecoEgamma/EgammaTools/interface/EcalClusterLocal.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalTools.h"
-
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
-
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
 #include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
-
 #include "DataFormats/ParticleFlowReco/interface/PFLayer.h"
-
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
-
 #include "DataFormats/EcalDigi/interface/EBSrFlag.h"
 #include "DataFormats/EcalDigi/interface/EESrFlag.h"
 #include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
@@ -77,6 +67,7 @@
 #include "Geometry/EcalMapping/interface/EcalMappingRcd.h"
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
+#include "DataFormats/RecoCandidate/interface/RecoEcalCandidate.h"
 
 #include <algorithm>
 #include <vector>
@@ -101,6 +92,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   bool matchElectronToGenParticle       (const reco::GsfElectron&);
   bool matchPhotonToGenParticle         (const reco::Photon&);
   bool matchSuperClusterToGenParticle   (const reco::SuperCluster&);
+
+  bool findTag(const reco::RecoCandidate& object, const edm::Event& iEvent, const edm::EventSetup& iSetup);
 	
  private:
   virtual void beginJob() override;
@@ -113,6 +106,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   bool saveUnmatched;
   bool doPFTree;
   bool doVertex;
+  bool doTagAndProbe;
 
 
   //typedef std::vector<std::pair<unsigned long,edm::Ptr<reco::PFCluster> > > EEtoPSAssociation;
@@ -626,6 +620,14 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Float_t    genPt_pf;
   Float_t    genEta_pf;
   Float_t    genPhi_pf;
+
+  //////////////////////////
+  // Tag and Probe  
+  //
+  Float_t tp_mll;
+  Float_t tp_ptll;
+  Float_t tp_tagpt;
+  Float_t tp_tageta;
+  Float_t tp_tagphi;
 		
 };
-

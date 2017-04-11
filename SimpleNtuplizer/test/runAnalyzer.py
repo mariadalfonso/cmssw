@@ -24,11 +24,10 @@ readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring() 
 
 readFiles.extend([
-        #'/store/mc/RunIISpring16DR80/DoubleElectron_FlatPt-300To6500/AODSIM/PUFlat0to50_80X_mcRun2_asymptotic_2016_v3-v1/00000/0A240112-4406-E611-9A29-20CF3027A5CE.root',
+        '/store/mc/RunIISpring16DR80/DoubleElectron_FlatPt-300To6500/AODSIM/PUFlat0to50_80X_mcRun2_asymptotic_2016_v3-v1/00000/0A240112-4406-E611-9A29-20CF3027A5CE.root',
         #'/store/mc/RunIISpring16DR80/DoubleElectron_FlatPt-1To300/AODSIM/PUFlat0to50_80X_mcRun2_asymptotic_2016_v3-v1/00000/0054673A-0306-E611-A949-0025905C2CD0.root'
         #'/store/user/rcoelhol/GluGluHToGG_M-125_13TeV_powheg_pythia8/crab_HggClusters/170327_193908/0000/skimEGMobjects_fromRAW_1.root'
         #'/store/user/rcoelhol/GluGluHToGG_M-125_13TeV_powheg_pythia8/crab_HggClusters_v2/170331_114027/0000/skimEGMobjects_fromRAW_101.root',
-        'file:/afs/cern.ch/work/r/rcoelhol/skimEGMobjects_fromRAW.root'
 ])
 
 process.source = cms.Source(
@@ -63,11 +62,12 @@ process.een_analyzer = cms.EDAnalyzer(
     ebSrFlagCollection  = cms.InputTag("ecalDigis"),
     eeSrFlagCollection  = cms.InputTag("ecalDigis"),
     
-    doElectronTree      = cms.bool(False),
-    doPhotonTree        = cms.bool(False),
-    doSuperClusterTree  = cms.bool(False),
-    doPFClusterTree     = cms.bool(True),
+    doElectronTree      = cms.bool(True),
+    doPhotonTree        = cms.bool(True),
+    doSuperClusterTree  = cms.bool(True),
+    doPFClusterTree     = cms.bool(False),
     doVertex            = cms.bool(True),
+    doTagAndProbe       = cms.bool(True),
     saveUnmatched       = cms.bool(False)
 
 

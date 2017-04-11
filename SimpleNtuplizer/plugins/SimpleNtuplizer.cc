@@ -52,6 +52,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
 
   doPFTree = iConfig.getParameter<bool>("doPFClusterTree");
   doVertex = iConfig.getParameter<bool>("doVertex");
+  doTagAndProbe = iConfig.getParameter<bool>("doTagAndProbe");
   
   std::cout << ">>>> Inside SimpleNtuplizer::constructor" << std::endl;
 
@@ -214,6 +215,11 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     electronTree_->Branch("genBornEnergy", &genBornEnergy_e);
     electronTree_->Branch("genPdgId", &genPdgId_e);
     electronTree_->Branch("genStatus", &genStatus_e);
+    electronTree_->Branch("tp_mll", &tp_mll);
+    electronTree_->Branch("tp_ptll", &tp_ptll);
+    electronTree_->Branch("tp_tagpt", &tp_tagpt);
+    electronTree_->Branch("tp_tageta", &tp_tageta);
+    electronTree_->Branch("tp_tagphi", &tp_tagphi);
   }
 
   if (doSuperClusterTree) {
@@ -328,6 +334,11 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     superClusterTree_->Branch("genBornEnergy", &genBornEnergy_c);
     superClusterTree_->Branch("genPdgId", &genPdgId_c);
     superClusterTree_->Branch("genStatus", &genStatus_c);
+    superClusterTree_->Branch("tp_mll", &tp_mll);
+    superClusterTree_->Branch("tp_ptll", &tp_ptll);
+    superClusterTree_->Branch("tp_tagpt", &tp_tagpt);
+    superClusterTree_->Branch("tp_tageta", &tp_tageta);
+    superClusterTree_->Branch("tp_tagphi", &tp_tagphi);
   }
 
   if (doPhotonTree) {
@@ -450,6 +461,11 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     photonTree_->Branch("genBornEnergy", &genBornEnergy_p);
     photonTree_->Branch("genPdgId", &genPdgId_p);
     photonTree_->Branch("genStatus", &genStatus_p);
+    photonTree_->Branch("tp_mll", &tp_mll);
+    photonTree_->Branch("tp_ptll", &tp_ptll);
+    photonTree_->Branch("tp_tagpt", &tp_tagpt);
+    photonTree_->Branch("tp_tageta", &tp_tageta);
+    photonTree_->Branch("tp_tagphi", &tp_tagphi);
   }
 
 
@@ -583,6 +599,8 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
     run_e             = iEvent.id().run();
     for (const auto &electron : *electrons) {
       setElectronVariables(electron, iEvent, iSetup);	
+      if (doTagAndProbe) 
+	findTag(electron, iEvent, iSetup);
     }
   }
 
@@ -596,6 +614,8 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
 
     for (const auto &photon : *photons) {
       setPhotonVariables( photon, iEvent, iSetup );
+      if (doTagAndProbe) 
+	findTag(photon, iEvent, iSetup);
     }
   }
 
@@ -611,6 +631,12 @@ void SimpleNtuplizer::analyze( const edm::Event& iEvent, const edm::EventSetup& 
     }
     for (const auto &superCluster : *superClustersEE) {
       setSuperClusterVariables( superCluster, iEvent, iSetup, false );
+      if (doTagAndProbe) { // Some gymnastics needed here
+	math::XYZPoint v(0, 0, 0);
+	math::XYZVector p = superCluster.energy() * (superCluster.position() - v).unit();
+	reco::RecoEcalCandidate recoSuperCluster(1, reco::Candidate::LorentzVector(p.x(), p.y(), p.z(), sqrt(p.mag2())), v, 11, 1);
+	findTag(recoSuperCluster, iEvent, iSetup);
+      }
     }
   }
     
