@@ -32,6 +32,7 @@ void SimpleNtuplizer::setPhotonVariables(const reco::Photon& photon,
   // Direction of the photons
   eta_p = photon.eta();
   phi_p = photon.phi();
+  pt_p = photon.pt();
     
   // Raw energy
   rawEnergy_p = superCluster.rawEnergy();

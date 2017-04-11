@@ -89,6 +89,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
 
     electronTree_->Branch("eta", &eta_e);
     electronTree_->Branch("phi", &phi_e);
+    electronTree_->Branch("pt", &pt_e);
 
     electronTree_->Branch("rawEnergy", &rawEnergy_e);
     electronTree_->Branch("preshowerEnergy", &preshowerEnergy_e);
@@ -232,6 +233,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
 
     superClusterTree_->Branch("eta", &eta_c);
     superClusterTree_->Branch("phi", &phi_c);
+    superClusterTree_->Branch("pt", &pt_c);
 
     superClusterTree_->Branch("rawEnergy", &rawEnergy_c);
     superClusterTree_->Branch("preshowerEnergy", &preshowerEnergy_c);
@@ -351,6 +353,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
 
     photonTree_->Branch("eta", &eta_p);
     photonTree_->Branch("phi", &phi_p);
+    photonTree_->Branch("pt", &pt_p);
 
     photonTree_->Branch("rawEnergy", &rawEnergy_p);
     photonTree_->Branch("preshowerEnergy", &preshowerEnergy_p);

@@ -33,6 +33,7 @@ void SimpleNtuplizer::setElectronVariables(
   // Direction of the electrons
   eta_e = electron.eta();
   phi_e = electron.phi();
+  pt_e = electron.pt();
     
   // Raw energy
   rawEnergy_e = superCluster.rawEnergy();

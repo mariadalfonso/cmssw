@@ -191,6 +191,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   // Direction of the electrons
   Float_t eta_e;
   Float_t phi_e;
+  Float_t pt_e;
 
   // Raw energy
   Float_t rawEnergy_e;
@@ -345,6 +346,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   // Direction of the electrons
   Float_t eta_c;
   Float_t phi_c;
+  Float_t pt_c;
 
   // Raw energy
   Float_t rawEnergy_c;
@@ -474,6 +476,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   // Direction of the electrons
   Float_t eta_p;
   Float_t phi_p;
+  Float_t pt_p;
 
   // Raw energy
   Float_t rawEnergy_p;

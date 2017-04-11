@@ -31,6 +31,7 @@ void SimpleNtuplizer::setSuperClusterVariables(
   // Direction of the superClusters
   eta_c = superCluster.eta();
   phi_c = superCluster.phi();
+  pt_c = superCluster.energy()/cosh(superCluster.eta());
     
   // Raw energy
   rawEnergy_c = superCluster.rawEnergy();
