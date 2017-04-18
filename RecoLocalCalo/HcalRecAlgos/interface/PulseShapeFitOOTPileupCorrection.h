@@ -18,6 +18,7 @@
 #include "Math/Functor.h"
 
 #include "RecoLocalCalo/HcalRecAlgos/src/HybridMinimizer.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/NewPulseShapes.h"
 
 namespace HcalConst{
 
@@ -34,6 +35,9 @@ namespace FitterFuncs{
    class PulseShapeFunctor {
       public:
      PulseShapeFunctor(const HcalPulseShapes::Shape& pulse,bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
+		       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
+		       double iNoise);
+     PulseShapeFunctor(NewPulseShapes pulseShapeInfo, bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
 		       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
 		       double iNoise);
      ~PulseShapeFunctor();
@@ -65,6 +69,7 @@ namespace FitterFuncs{
      std::vector<float> accVarLenIdxZEROVec, diffVarItvlIdxZEROVec;
      std::vector<float> accVarLenIdxMinusOneVec, diffVarItvlIdxMinusOneVec;
      void funcHPDShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew);
+     void funcNewShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight);
      double psFit_x[HcalConst::maxSamples], psFit_y[HcalConst::maxSamples], psFit_erry[HcalConst::maxSamples], psFit_erry2[HcalConst::maxSamples], psFit_slew[HcalConst::maxSamples];
      
      bool pedestalConstraint_;
@@ -84,6 +89,9 @@ namespace FitterFuncs{
      std::array<double,HcalConst::maxSamples> pulse_shape_;
      std::array<double,HcalConst::maxSamples> pulse_shape_sum_;
 
+     NewPulseShapes pulseShapeInfo_;
+     bool useDbPulseShapes_;
+
    };
    
 }
@@ -95,10 +103,14 @@ public:
     ~PulseShapeFitOOTPileupCorrection();
 
     void phase1Apply(const HBHEChannelInfo& channelData,
-		     float& reconstructedEnergy,
-		     float& reconstructedTime,
-		     bool & useTriple,
-		     float& chi2) const;
+		     std::vector<float>& reconstructedVals,
+		     bool & useTriple) const;
+
+//    void phase1Apply(const HBHEChannelInfo& channelData,
+//		     float& reconstructedEnergy,
+//		     float& reconstructedTime,
+//		     bool & useTriple,
+//		     float& chi2) const;
 
     void apply(const CaloSamples & cs,
 	       const std::vector<int> & capidvec,
@@ -118,16 +130,26 @@ public:
 		     const std::vector<double> & its4Chi2, HcalTimeSlew::BiasSetting slewFlavor, int iFitTimes);
 
     const HcalPulseShapes::Shape* currentPulseShape_=NULL;
+    const NewPulseShapes* currentNewPulseShape_=NULL;
     void setChi2Term( bool isHPD );
+
+    void setDebug( bool doDebug );
 
     void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps, bool isHPD);
     void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps);
 
+    void newSetPulseShapeTemplate(NewPulseShapes pulseShapeInfo, bool isHPD);
+    void newResetPulseShapeTemplate(NewPulseShapes pulseShapeInfo);
+
 private:
-    int pulseShapeFit(const double * energyArr, const double * pedenArr, const double *chargeArr, 
-		      const double *pedArr, const double *gainArr, const double tsTOTen, std::vector<float> &fitParsVec, const double * ADCnoise) const;
-    void fit(int iFit,float &timevalfit,float &chargevalfit,float &pedvalfit,float &chi2,bool &fitStatus,double &iTSMax,
-	     const double  &iTSTOTen,double *iEnArr,int (&iBX)[3]) const;
+    int pulseShapeFit(const double * energyArr, const double * pedenArr, const double *chargeArr,
+                      const double *pedArr, const double *gainArr, const double tsTOTen, std::vector<float> &fitParsVec, const double * ADCnoise) const;
+
+    void fit(int iFit, std::vector<float> & fitParsVec, bool &fitStatus, double &iTSMax,
+             const double &iTSTOTEn, double *iEnArr, int (&iBX)[3]) const;
+
+    //void fit(int iFit,float &timevalfit,float &chargevalfit,float &pedvalfit,float &chi2,bool &fitStatus,double &iTSMax,
+    //const double  &iTSTOTen,double *iEnArr,int (&iBX)[3]) const;
 
     PSFitter::HybridMinimizer * hybridfitter;
     int cntsetPulseShape;
@@ -166,6 +188,10 @@ private:
     HcalTimeSlew::BiasSetting slewFlavor_;    
 
     bool isCurrentChannelHPD_;
+
+    NewPulseShapes pulseShapeInfo_;
+    bool doDebug_;
+
 };
 
 #endif // PulseShapeFitOOTPileupCorrection_h
