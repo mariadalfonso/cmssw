@@ -29,6 +29,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   genPt_pf        = -99;
   genEta_pf       = -99;
   genPhi_pf       = -99;
+  genStatusFlag_pf= -99;
     
   edm::Handle<reco::PFClusterCollection> clustersH;
   iEvent.getByToken(pfLabel_,clustersH);
@@ -183,6 +184,18 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       genPt_pf = genpart->pt();
       genEta_pf = genpart->eta();
       genPhi_pf = genpart->phi();
+
+
+      ///OLD - https://github.com/cms-sw/cmssw/blob/CMSSW_7_4_X/DataFormats/HepMCCandidate/interface/GenParticle.h#L86
+      ////https://github.com/cms-sw/cmssw/blob/CMSSW_9_1_X/DataFormats/HepMCCandidate/interface/GenParticle.h#L65-L103
+      UShort_t tmpStatusFlag = 0;
+      if (genpart->fromHardProcessFinalState()) setbit(tmpStatusFlag, 0);
+      if (genpart->isPromptFinalState())        setbit(tmpStatusFlag, 1);
+      if (genpart->isHardProcess()) setbit(tmpStatusFlag, 2);
+      if (genpart->fromHardProcessDecayed()) setbit(tmpStatusFlag, 3);
+      if (genpart->isPromptDecayed()) setbit(tmpStatusFlag, 4);
+      
+      genStatusFlag_pf = tmpStatusFlag;
 
       nClus_pf++;
        

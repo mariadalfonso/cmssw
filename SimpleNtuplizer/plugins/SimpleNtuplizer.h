@@ -72,6 +72,11 @@
 #include <algorithm>
 #include <vector>
 
+
+////to set the status of gen particle in PF cluster code in a 16 bit integer
+void setbit(UShort_t& x, UShort_t bit);
+
+
 //######################################
 //# Class declaration
 //######################################
@@ -623,6 +628,7 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Float_t    genPt_pf;
   Float_t    genEta_pf;
   Float_t    genPhi_pf;
+  UShort_t   genStatusFlag_pf;
 
   //////////////////////////
   // Tag and Probe  
