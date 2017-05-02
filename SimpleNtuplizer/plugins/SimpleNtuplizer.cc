@@ -20,6 +20,12 @@
 #include "SimpleNtuplizer.h"
 
 
+////to set the status of gen particle in PF cluster code in a 16 bit integer
+void setbit(UShort_t& x, UShort_t bit) {
+  UShort_t a = 1;
+  x |= (a << bit);
+}
+
 //######################################
 //# Constructors and Destructor
 //######################################
@@ -498,6 +504,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("genPt",           &genPt_pf);
     pfTree_->Branch("genEta",          &genEta_pf);
     pfTree_->Branch("genPhi",          &genPhi_pf);
+    pfTree_->Branch("genStatusFlag",          &genStatusFlag_pf);
   }
 
 
