@@ -4531,6 +4531,8 @@ fragment.hltHbhePhase1Reco = cms.EDProducer( "HBHEPhase1Reconstructor",
       timeSlewPars = cms.vdouble( 12.2999, -2.19142, 0.0, 12.2999, -2.19142, 0.0, 12.2999, -2.19142, 0.0 ),
       ts4chi2 = cms.vdouble( 15.0, 15.0 ),
       timeMax = cms.double( 12.5 ),
+      useMahi = cms.bool( False ),
+      pulseShapeType = cms.int32(1),
       Class = cms.string( "SimpleHBHEPhase1Algo" )
     ),
     setLegacyFlagsQIE8 = cms.bool( True ),
@@ -10953,6 +10955,8 @@ fragment.hltHbherecoMethod2L1EGSeeded = cms.EDProducer( "HBHEPhase1Reconstructor
       timeSlewPars = cms.vdouble( 12.2999, -2.19142, 0.0, 12.2999, -2.19142, 0.0, 12.2999, -2.19142, 0.0 ),
       ts4chi2 = cms.vdouble( 15.0, 15.0 ),
       timeMax = cms.double( 12.5 ),
+      useMahi = cms.bool( False ),
+      pulseShapeType = cms.int32(1),
       Class = cms.string( "SimpleHBHEPhase1Algo" )
     ),
     setLegacyFlagsQIE8 = cms.bool( True ),
@@ -12627,6 +12631,8 @@ fragment.hltHbherecoMethod2L1EGUnseeded = cms.EDProducer( "HBHEPhase1Reconstruct
       timeSlewPars = cms.vdouble( 12.2999, -2.19142, 0.0, 12.2999, -2.19142, 0.0, 12.2999, -2.19142, 0.0 ),
       ts4chi2 = cms.vdouble( 15.0, 15.0 ),
       timeMax = cms.double( 12.5 ),
+      useMahi = cms.bool( False ),
+      pulseShapeType = cms.int32(1),
       Class = cms.string( "SimpleHBHEPhase1Algo" )
     ),
     setLegacyFlagsQIE8 = cms.bool( True ),
