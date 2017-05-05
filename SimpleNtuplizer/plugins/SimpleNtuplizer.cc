@@ -494,8 +494,8 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("clusPhi",         &clusPhi_pf);
     pfTree_->Branch("clusLayer",       &clusLayer_pf);
     pfTree_->Branch("clusSize",        &clusSize_pf);
-    pfTree_->Branch("clusIetaIx_pf",   &clusIetaIx_pf);
-    pfTree_->Branch("clusIphiIy_pf",   &clusIphiIy_pf);
+    pfTree_->Branch("clusIetaIx",      &clusIetaIx_pf);
+    pfTree_->Branch("clusIphiIy",      &clusIphiIy_pf);
     pfTree_->Branch("clusPS1",         &clusPS1_pf);
     pfTree_->Branch("clusPS2",         &clusPS2_pf);
     pfTree_->Branch("clusFlag",        &clusFlag_pf);
