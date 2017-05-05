@@ -40,6 +40,9 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   edm::Handle<edm::ValueMap<reco::GenParticleRef> > clustergenH;
   iEvent.getByToken(genpfLabel_,clustergenH);
 
+  edm::Handle<edm::ValueMap<int> > clusSize;
+  iEvent.getByToken(clusSizeLabel_,clusSize);
+
   edm::Handle<reco::VertexCollection> vertices;
   if(doVertex) {
     iEvent.getByToken(vtxToken_, vertices);
@@ -127,9 +130,9 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       }
        
       ///lazy tools
-      EcalClusterLazyTools lazyTool(iEvent, iSetup, ecalRecHitEBToken_, ecalRecHitEEToken_);
-      clusSize_pf = lazyTool.n5x5(pfc);
-       
+      //EcalClusterLazyTools lazyTool(iEvent, iSetup, ecalRecHitEBToken_, ecalRecHitEEToken_);
+      //clusSize_pf = lazyTool.n5x5(pfc);
+      
       ///////PS energy
       //compute preshower energies for endcap clusters
       double ePS1=0, ePS2=0;
@@ -159,7 +162,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 	    
       }//if(!iseb)
 
-
+      
 
        ////SR flags
       if(iseb){
@@ -177,6 +180,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 	 
 	clusFlag_pf = srf->value();   
       }
+    
       // gen matching
       auto clusterref = edm::Ref<reco::PFClusterCollection>(clustersH, iP++);
       auto genpart = (*clustergenH)[clusterref];
@@ -185,7 +189,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       genEta_pf = genpart->eta();
       genPhi_pf = genpart->phi();
 
-
+      
       ///OLD - https://github.com/cms-sw/cmssw/blob/CMSSW_7_4_X/DataFormats/HepMCCandidate/interface/GenParticle.h#L86
       ////https://github.com/cms-sw/cmssw/blob/CMSSW_9_1_X/DataFormats/HepMCCandidate/interface/GenParticle.h#L65-L103
       UShort_t tmpStatusFlag = 0;
@@ -196,6 +200,8 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       if (genpart->isPromptDecayed()) setbit(tmpStatusFlag, 4);
       
       genStatusFlag_pf = tmpStatusFlag;
+
+      clusSize_pf = (*clusSize)[clusterref];
 
       nClus_pf++;
        

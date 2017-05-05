@@ -152,6 +152,8 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::EDGetTokenT<reco::PFClusterCollection> pfLabel_;
   edm::EDGetTokenT<reco::PFCluster::EEtoPSAssociation> pspfLabel_;
   edm::EDGetTokenT<edm::ValueMap<reco::GenParticleRef> > genpfLabel_;
+  edm::EDGetTokenT<edm::ValueMap<int> > clusSizeLabel_;
+
   edm::EDGetTokenT<EBSrFlagCollection> ebSrFlagToken_; 
   edm::EDGetTokenT<EESrFlagCollection> eeSrFlagToken_; 
 

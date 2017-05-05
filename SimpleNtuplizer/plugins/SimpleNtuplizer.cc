@@ -47,6 +47,7 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   pfLabel_(consumes<reco::PFClusterCollection>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   genpfLabel_(consumes<edm::ValueMap<reco::GenParticleRef> >(iConfig.getParameter<edm::InputTag>("pfLabel"))),
+  clusSizeLabel_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   // SRP collections
   ebSrFlagToken_(consumes<EBSrFlagCollection>(iConfig.getParameter<edm::InputTag>("ebSrFlagCollection"))),
   eeSrFlagToken_(consumes<EESrFlagCollection>(iConfig.getParameter<edm::InputTag>("eeSrFlagCollection")))
