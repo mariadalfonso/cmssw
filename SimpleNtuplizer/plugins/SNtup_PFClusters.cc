@@ -103,7 +103,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       clusLayer_pf = layerNum;
        
       ///position
-      auto const & crep = pfc.positionREP();
+      auto const & crep = pfc.position();
       double eta = crep.eta();
       double phi = crep.phi();
       double rho = crep.rho();
