@@ -204,10 +204,11 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       clusSize_pf = (*clusSize)[clusterref];
 
       nClus_pf++;
-       
+
+      pfTree_->Fill();       
     }//for (reco::PFClusterCollection::const_iterator pfc=(....))
     
-    pfTree_->Fill();
+
     
   }//if (clustersH.isValid())
   else{
