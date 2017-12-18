@@ -83,6 +83,14 @@ def customiseFor21437(process):
         delattr(process,"hltESPTrajectoryCleanerBySharedSeeds")
     return process
 
+# Removal of old Hcal time slew parameters
+def customiseFor21733(process):
+    if hasattr(process,"timeSlewParsType"):
+        delattr(process,"timeSlewParsType")
+    if hasattr(process,"timeSlewPars"):
+        delattr(process,"timeSlewPars")
+    return process
+
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
 
@@ -98,5 +106,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
         process = customiseFor21437(process)        
         
     process = customiseFor21664(process)
+    process = customiseFor21733(process)
 
     return process
