@@ -17,9 +17,8 @@ HcalDeterministicFit::HcalDeterministicFit() {
 HcalDeterministicFit::~HcalDeterministicFit() { 
 }
 
-void HcalDeterministicFit::init(bool iApplyTimeSlew, PedestalSub pedSubFxn, double respCorr) {
+void HcalDeterministicFit::init(bool iApplyTimeSlew, double respCorr) {
   applyTimeSlew_=iApplyTimeSlew;
-  fPedestalSubFxn_=pedSubFxn;
   frespCorr_=respCorr;
 }
 
