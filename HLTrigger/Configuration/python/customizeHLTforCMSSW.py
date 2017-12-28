@@ -83,6 +83,11 @@ def customiseFor21437(process):
         delattr(process,"hltESPTrajectoryCleanerBySharedSeeds")
     return process
 
+# Needs the ESProducer for HcalTimeSlewRecord
+def customiseFor21733(process):
+    process.load('CalibCalorimetry.HcalPlugins.HcalTimeSlew_cff')
+    return process
+
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
 
@@ -98,5 +103,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
         process = customiseFor21437(process)        
         
     process = customiseFor21664(process)
+    process = customiseFor21733(process)
 
     return process
