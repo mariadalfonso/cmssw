@@ -17,6 +17,22 @@ from HLTrigger.Configuration.common import *
 #                     pset.minGoodStripCharge = cms.PSet(refToPSet_ = cms.string('HLTSiStripClusterChargeCutNone'))
 #     return process
 
+
+def customiseFor21821(process):
+    from RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi import hbheprereco
+    for producer in producers_by_type(process, "HBHEPhase1Reconstructor"):
+        producer.algorithm.ts4Max = cms.vdouble(100., 20000., 30000)
+        del producer.algorithm.pedestalUpperLimit
+        del producer.algorithm.pedSigmaHPD
+        del producer.algorithm.pedSigmaSiPM
+        del producer.algorithm.noiseHPD
+        del producer.algorithm.noiseSiPM
+
+    for producer in producers_by_type(process, "HcalHitReconstructor"):
+        del producer.puCorrMethod
+
+    return process
+
 # Add mahi to HCAL local reconstruction 
 def customiseFor21664(process):
     from RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi import hbheprereco
@@ -97,5 +113,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
         process = customiseFor20429(process)
         process = customiseFor21437(process)        
         process = customiseFor21664(process)
+        process = customiseFor21821(process)
 
     return process
