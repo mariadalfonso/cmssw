@@ -68,13 +68,13 @@ hbheprereco = cms.EDProducer(
         firstSampleShift = cms.int32(0),
 
         # Use "Method 2"?
-        useM2 = cms.bool(False),
+        useM2 = cms.bool(True),
 
         # Use "Method 3"?
         useM3 = cms.bool(True),
 
         # Use Mahi?
-        useMahi = cms.bool(True)
+        useMahi = cms.bool(False)
     ),
 
     # Reconstruction algorithm configuration data to fetch from DB, if any
@@ -107,3 +107,6 @@ hbheprereco.pulseShapeParametersQIE8.TrianglePeakTS = cms.uint32(10000)
 
 from Configuration.Eras.Modifier_run2_HE_2017_cff import run2_HE_2017
 run2_HE_2017.toModify(hbheprereco, saveEffectivePedestal = cms.bool(True))
+
+from Configuration.Eras.Modifier_run2_HCAL_2018_cff import run2_HCAL_2018
+run2_HCAL_2018.toModify(hbheprereco, useM2 = cms.bool(False),useMahi = cms.bool(True))
