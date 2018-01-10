@@ -13,8 +13,59 @@ particleFlowRecHitHBHE = cms.EDProducer("PFRecHitProducer",
              src  = cms.InputTag("hbhereco",""),
              qualityTests = cms.VPSet(
                   cms.PSet(
-                  name = cms.string("PFRecHitQTestThreshold"),
-                  threshold = cms.double(0.8)
+                  name = cms.string("PFRecHitQTestHCALThresholdVsDepth"),
+                  cuts = cms.VPSet(
+                        cms.PSet(
+                            depth=cms.double(1.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalBarrel"),
+                            ),
+                        cms.PSet(
+                            depth=cms.double(2.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalBarrel"),
+                            ),
+                        cms.PSet(
+                            depth=cms.double(3.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalBarrel"),
+                            ),
+                        cms.PSet(
+                            depth=cms.double(1.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            ),
+                        cms.PSet(
+                            depth=cms.double(2.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            )
+                        cms.PSet(
+                            depth=cms.double(3.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            )
+                        cms.PSet(
+                            depth=cms.double(4.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            )
+                        cms.PSet(
+                            depth=cms.double(5.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            )
+                        cms.PSet(
+                            depth=cms.double(6.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            )
+                        cms.PSet(
+                            depth=cms.double(7.),
+                            threshold = cms.double(0.8),
+                            detector = cms.string("HcalEndcap"),
+                            )
+                        )
                   ),
                   cms.PSet(
                       name = cms.string("PFRecHitQTestHCALChannel"),

@@ -261,6 +261,7 @@ public:
       for (auto & pset : psets) {
         depths_.push_back(pset.getParameter<int>("depth"));
         thresholds_.push_back(pset.getParameter<double>("threshold"));
+	detector_.push_back(pset.getParameter<string>("detector"));
       }
     }
 
@@ -292,11 +293,13 @@ public:
 protected:
     std::vector<int> depths_;
     std::vector<double> thresholds_;
+    std::vector<string> detector_;
 
     bool test(unsigned aDETID, double energy, double time, bool& clean){
       HcalDetId detid(aDETID);
-      for (unsigned int i=0;i<depths_.size();++i) {
-        if (detid.depth() == depths_[i]) {
+
+      for (unsigned int i=0;i<thresholds_.size();++i) {
+        if (detid.depth() == depths_[i] && id.subdet()==detector_[i]) {
           if (  energy<thresholds_[i])
             {
               clean=false;
