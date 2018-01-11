@@ -29,7 +29,8 @@ def customiseFor21821(process):
         del producer.algorithm.noiseSiPM
 
     for producer in producers_by_type(process, "HcalHitReconstructor"):
-        del producer.puCorrMethod
+        if hasattr(producer,"puCorrMethod"):
+            del producer.puCorrMethod
 
     return process
 
