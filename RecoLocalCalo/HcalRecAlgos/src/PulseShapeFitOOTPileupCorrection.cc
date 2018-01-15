@@ -301,10 +301,10 @@ void PulseShapeFitOOTPileupCorrection::phase1Apply(const HBHEChannelInfo& channe
   psfPtr_->setinvertpedSig2(1./(averagePedSig2GeV));
 
   if(channelData.hasTimeInfo()) { 
+
     ts4Chi2_=vts4Chi2_[1];
     if(channelData.id().depth()==1) ts4Max_=vts4Max_[1];
-    if(channelData.id().depth()>1) ts4Max_=vts4Max_[2];
-
+    else ts4Max_=vts4Max_[2];
 
   } else {
     ts4Max_=vts4Max_[0]; ts4Chi2_=vts4Chi2_[0];
