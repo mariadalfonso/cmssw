@@ -45,12 +45,15 @@ class InitialClusteringStepBase {
     for( const auto& pset : thresholds ) {
       const std::string& det = pset.getParameter<std::string>("detector");
 
+      std::vector<int> detectorEnum;
       std::vector<int> depths;
       std::vector<double> thresh_E;
       std::vector<double> thresh_pT ;
       std::vector<double> thresh_pT2;
 
       if (det==std::string("HCAL_BARREL1") || det==std::string("HCAL_ENDCAP")) {
+	if(det==std::string("HCAL_BARREL1")) detectorEnum.push_back(1);
+	if(det==std::string("HCAL_ENDCAP")) detectorEnum.push_back(2);
 	depths = pset.getParameter<std::vector<int> >("depths");
 	thresh_E = pset.getParameter<std::vector<double> >("gatheringThreshold");
 	thresh_pT = pset.getParameter<std::vector<double> >("gatheringThresholdPt");
@@ -59,6 +62,7 @@ class InitialClusteringStepBase {
 	    << "gatheringThresholds mismatch with the numbers of depths";
 	}
       } else {
+	detectorEnum.push_back(0);
 	depths.push_back(0);
 	thresh_E.push_back(pset.getParameter<double>("gatheringThreshold"));
 	thresh_pT.push_back(pset.getParameter<double>("gatheringThresholdPt"));
@@ -75,7 +79,7 @@ class InitialClusteringStepBase {
 	  << " detector layers!";
       }
       _thresholds.emplace(_layerMap.find(det)->second, 
-			  std::make_tuple(depths,thresh_E,thresh_pT2));
+			  std::make_tuple(detectorEnum,depths,thresh_E,thresh_pT2));
   }
   }
   virtual ~InitialClusteringStepBase() = default;
@@ -109,7 +113,7 @@ class InitialClusteringStepBase {
   unsigned _nSeeds, _nClustersFound; // basic performance information
   const std::unordered_map<std::string,int> _layerMap;
 
-  typedef std::tuple<std::vector<int> ,std::vector<double> , std::vector<double> > _i3tuple;
+  typedef std::tuple<std::vector<int> ,std::vector<int> ,std::vector<double> , std::vector<double> > _i3tuple;
   std::unordered_map<int,_i3tuple > _thresholds;
  
  private:

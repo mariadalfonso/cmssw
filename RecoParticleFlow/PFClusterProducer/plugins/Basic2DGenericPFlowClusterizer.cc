@@ -46,18 +46,19 @@ Basic2DGenericPFlowClusterizer(const edm::ParameterSet& conf) :
     const std::string& det = pset.getParameter<std::string>("detector");
 
 
+    std::vector<int> detectorEnum;
     std::vector<int> depths;
     std::vector<double> rhE_norm;
 
     if (det==std::string("HCAL_BARREL1") || det==std::string("HCAL_ENDCAP")) {
-
+      if(det==std::string("HCAL_BARREL1")) detectorEnum.push_back(1);
+      if(det==std::string("HCAL_ENDCAP")) detectorEnum.push_back(2);
       depths= pset.getParameter<std::vector<int> >("depths");
       rhE_norm = pset.getParameter<std::vector<double> >("recHitEnergyNorm");
-
     } else {
-
+      depths.push_back(0);
+      detectorEnum.push_back(0);
       rhE_norm.push_back(pset.getParameter<double>("recHitEnergyNorm"));
-
     }
 
     auto entry = _layerMap.find(det);
@@ -66,7 +67,7 @@ Basic2DGenericPFlowClusterizer(const edm::ParameterSet& conf) :
 	<< "Detector layer : " << det << " is not in the list of recognized"
 	<< " detector layers!";
     }
-    _recHitEnergyNorms.emplace(_layerMap.find(det)->second,std::make_pair(depths,rhE_norm));
+    _recHitEnergyNorms.emplace(_layerMap.find(det)->second,std::make_tuple(detectorEnum,depths,rhE_norm));
   }
   
   _allCellsPosCalc.reset(nullptr);
@@ -182,18 +183,21 @@ growPFClusters(const reco::PFCluster& topo,
       cell_layer *= 100;
     }  
 
-    std::pair<std::vector<int>,std::vector<double> > recHitEnergyNormDepthPair = _recHitEnergyNorms.find(cell_layer)->second;
-
-    const std::vector<double>& recHitEnergyNormV = recHitEnergyNormDepthPair.second;
-    const std::vector<int>& recHitDepthV = recHitEnergyNormDepthPair.first;
-
     math::XYZPoint topocellpos_xyz(refhit->position());
     dist2.clear(); frac.clear(); fractot = 0;
 
     double recHitEnergyNorm=0.;
-    for (unsigned int j=0; j<recHitEnergyNormV.size(); ++j) {
-      if((cell_layer == PFLayer::HCAL_BARREL1 || cell_layer == PFLayer::HCAL_ENDCAP) && refhit->depth()!=recHitDepthV[j]) continue;
-      recHitEnergyNorm = recHitEnergyNormV[j];
+    std::tuple<std::vector<int> ,std::vector<int> , std::vector<double> > _recHitEnergyNormsT = _recHitEnergyNorms.find(cell_layer)->second;
+
+    for (unsigned int j=0; j<(std::get<2>(_recHitEnergyNormsT)).size(); ++j) {
+
+      int detectorEnum=std::get<0>(_recHitEnergyNormsT)[j];
+      int depth=std::get<1>(_recHitEnergyNormsT)[j];
+
+      if( ( cell_layer == PFLayer::HCAL_BARREL1 && detectorEnum==1 && refhit->depth()== depth)
+	  || ( cell_layer == PFLayer::HCAL_ENDCAP && detectorEnum==2 && refhit->depth()== depth)
+	  || detectorEnum==0
+	  ) recHitEnergyNorm=std::get<2>(_recHitEnergyNormsT)[j];
     }
 
     // add rechits to clusters, calculating fraction based on distance

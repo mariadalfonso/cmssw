@@ -54,19 +54,29 @@ buildTopoCluster(const edm::Handle<reco::PFRecHitCollection>& input,
       cell_layer *= 100;
     }    
 
-  std::tuple<std::vector<int> ,std::vector<double> , std::vector<double> > thresholds = _thresholds.find(cell_layer)->second;
+  std::tuple<std::vector<int>,std::vector<int> ,std::vector<double> , std::vector<double> > thresholds = _thresholds.find(cell_layer)->second;
 
-  for (unsigned int j=0; j<(std::get<1>(thresholds)).size(); ++j) {
-    if((cell_layer == PFLayer::HCAL_BARREL1 || cell_layer == PFLayer::HCAL_ENDCAP) && (cell.depth()!=std::get<0>(thresholds)[j])) continue;
 
-    if( cell.energy() < std::get<1>(thresholds)[j] ||
-	cell.pt2() < std::get<2>(thresholds)[j]  ) {
-      LOGDRESSED("GenericTopoCluster::buildTopoCluster()")
-	<< "RecHit " << cell.detId() << " with enegy "
-	<< cell.energy() << " GeV was rejected!." << std::endl;
-      return;
-    }
+  double thresholdE=0.;
+  double thresholdPT2=0.;
 
+  for (unsigned int j=0; j<(std::get<2>(thresholds)).size(); ++j) {
+    int detectorEnum=std::get<0>(thresholds)[j];
+    int depth=std::get<1>(thresholds)[j];
+
+    if( ( cell_layer == PFLayer::HCAL_BARREL1 && detectorEnum==1 && cell.depth()== depth)
+	|| ( cell_layer == PFLayer::HCAL_ENDCAP && detectorEnum==2 && cell.depth()== depth)
+            || detectorEnum==0
+	) { thresholdE=std::get<2>(thresholds)[j]; thresholdPT2=std::get<3>(thresholds)[j]; }
+
+  }
+
+  if( cell.energy() < thresholdE ||
+      cell.pt2() < thresholdPT2  ) {
+    LOGDRESSED("GenericTopoCluster::buildTopoCluster()")
+      << "RecHit " << cell.detId() << " with enegy "
+      << cell.energy() << " GeV was rejected!." << std::endl;
+    return;
   }
 
 

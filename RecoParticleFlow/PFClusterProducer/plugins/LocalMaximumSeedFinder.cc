@@ -31,12 +31,15 @@ LocalMaximumSeedFinder(const edm::ParameterSet& conf) :
   for( const auto& pset : thresholds ) {
     const std::string& det = pset.getParameter<std::string>("detector");
 
+    std::vector<int> detectorEnum;
     std::vector<int> depths;
     std::vector<double> thresh_E;
     std::vector<double> thresh_pT ;
     std::vector<double> thresh_pT2;
 
     if (det==std::string("HCAL_BARREL1") || det==std::string("HCAL_ENDCAP")) {
+      if(det==std::string("HCAL_BARREL1")) detectorEnum.push_back(1);
+      if(det==std::string("HCAL_ENDCAP")) detectorEnum.push_back(2);
       depths = pset.getParameter<std::vector<int> >("depths");
       thresh_E = pset.getParameter<std::vector<double> >("seedingThreshold");
       thresh_pT = pset.getParameter<std::vector<double> >("seedingThresholdPt");
@@ -45,6 +48,7 @@ LocalMaximumSeedFinder(const edm::ParameterSet& conf) :
 	  << "gatheringThresholds mismatch with the numbers of depths";
       }
     } else {
+      detectorEnum.push_back(0);
       depths.push_back(0);
       thresh_E.push_back(pset.getParameter<double>("seedingThreshold"));
       thresh_pT.push_back(pset.getParameter<double>("seedingThresholdPt"));
@@ -62,7 +66,7 @@ LocalMaximumSeedFinder(const edm::ParameterSet& conf) :
     }
 
     _thresholds[entry->second+layerOffset]= 
-                       std::make_tuple(depths,thresh_E,thresh_pT2);
+      std::make_tuple(detectorEnum,depths,thresh_E,thresh_pT2);
   }
 }
 
@@ -91,15 +95,27 @@ findSeeds( const edm::Handle<reco::PFRecHitCollection>& input,
     }
     auto const & thresholds = _thresholds[seedlayer+layerOffset];
 
-    for (unsigned int j=0; j<(std::get<1>(thresholds)).size(); ++j) {
-      if((seedlayer == PFLayer::HCAL_BARREL1 || seedlayer == PFLayer::HCAL_ENDCAP) && (maybeseed.depth()!=std::get<0>(thresholds)[j])) continue;
 
-	if( maybeseed.energy() < std::get<1>(thresholds)[j] ||
-	    maybeseed.pt2() < std::get<2>(thresholds)[j]   ) usable[i] = false;
-	if( !usable[i] ) continue;
-	ordered_hits.push(i);
+    double thresholdE=0.;
+    double thresholdPT2=0.;
+
+    for (unsigned int j=0; j<(std::get<2>(thresholds)).size(); ++j) {
+
+      int detectorEnum=std::get<0>(thresholds)[j];
+      int depth=std::get<1>(thresholds)[j];
+
+      if( ( seedlayer == PFLayer::HCAL_BARREL1 && detectorEnum==1 && maybeseed.depth()== depth)
+	  || ( seedlayer == PFLayer::HCAL_ENDCAP && detectorEnum==2 && maybeseed.depth()== depth)
+            || detectorEnum==0
+	  ) { thresholdE=std::get<2>(thresholds)[j]; thresholdPT2=std::get<3>(thresholds)[j]; }
 
     }
+
+    if( maybeseed.energy() < thresholdE ||
+	maybeseed.pt2() < thresholdPT2   ) usable[i] = false;
+    if( !usable[i] ) continue;
+    ordered_hits.push(i);
+
   }
 
 
