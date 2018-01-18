@@ -190,7 +190,7 @@ bool HybridMinimizer::SetVariable(unsigned int ivar, const std::string & name, d
       std::string txtmsg("Wrong index used for the variable " + name);
       MN_INFO_MSG2("HybridMinimizer::SetVariable",txtmsg);  
       MN_INFO_VAL2("HybridMinimizer::SetVariable",minuit2Index);  
-      ivar = minuit2Index;
+      //      ivar = minuit2Index;
       return false;
    }
    fState.RemoveLimits(ivar);
@@ -325,7 +325,7 @@ bool HybridMinimizer::Minimize() {
       int maxfcn_used = maxfcn; 
       if (maxfcn_used == 0) { 
          int nvar = fState.VariableParameters();
-         maxfcn_used = 200 + 100*nvar + 5*nvar*nvar;
+	 //         maxfcn_used = 200 + 100*nvar + 5*nvar*nvar;
       }      
 //      std::cout << "HybridMinimizer: Minimize with max-calls " << maxfcn_used 
 //                << " convergence for edm < " << tol << " strategy " 
@@ -706,7 +706,7 @@ bool HybridMinimizer::GetMinosError(unsigned int i, double & errLow, double & er
       int maxfcn_used = maxfcn; 
       if (maxfcn_used == 0) { 
          int nvar = fState.VariableParameters();
-         maxfcn_used = 2*(nvar+1)*(200 + 100*nvar + 5*nvar*nvar);
+	 //	 maxfcn_used = 2*(nvar+1)*(200 + 100*nvar + 5*nvar*nvar);
       }
 //      std::cout << "HybridMinimizer::GetMinosError for parameter " << i << "  " << par_name
 //                << " using max-calls " << maxfcn_used << ", tolerance " << tol << std::endl; 
