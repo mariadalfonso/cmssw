@@ -23,7 +23,7 @@ namespace FitterFuncs{
 		       double iNoise, unsigned int nSamplesToFit);
      ~PulseShapeFunctor();
      
-     double EvalPulse(const double *pars, unsigned int nPar);
+     double EvalPulse(const double *pars, const unsigned nPar);
      
      void setDefaultcntNANinfit(){ cntNANinfit =0; }
      int getcntNANinfit(){ return cntNANinfit; }
@@ -51,7 +51,7 @@ namespace FitterFuncs{
      std::vector<float> acc25nsVec, diff25nsItvlVec;
      std::vector<float> accVarLenIdxZEROVec, diffVarItvlIdxZEROVec;
      std::vector<float> accVarLenIdxMinusOneVec, diffVarItvlIdxMinusOneVec;
-     void funcShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew);
+     void funcShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double pulseTime, const double pulseHeight,const double slew);
      double psFit_x[HcalConst::maxSamples], psFit_y[HcalConst::maxSamples], psFit_erry[HcalConst::maxSamples], psFit_erry2[HcalConst::maxSamples], psFit_slew[HcalConst::maxSamples];
      
      unsigned nSamplesToFit_;
