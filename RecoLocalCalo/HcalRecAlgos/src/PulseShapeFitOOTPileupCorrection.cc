@@ -66,14 +66,16 @@ void PulseShapeFitOOTPileupCorrection::setPUParams(bool   iPedestalConstraint, b
 void PulseShapeFitOOTPileupCorrection::setPulseShapeTemplate(const HcalPulseShapes::Shape& ps, bool isHPD, unsigned nSamples, const HcalTimeSlew* hcalTimeSlewDelay) {
   // initialize for every different channel types (HPD vs SiPM)
 
-  hcalTimeSlewDelay_ = hcalTimeSlewDelay;
-
   if (!(&ps == currentPulseShape_ && isHPD == isCurrentChannelHPD_))
     {
       setChi2Term(isHPD);
       resetPulseShapeTemplate(ps,nSamples);
       currentPulseShape_ = &ps;
       isCurrentChannelHPD_ = isHPD;
+
+      hcalTimeSlewDelay_ = hcalTimeSlewDelay;
+      TSdelay1GeV_= hcalTimeSlewDelay->delay(1.0, slewFlavor_);
+
     }
 }
 
@@ -98,7 +100,11 @@ int PulseShapeFitOOTPileupCorrection::pulseShapeFit(const double * energyArr, co
       tmpy[i]=energyArr[i]-pedenArr[i];
       //Add Time Slew !!! does this need to be pedestal subtracted
       tmpslew[i] = 0;
-      if(applyTimeSlew_) tmpslew[i] = hcalTimeSlewDelay_->delay(std::max(1.0,chargeArr[i]),slewFlavor_);
+      if(applyTimeSlew_) {
+	if(chargeArr[i]<=1.0) tmpslew[i] = TSdelay1GeV_;
+	else tmpslew[i] = hcalTimeSlewDelay_->delay(chargeArr[i],slewFlavor_);
+      }
+
       // add the noise components
       tmperry2[i]=noiseArrSq[i];
 
