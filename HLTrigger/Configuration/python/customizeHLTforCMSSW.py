@@ -17,6 +17,13 @@ from HLTrigger.Configuration.common import *
 #                     pset.minGoodStripCharge = cms.PSet(refToPSet_ = cms.string('HLTSiStripClusterChargeCutNone'))
 #     return process
 
+
+def customiseForPRXXX(process):
+    for producer in producers_by_type(process, "HBHEPhase1Reconstructor"):
+        producer.saveEffectivePedestal = cms.bool(True)
+    return process
+
+
 def customiseFor22001(process):
     for producer in producers_by_type(process, "CaloTowersCreator"):
         if hasattr(producer,'HcalCollapsed'):
@@ -76,5 +83,6 @@ def customizeHLTforCMSSW(process, menuType="GRun"):
     # add call to action function in proper order: newest last!
     # process = customiseFor12718(process)
     process = customiseFor22001(process)
+    process = customiseForPRXXX(process)
         
     return process
