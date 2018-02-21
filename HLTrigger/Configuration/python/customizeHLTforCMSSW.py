@@ -25,6 +25,9 @@ def customiseForPRXXX(process):
         if (producer.algorithm.useMahi == cms.bool(True)):
             producer.algorithm.applyTimeConstraint = cms.bool(False)
             producer.algorithm.applyPedConstraint = cms.bool(False)
+        if producer.algorithm.timeSlewPars:
+            del producer.algorithm.timeSlewPars
+
     return process
 
 
