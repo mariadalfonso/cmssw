@@ -20,6 +20,7 @@ from HLTrigger.Configuration.common import *
 
 def customiseForPRXXX(process):
     for producer in producers_by_type(process, "HBHEPhase1Reconstructor"):
+        producer.algorithm.chiSqSwitch = cms.double(15.0)
         producer.saveEffectivePedestal = cms.bool(True)
         if (producer.algorithm.useMahi == cms.bool(True)):
             producer.algorithm.applyTimeConstraint = cms.bool(False)
