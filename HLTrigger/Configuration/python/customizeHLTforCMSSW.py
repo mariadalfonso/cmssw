@@ -21,6 +21,9 @@ from HLTrigger.Configuration.common import *
 def customiseForPRXXX(process):
     for producer in producers_by_type(process, "HBHEPhase1Reconstructor"):
         producer.saveEffectivePedestal = cms.bool(True)
+        if (producer.algorithm.useMahi == cms.bool(True)):
+            producer.algorithm.applyTimeConstraint = cms.bool(False)
+            producer.algorithm.applyPedConstraint = cms.bool(False)
     return process
 
 
