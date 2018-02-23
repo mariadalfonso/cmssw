@@ -154,6 +154,9 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   edm::EDGetTokenT<edm::ValueMap<reco::GenParticleRef> > genpfLabel_;
   edm::EDGetTokenT<edm::ValueMap<int> > clusSizeLabel_;
 
+  edm::EDGetTokenT<edm::ValueMap<float> > ps1Label_;
+  edm::EDGetTokenT<edm::ValueMap<float> > ps2Label_;
+
   edm::EDGetTokenT<EBSrFlagCollection> ebSrFlagToken_; 
   edm::EDGetTokenT<EESrFlagCollection> eeSrFlagToken_; 
 
@@ -631,6 +634,12 @@ class SimpleNtuplizer : public edm::EDAnalyzer {
   Float_t    genEta_pf;
   Float_t    genPhi_pf;
   UShort_t   genStatusFlag_pf;
+
+  Int_t     ietamod20_pf;
+  Int_t     iphimod20_pf;
+  Int_t     nhits_pf;
+  Float_t tgtvar_pf;
+  Float_t nlgtgtvar_pf;
 
   //////////////////////////
   // Tag and Probe  

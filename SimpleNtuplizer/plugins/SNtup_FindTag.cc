@@ -40,7 +40,8 @@ bool SimpleNtuplizer::findTag(
       electron.deltaPhiSuperClusterTrackAtVtx() < 0.08 &&
       electron.hcalOverEcal() < 0.01 &&
       (1./electron.correctedEcalEnergy() - 1./electron.trackMomentumAtVtx().rho()) < 0.01 &&
-      electron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS) < 1 &&      
+      //electron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS) < 1 &&      
+      electron.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS) < 1 &&      
       (electron.pfIsolationVariables().sumChargedHadronPt + electron.pfIsolationVariables().sumNeutralHadronEt + electron.pfIsolationVariables().sumPhotonEt) < 0.05*electron.pt();
     if (!passID) continue;
 

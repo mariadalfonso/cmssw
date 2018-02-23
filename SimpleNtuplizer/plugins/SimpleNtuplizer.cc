@@ -48,6 +48,8 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
   pspfLabel_(consumes<reco::PFCluster::EEtoPSAssociation>(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   genpfLabel_(consumes<edm::ValueMap<reco::GenParticleRef> >(iConfig.getParameter<edm::InputTag>("pfLabel"))),
   clusSizeLabel_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("pfLabel"))),
+  ps1Label_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("ps1Label"))),
+  ps2Label_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("ps2Label"))),
   // SRP collections
   ebSrFlagToken_(consumes<EBSrFlagCollection>(iConfig.getParameter<edm::InputTag>("ebSrFlagCollection"))),
   eeSrFlagToken_(consumes<EESrFlagCollection>(iConfig.getParameter<edm::InputTag>("eeSrFlagCollection")))
@@ -506,6 +508,13 @@ SimpleNtuplizer::SimpleNtuplizer(const edm::ParameterSet& iConfig):
     pfTree_->Branch("genEta",          &genEta_pf);
     pfTree_->Branch("genPhi",          &genPhi_pf);
     pfTree_->Branch("genStatusFlag",          &genStatusFlag_pf);
+
+    pfTree_->Branch("ietamod20",         &ietamod20_pf);
+    pfTree_->Branch("iphimod20",         &iphimod20_pf);
+    pfTree_->Branch("nhits",         &nhits_pf);
+    pfTree_->Branch("tgtvar",         &tgtvar_pf);
+    pfTree_->Branch("nlgtgtvar",         &nlgtgtvar_pf);
+
   }
 
 
