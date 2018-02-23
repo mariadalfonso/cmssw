@@ -30,18 +30,29 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
   genEta_pf       = -99;
   genPhi_pf       = -99;
   genStatusFlag_pf= -99;
-    
+  ietamod20_pf      = -999;
+  iphimod20_pf      = -999;
+  tgtvar_pf         = -999;
+  nlgtgtvar_pf      = -999;
+  nhits_pf          = -999;
+  
   edm::Handle<reco::PFClusterCollection> clustersH;
   iEvent.getByToken(pfLabel_,clustersH);
   
-  edm::Handle<reco::PFCluster::EEtoPSAssociation> clusterpairH;
-  iEvent.getByToken(pspfLabel_,clusterpairH);
+  //edm::Handle<reco::PFCluster::EEtoPSAssociation> clusterpairH;
+  //iEvent.getByToken(pspfLabel_,clusterpairH);
 
   edm::Handle<edm::ValueMap<reco::GenParticleRef> > clustergenH;
   iEvent.getByToken(genpfLabel_,clustergenH);
 
   edm::Handle<edm::ValueMap<int> > clusSize;
   iEvent.getByToken(clusSizeLabel_,clusSize);
+
+  edm::Handle<edm::ValueMap<float> > clusPS1;
+  iEvent.getByToken(ps1Label_,clusPS1);
+
+  edm::Handle<edm::ValueMap<float> > clusPS2;
+  iEvent.getByToken(ps2Label_,clusPS2);
 
   edm::Handle<reco::VertexCollection> vertices;
   if(doVertex) {
@@ -83,6 +94,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       ///corrected energy
       cluscorrE_pf = pfc.correctedEnergy();
       
+      //std::cout<<"corrected cluster energy "<<cluscorrE_pf<<std::endl;
       ///pt
       clusPt_pf = pfc.pt();
       
@@ -129,14 +141,25 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 	clusIphiIy_pf = eeseed.iy();      
       }
        
+      Int_t signiEtaSeed = clusIetaIx_pf > 0 ? +1 : -1;
+      
+      ietamod20_pf = abs(clusIetaIx_pf)<=25 ? (clusIetaIx_pf-signiEtaSeed) : (clusIetaIx_pf-26*signiEtaSeed)%20 ;
+    
+      iphimod20_pf  = (clusIphiIy_pf-1)%20;
+    
+      auto clusterref = edm::Ref<reco::PFClusterCollection>(clustersH, iP++);
+    
       ///lazy tools
       //EcalClusterLazyTools lazyTool(iEvent, iSetup, ecalRecHitEBToken_, ecalRecHitEEToken_);
       //clusSize_pf = lazyTool.n5x5(pfc);
-      
+
+      //std::cout<<""<<std::endl;
+      //std::cout<<" clusrawE "<<clusrawE_pf<<std::endl;
       ///////PS energy
       //compute preshower energies for endcap clusters
       double ePS1=0, ePS2=0;
       if(!iseb) {
+	/*
 	auto ee_key_val = std::make_pair(nClus_pf,edm::Ptr<reco::PFCluster>());
 	const auto clustops = std::equal_range(clusterpairH->begin(),
 					       clusterpairH->end(),
@@ -144,6 +167,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 					       sortByKey);
 	for( auto i_ps = clustops.first; i_ps != clustops.second; ++i_ps) {
 	  edm::Ptr<reco::PFCluster> psclus(i_ps->second);
+
 	  switch( psclus->layer() ) {
 		
 	  case PFLayer::PS1:
@@ -156,13 +180,17 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 	    break;
 	  }
 	}//for( auto i_ps = clustops.first; i_ps !=..)
-	    
 	clusPS1_pf = ePS1;
 	clusPS2_pf = ePS2;
+	*/
+
+	clusPS1_pf = (*clusPS1)[clusterref];
+	clusPS2_pf = (*clusPS2)[clusterref];
+
+
 	    
       }//if(!iseb)
 
-      
 
        ////SR flags
       if(iseb){
@@ -182,7 +210,7 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
       }
     
       // gen matching
-      auto clusterref = edm::Ref<reco::PFClusterCollection>(clustersH, iP++);
+      //auto clusterref = edm::Ref<reco::PFClusterCollection>(clustersH, iP++);
       auto genpart = (*clustergenH)[clusterref];
       genEnergy_pf = genpart->energy();
       genPt_pf = genpart->pt();
@@ -203,6 +231,21 @@ void SimpleNtuplizer::setPFVariables(const edm::Event& iEvent,
 
       clusSize_pf = (*clusSize)[clusterref];
 
+
+      ///tgtvar_pf
+      tgtvar_pf    = log(genEnergy_pf/clusrawE_pf);
+      nlgtgtvar_pf = genEnergy_pf/clusrawE_pf;
+      if(!iseb)
+	{
+	  tgtvar_pf    = log( genEnergy_pf/(clusrawE_pf+clusPS1_pf+clusPS2_pf) );
+	  nlgtgtvar_pf =  genEnergy_pf/(clusrawE_pf+clusPS1_pf+clusPS2_pf) ;
+	}
+      
+      nhits_pf = clusSize_pf;
+      if(clusSize_pf>=3)
+	nhits_pf = 3;
+      
+      
       nClus_pf++;
 
       pfTree_->Fill();       
