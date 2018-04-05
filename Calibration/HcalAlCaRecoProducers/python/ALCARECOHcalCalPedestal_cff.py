@@ -31,61 +31,26 @@ qie10Digis = EventFilter.HcalRawToDigi.HcalRawToDigi_cfi.hcalDigis.clone()
 qie10Digis.InputLabel = cms.InputTag('hltHcalCalibrationRaw')
 qie10Digis.FEDs = cms.untracked.vint32(1132)
 
-import RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi
-hbherecoPedestal = RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi.hbheprereco.clone(
-    digiLabelQIE8  = cms.InputTag("hcalDigiAlCaPedestal"),
-    digiLabelQIE11 = cms.InputTag("hcalDigiAlCaPedestal"),
-###    tsFromDB = cms.bool(False),
-    dropZSmarkedPassed = cms.bool(False),
-    algorithm = dict(
-        useMahi = cms.bool(False),
-        useM2 = cms.bool(False),
-        useM3 = cms.bool(False)
-    ),
-    setNegativeFlagsQIE8 = cms.bool(False),
-    setNegativeFlagsQIE11 = cms.bool(False),
-    setNoiseFlagsQIE8 = cms.bool(True),
-    setNoiseFlagsQIE11 = cms.bool(False),
-    setPulseShapeFlagsQIE8 = cms.bool(False),
-    setPulseShapeFlagsQIE11 = cms.bool(False),
-    setLegacyFlagsQIE8 = cms.bool(False),
-    setLegacyFlagsQIE11 = cms.bool(False),
-)
 
-hbherecoPedestal.algorithm.firstSampleShift = -100 # for the very beginning of the TS array
+from Calibration.HcalAlCaRecoProducers.ALCARECOHcalCalMinBiasNoise_cff import *
 
-import RecoLocalCalo.HcalRecProducers.hosimplereco_cfi
-horecoPedestal = RecoLocalCalo.HcalRecProducers.hosimplereco_cfi.hosimplereco.clone()
+hbherecoPedestal = hbherecoNoise.clone()
+hbherecoPedestal.digiLabelQIE8  = cms.InputTag("hcalDigiAlCaPedestal")
+hbherecoPedestal.digiLabelQIE11 = cms.InputTag("hcalDigiAlCaPedestal")
+
+horecoPedestal = horecoNoise.clone()
 horecoPedestal.digiLabel = cms.InputTag('hcalDigiAlCaPedestal')
-horecoPedestal.firstSample = cms.int32(0)
-horecoPedestal.samplesToAdd = cms.int32(4)
-horecoPedestal.dropZSmarkedPassed = cms.bool(False)
 
-import RecoLocalCalo.HcalRecProducers.hfsimplereco_cfi
-hfrecoPedestal = RecoLocalCalo.HcalRecProducers.hfsimplereco_cfi.hfsimplereco.clone()
+hfrecoPedestal = hfrecoNoise.clone()
 hfrecoPedestal.digiLabel = cms.InputTag('hcalDigiAlCaPedestal')
-hfrecoPedestal.firstSample = cms.int32(0)
-hfrecoPedestal.samplesToAdd = cms.int32(2)
-hfrecoPedestal.dropZSmarkedPassed = cms.bool(False)
 
-import RecoLocalCalo.HcalRecProducers.hfprereco_cfi
-hfprerecoPedestal = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
-    digiLabel = cms.InputTag("hcalDigiAlCaPedestal"),
-    dropZSmarkedPassed = cms.bool(False),
-    tsFromDB = cms.bool(False),
-    sumAllTimeSlices = cms.bool(False),
-    forceSOI = cms.int32(0)
-)
+hfprerecoPedestal = hfprerecoNoise.clone()
+hfprerecoPedestal.digiLabel = cms.InputTag("hcalDigiAlCaPedestal")
 
-import RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi
-_phase1_hfrecoPedestal = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi.hfreco.clone(
-    inputLabel = cms.InputTag("hfprerecoPedestal"),
-    setNoiseFlags = cms.bool(False),
-    algorithm = dict(
-        Class = cms.string("HFSimpleTimeCheck"),
-        rejectAllFailures = cms.bool(False)
-    ),
-)
+phase1_hfrecoPedestal = phase1_hfrecoNoise.clone()
+phase1_hfrecoPedestal.inputLabel = cms.InputTag("hfprerecoPedestal")
+
+
 
 seqALCARECOHcalCalPedestal = cms.Sequence(hbherecoPedestal*hfrecoPedestal*horecoPedestal)
 
@@ -100,7 +65,7 @@ _phase1_seqALCARECOHcalCalPedestal.insert(0,hfprerecoPedestal)
 
 from Configuration.Eras.Modifier_run2_HF_2017_cff import run2_HF_2017
 run2_HF_2017.toReplaceWith( seqALCARECOHcalCalPedestal, _phase1_seqALCARECOHcalCalPedestal )
-run2_HF_2017.toReplaceWith( hfrecoPedestal, _phase1_hfrecoPedestal )
+run2_HF_2017.toReplaceWith( hfrecoPedestal, phase1_hfrecoPedestal )
 
 import RecoLocalCalo.HcalRecProducers.hbheplan1_cfi
 hbheplan1Pedestal = RecoLocalCalo.HcalRecProducers.hbheplan1_cfi.hbheplan1.clone(
