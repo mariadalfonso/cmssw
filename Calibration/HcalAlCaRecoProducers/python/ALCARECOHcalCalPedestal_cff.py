@@ -42,7 +42,6 @@ hbherecoPedestal = RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi.hb
         useM2 = cms.bool(False),
         useM3 = cms.bool(False)
     ),
-    processQIE11 = cms.bool(False),
     setNegativeFlagsQIE8 = cms.bool(False),
     setNegativeFlagsQIE11 = cms.bool(False),
     setNoiseFlagsQIE8 = cms.bool(True),
@@ -106,13 +105,6 @@ run2_HF_2017.toReplaceWith( hfrecoPedestal, _phase1_hfrecoPedestal )
 import RecoLocalCalo.HcalRecProducers.hbheplan1_cfi
 hbheplan1Pedestal = RecoLocalCalo.HcalRecProducers.hbheplan1_cfi.hbheplan1.clone(
     hbheInput = cms.InputTag("hbheprerecoPedestal")
-)
-
-from Configuration.Eras.Modifier_run2_HCAL_2017_cff import run2_HCAL_2017
-run2_HCAL_2017.toModify( hbherecoPedestal,
-    processQIE11 = cms.bool(True),
-# temporarily disabled until RecoLocalCalo/HcalRecProducers/python/HBHEPhase1Reconstructor_cfi.py:flagParametersQIE11 is filled
-#    setNoiseFlagsQIE11 = cms.bool(True),
 )
 
 _plan1_seqALCARECOHcalCalPedestal = _phase1_seqALCARECOHcalCalPedestal.copy()

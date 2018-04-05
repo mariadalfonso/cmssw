@@ -28,7 +28,6 @@ hbherecoNoise = RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi.hbhep
         useM2 = cms.bool(False),
         useM3 = cms.bool(False)
     ),
-    processQIE11 = cms.bool(False),
     setNegativeFlagsQIE8 = cms.bool(False),
     setNegativeFlagsQIE11 = cms.bool(False),
     setNoiseFlagsQIE8 = cms.bool(True),
