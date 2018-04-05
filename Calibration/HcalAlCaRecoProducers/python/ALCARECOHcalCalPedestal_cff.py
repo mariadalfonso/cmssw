@@ -54,13 +54,6 @@ hbherecoPedestal = RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi.hb
 
 hbherecoPedestal.algorithm.firstSampleShift = -100 # for the very beginning of the TS array
 
-import RecoLocalCalo.HcalRecProducers.hfsimplereco_cfi
-hfrecoPedestal = RecoLocalCalo.HcalRecProducers.hfsimplereco_cfi.hfsimplereco.clone()
-hfrecoPedestal.digiLabel = cms.InputTag('hcalDigiAlCaPedestal')
-hfrecoPedestal.firstSample = cms.int32(0)
-hfrecoPedestal.samplesToAdd = cms.int32(2)
-hfrecoPedestal.dropZSmarkedPassed = cms.bool(False)
-
 import RecoLocalCalo.HcalRecProducers.hosimplereco_cfi
 horecoPedestal = RecoLocalCalo.HcalRecProducers.hosimplereco_cfi.hosimplereco.clone()
 horecoPedestal.digiLabel = cms.InputTag('hcalDigiAlCaPedestal')
@@ -68,13 +61,12 @@ horecoPedestal.firstSample = cms.int32(0)
 horecoPedestal.samplesToAdd = cms.int32(4)
 horecoPedestal.dropZSmarkedPassed = cms.bool(False)
 
-seqALCARECOHcalCalPedestal = cms.Sequence(hbherecoPedestal*hfrecoPedestal*horecoPedestal) 
-
-seqALCARECOHcalCalPedestalDigi = cms.Sequence(hcalCalibPedestalHLT*
-                                              hcalCalibPedestal*
-                                              hcalDigiAlCaPedestal*
-                                              qie10Digis*
-                                              gtDigisAlCaPedestal)
+import RecoLocalCalo.HcalRecProducers.hfsimplereco_cfi
+hfrecoPedestal = RecoLocalCalo.HcalRecProducers.hfsimplereco_cfi.hfsimplereco.clone()
+hfrecoPedestal.digiLabel = cms.InputTag('hcalDigiAlCaPedestal')
+hfrecoPedestal.firstSample = cms.int32(0)
+hfrecoPedestal.samplesToAdd = cms.int32(2)
+hfrecoPedestal.dropZSmarkedPassed = cms.bool(False)
 
 import RecoLocalCalo.HcalRecProducers.hfprereco_cfi
 hfprerecoPedestal = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
@@ -94,6 +86,14 @@ _phase1_hfrecoPedestal = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cf
         rejectAllFailures = cms.bool(False)
     ),
 )
+
+seqALCARECOHcalCalPedestal = cms.Sequence(hbherecoPedestal*hfrecoPedestal*horecoPedestal)
+
+seqALCARECOHcalCalPedestalDigi = cms.Sequence(hcalCalibPedestalHLT*
+                                              hcalCalibPedestal*
+                                              hcalDigiAlCaPedestal*
+                                              qie10Digis*
+                                              gtDigisAlCaPedestal)
 
 _phase1_seqALCARECOHcalCalPedestal = seqALCARECOHcalCalPedestal.copy()
 _phase1_seqALCARECOHcalCalPedestal.insert(0,hfprerecoPedestal)

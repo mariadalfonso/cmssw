@@ -14,6 +14,7 @@ hcalminbiasHLT =  HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone(
 )
 
 import RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi
+
 hbherecoMBNZS = RecoLocalCalo.HcalRecProducers.HBHEPhase1Reconstructor_cfi.hbheprereco.clone(
     digiLabelQIE8  = cms.InputTag("hcalDigiAlCaMB"),
     digiLabelQIE11 = cms.InputTag("hcalDigiAlCaMB"),
@@ -60,13 +61,7 @@ seqALCARECOHcalCalMinBiasDigiNoHLT = cms.Sequence(hcalDigiAlCaMB*gtDigisAlCaMB)
 seqALCARECOHcalCalMinBias = cms.Sequence(hbherecoMBNZS*horecoMBNZS*hbherecoNoise*hfrecoNoise*hfrecoMBNZS*horecoNoise)
 
 import RecoLocalCalo.HcalRecProducers.hfprereco_cfi
-hfprerecoNoise = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
-    digiLabel = cms.InputTag("hcalDigiAlCaMB"),
-    dropZSmarkedPassed = cms.bool(False),
-    tsFromDB = cms.bool(False),
-    sumAllTimeSlices = cms.bool(False),
-    forceSOI = cms.int32(0)
-)
+
 hfprerecoMBNZS = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
     digiLabel = cms.InputTag("hcalDigiAlCaMB"),
     dropZSmarkedPassed = cms.bool(False),
@@ -75,16 +70,7 @@ hfprerecoMBNZS = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
     forceSOI = cms.int32(1)
 )
 
-import RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi
-_phase1_hfrecoNoise = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi.hfreco.clone(
-    inputLabel = cms.InputTag("hfprerecoNoise"),
-    setNoiseFlags = cms.bool(False),
-    algorithm = dict(
-        Class = cms.string("HFSimpleTimeCheck"),
-        rejectAllFailures = cms.bool(False)
-    ),
-)
-_phase1_hfrecoMBNZS = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi.hfreco.clone(
+phase1_hfrecoMBNZS = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi.hfreco.clone(
     inputLabel = cms.InputTag("hfprerecoMBNZS"),
     setNoiseFlags = cms.bool(False),
     algorithm = dict(
@@ -99,8 +85,8 @@ _phase1_seqALCARECOHcalCalMinBias.insert(0,hfprerecoNoise)
 
 from Configuration.Eras.Modifier_run2_HF_2017_cff import run2_HF_2017
 run2_HF_2017.toReplaceWith( seqALCARECOHcalCalMinBias, _phase1_seqALCARECOHcalCalMinBias )
-run2_HF_2017.toReplaceWith( hfrecoNoise, _phase1_hfrecoNoise )
-run2_HF_2017.toReplaceWith( hfrecoMBNZS, _phase1_hfrecoMBNZS )
+run2_HF_2017.toReplaceWith( hfrecoNoise, phase1_hfrecoNoise )
+run2_HF_2017.toReplaceWith( hfrecoMBNZS, phase1_hfrecoMBNZS )
 
 import RecoLocalCalo.HcalRecProducers.hbheplan1_cfi
 hbheplan1MBNZS = RecoLocalCalo.HcalRecProducers.hbheplan1_cfi.hbheplan1.clone(

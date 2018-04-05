@@ -35,25 +35,10 @@ hfprerecoMBNZS = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
     sumAllTimeSlices = cms.bool(True),
     forceSOI = cms.int32(1)
 )
-hfprerecoNoise = RecoLocalCalo.HcalRecProducers.hfprereco_cfi.hfprereco.clone(
-    digiLabel = cms.InputTag("hcalDigiAlCaMB"),
-    dropZSmarkedPassed = cms.bool(False),
-    tsFromDB = cms.bool(False),
-    sumAllTimeSlices = cms.bool(False),
-    forceSOI = cms.int32(0)
-)
 
 import RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi
 _phase1_hfrecoMBNZS = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi.hfreco.clone(
     inputLabel = cms.InputTag("hfprerecoMBNZS"),
-    setNoiseFlags = cms.bool(False),
-    algorithm = dict(
-        Class = cms.string("HFSimpleTimeCheck"),
-        rejectAllFailures = cms.bool(False)
-    ),
-)
-_phase1_hfrecoNoise = RecoLocalCalo.HcalRecProducers.HFPhase1Reconstructor_cfi.hfreco.clone(
-    inputLabel = cms.InputTag("hfprerecoNoise"),
     setNoiseFlags = cms.bool(False),
     algorithm = dict(
         Class = cms.string("HFSimpleTimeCheck"),
