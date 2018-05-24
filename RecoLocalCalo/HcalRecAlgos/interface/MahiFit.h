@@ -66,7 +66,6 @@ struct MahiNnlsWorkspace {
   unsigned int nP;
   PulseVector ampVec;
 
-  PulseVector errVec;
   PulseVector ampvecpermtest;
 
   SamplePulseMatrix invcovp;
@@ -75,8 +74,6 @@ struct MahiNnlsWorkspace {
   PulseVector updateWork; // w (vector)
 
   SampleDecompLLT covDecomp;
-  SampleMatrix covDecompLinv;
-  PulseMatrix topleft_work;
   PulseDecompLDLT pulseDecomp;
 
 };

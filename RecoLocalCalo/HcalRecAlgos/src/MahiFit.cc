@@ -158,7 +158,6 @@ void MahiFit::doFit(std::array<float,3> &correctedOutput, int nbx) const {
 
   nnlsWork_.pulseMat.resize(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
   nnlsWork_.ampVec = PulseVector::Zero(nnlsWork_.nPulseTot);
-  nnlsWork_.errVec = PulseVector::Zero(nnlsWork_.nPulseTot);
 
   int offset=0;
   for (unsigned int iBX=0; iBX<nnlsWork_.nPulseTot; ++iBX) {
@@ -686,14 +685,11 @@ void MahiFit::resetWorkspace() const {
   nnlsWork_.pulseDerivMat.setZero();
   nnlsWork_.residuals.setZero();
   nnlsWork_.ampVec.setZero();
-  nnlsWork_.errVec.setZero();
   nnlsWork_.ampvecpermtest.setZero();
   nnlsWork_.invcovp.setZero();
   nnlsWork_.aTaMat.setZero();
   nnlsWork_.aTbVec.setZero();
   nnlsWork_.updateWork.setZero();
-  nnlsWork_.covDecompLinv.setZero();
-  nnlsWork_.topleft_work.setZero();
 
 
 
