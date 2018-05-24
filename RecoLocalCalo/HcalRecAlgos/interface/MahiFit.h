@@ -149,9 +149,7 @@ class MahiFit
   double minimize() const;
   void onePulseMinimize() const;
   void updateCov() const;
-  void updatePulseShape(double itQ, FullSampleVector &pulseShape, 
-			FullSampleVector &pulseDeriv,
-			FullSampleMatrix &pulseCov) const;
+  void updatePulseShape(double itQ, unsigned int) const;
 
   double calculateArrivalTime() const;
   double calculateChiSq() const;

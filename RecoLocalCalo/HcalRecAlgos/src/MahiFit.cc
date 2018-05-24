@@ -167,15 +167,13 @@ void MahiFit::doFit(std::array<float,3> &correctedOutput, int nbx) const {
     nnlsWork_.pulseDerivArray[iBX] = FullSampleVector::Zero(MaxFSVSize);
     nnlsWork_.pulseCovArray[iBX]   = FullSampleMatrix::Constant(0);
 
-    if (offset==pedestalBX_) {
-      nnlsWork_.ampVec.coeffRef(iBX) = 0;
-    }
-    else {
+    nnlsWork_.ampVec.coeffRef(iBX) = 0;
+
+
+    if (offset!=pedestalBX_) {
 
       updatePulseShape(nnlsWork_.amplitudes.coeff(nnlsWork_.tsOffset + offset), 
-		       nnlsWork_.pulseShapeArray[iBX], 
-		       nnlsWork_.pulseDerivArray[iBX],
-		       nnlsWork_.pulseCovArray[iBX]);
+		       iBX);
       
       nnlsWork_.ampVec.coeffRef(iBX)=0;
 
@@ -250,8 +248,7 @@ double MahiFit::minimize() const {
 
 }
 
-void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSampleVector &pulseDeriv,
-			       FullSampleMatrix &pulseCov) const {
+void MahiFit::updatePulseShape(double itQ, unsigned int iBX) const {
   
   float t0=meanTime_;
 
@@ -283,8 +280,8 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
 
   for (unsigned int iTS=nnlsWork_.fullTSOffset; iTS<nnlsWork_.fullTSOffset + nnlsWork_.tsSize; ++iTS) {
 
-    pulseShape.coeffRef(iTS) = nnlsWork_.pulseN[iTS-nnlsWork_.fullTSOffset+delta];
-    pulseDeriv.coeffRef(iTS) = 0.5*(nnlsWork_.pulseM[iTS-nnlsWork_.fullTSOffset+delta]+nnlsWork_.pulseP[iTS-nnlsWork_.fullTSOffset+delta])/(2*nnlsWork_.dt);
+    nnlsWork_.pulseShapeArray[iBX].coeffRef(iTS) = nnlsWork_.pulseN[iTS-nnlsWork_.fullTSOffset+delta];
+    nnlsWork_.pulseDerivArray[iBX].coeffRef(iTS) = 0.5*(nnlsWork_.pulseM[iTS-nnlsWork_.fullTSOffset+delta]+nnlsWork_.pulseP[iTS-nnlsWork_.fullTSOffset+delta])/(2*nnlsWork_.dt);
 
     nnlsWork_.pulseM[iTS-nnlsWork_.fullTSOffset] -= nnlsWork_.pulseN[iTS-nnlsWork_.fullTSOffset];
     nnlsWork_.pulseP[iTS-nnlsWork_.fullTSOffset] -= nnlsWork_.pulseN[iTS-nnlsWork_.fullTSOffset];
@@ -296,8 +293,8 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
       double tmp = 0.5*( nnlsWork_.pulseP[iTS-nnlsWork_.fullTSOffset+delta]*nnlsWork_.pulseP[jTS-nnlsWork_.fullTSOffset+delta] +
 			 nnlsWork_.pulseM[iTS-nnlsWork_.fullTSOffset+delta]*nnlsWork_.pulseM[jTS-nnlsWork_.fullTSOffset+delta] );
       
-      pulseCov(iTS,jTS) += tmp;
-      pulseCov(jTS,iTS) += tmp;
+      nnlsWork_.pulseCovArray[iBX](iTS,jTS) += tmp;
+      nnlsWork_.pulseCovArray[iBX](jTS,iTS) += tmp;
       
     }
   }
