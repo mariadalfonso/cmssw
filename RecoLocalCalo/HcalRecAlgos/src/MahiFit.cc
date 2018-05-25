@@ -175,8 +175,6 @@ void MahiFit::doFit(std::array<float,3> &correctedOutput, int nbx) const {
       updatePulseShape(nnlsWork_.amplitudes.coeff(nnlsWork_.tsOffset + offset), 
 		       iBX);
       
-      nnlsWork_.ampVec.coeffRef(iBX)=0;
-
       nnlsWork_.pulseMat.col(iBX) = nnlsWork_.pulseShapeArray[iBX].segment(nnlsWork_.fullTSOffset - offset, nnlsWork_.tsSize);
 
     }
@@ -188,8 +186,6 @@ void MahiFit::doFit(std::array<float,3> &correctedOutput, int nbx) const {
   nnlsWork_.aTbVec.resize(nnlsWork_.nPulseTot);
 
   double chiSq = minimize(); 
-
-  nnlsWork_.residuals = nnlsWork_.pulseMat*nnlsWork_.ampVec - nnlsWork_.amplitudes;
 
   bool foundintime = false;
   unsigned int ipulseintime = 0;
@@ -204,6 +200,7 @@ void MahiFit::doFit(std::array<float,3> &correctedOutput, int nbx) const {
   if (foundintime) {
     correctedOutput.at(0) = nnlsWork_.ampVec.coeff(ipulseintime); //charge
     if (correctedOutput.at(0)!=0) {
+
 	double arrivalTime = calculateArrivalTime();
 	correctedOutput.at(1) = arrivalTime; //time
     }
@@ -324,6 +321,8 @@ void MahiFit::updateCov() const {
 }
 
 double MahiFit::calculateArrivalTime() const {
+
+  nnlsWork_.residuals = nnlsWork_.pulseMat*nnlsWork_.ampVec - nnlsWork_.amplitudes;
 
   nnlsWork_.pulseDerivMat.resize(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
 
