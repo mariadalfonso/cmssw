@@ -50,6 +50,6 @@ import FWCore.ParameterSet.Config as cms
 m0Parameters = cms.PSet(
     firstSampleShift = cms.int32(0),
     samplesToAdd = cms.int32(2),
-    correctForPhaseContainment = cms.bool(True),
+    correctForPhaseContainment = cms.bool(False),
     correctionPhaseNS = cms.double(6.0),
 )

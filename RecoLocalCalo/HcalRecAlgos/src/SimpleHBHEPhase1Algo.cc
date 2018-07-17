@@ -76,7 +76,8 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
         const bool applyContainment = params ? params->correctForPhaseContainment() : corrFPC_;
         const float phasens = params ? params->correctionPhaseNS() : phaseNS_;
         m0E = m0Energy(info, fc_ampl, applyContainment, phasens, nSamplesToAdd);
-        m0E *= hbminusCorrectionFactor(channelId, m0E, isData);
+	// not yet implemented in the GPU
+	//        m0E *= hbminusCorrectionFactor(channelId, m0E, isData);
         m0t = m0Time(info, fc_ampl, calibs, nSamplesToAdd);
     }
 

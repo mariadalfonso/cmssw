@@ -61,6 +61,7 @@
 #include "RecoLocalCalo/HcalRecAlgos/interface/fetchHcalAlgoData.h"
 
 #include "RecoLocalCalo/HcalRecAlgos/interface/gpu_reco_mahi.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/gpu_reco_m0.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/gpu_common.h"
 
 #define MAX_SIZE_RECHITS 10000
@@ -356,7 +357,8 @@ private:
     void runHBHENegativeEFilter(const HBHEChannelInfo& info, HBHERecHit* rh);
 
     // gpu stuff
-    hcal::mahi::DeviceData ddata_;
+    hcal::m0::DeviceData ddata_;
+  //    hcal::mahi::DeviceData ddata_;
     hcal::mahi::PulseShapeData psdata_;
 };
 
@@ -571,7 +573,10 @@ void HBHEPhase1ReconstructorGPU::processData(const Collection& coll,
     }
 
     // perform the reconstruction on the whole vector 
-    hcal::mahi::reco(ddata_, *infos, *rechits, vparams, vcalibs, psdata_, isRealData);
+    // USE THE MAHI E
+    //    hcal::mahi::reco(ddata_, *infos, *rechits, vparams, vcalibs, psdata_, isRealData);
+    // USE THE MO E
+    hcal::m0::reco(ddata_, *infos, *rechits, vparams, vcalibs, isRealData);
 
     /*
     for (size_t ihit=0; ihit<infos->size(); ihit++) {
@@ -687,8 +692,11 @@ HBHEPhase1ReconstructorGPU::produce(edm::Event& e, const edm::EventSetup& eventS
 
     // Create new output collections
     std::unique_ptr<HBHEChannelInfoCollection> infos;
-    infos = std::make_unique<HBHEChannelInfoCollection>();
-
+    if (saveInfos_)
+      {
+	infos = std::make_unique<HBHEChannelInfoCollection>();
+	infos->reserve(maxOutputSize);
+      }
     std::unique_ptr<HBHERecHitCollection> out;
     if (makeRecHits_)
     {
