@@ -27,6 +27,7 @@
 #include "G4TouchableHistory.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4AffineTransform.hh"
+#include "G4EmCalculator.hh"
 
 #include "TrackingMaterialProducer.h"
 
@@ -129,6 +130,8 @@ void TrackingMaterialProducer::update(const BeginOfJob* event)
 void TrackingMaterialProducer::update(const BeginOfEvent* event)
 {
   m_tracks = new std::vector<MaterialAccountingTrack>();
+  totallosinmatEtable = 0.;
+  totallosinmatEfull = 0.;
 }
 
 
@@ -187,75 +190,57 @@ void TrackingMaterialProducer::update(const G4Step* step)
   CLHEP::Hep3Vector prePos  = prePoint->GetPosition();
   CLHEP::Hep3Vector postPos = postPoint->GetPosition();
   //====================================================================================================
-  //Comment out the composite materials until we find a way to get their atomic weight
-  if (material->GetName() == "StainlessSteel"){return;}
-  if (material->GetName() == "M_NEMA FR4 plate"){return;}
-  if (material->GetName() == "Air"){return;}
-  if (material->GetName() == "WCu"){return;}
-  if (material->GetName() == "Cables"){return;}
-  if (material->GetName() == "H_Scintillator"){return;}
-  //An effort to implement bethe-block
-  //In order to understand the units here someone should see 33.4 and 33.5 in 
-  //http://pdg.lbl.gov/2016/reviews/rpp2016-rev-passage-particles-matter.pdf
-  //and keep in mind that he is shooting particle of GeV. 
-  const G4VTouchable* tch= prePoint->GetTouchable();
-  G4ThreeVector localPre = tch->GetHistory()->GetTopTransform().TransformPoint(step->GetPreStepPoint()->GetPosition());
+  //Go below only in HGCal case
+  bool isHGCal = false;
+  if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HGCal" ) != m_selectedNames.end()){isHGCal = true;}
 
-  Float p2 = localPre.mag2();
-  Float xf = std::abs(std::sqrt(p2)/localPre.z());
+  if (isHGCal){
 
-  Float emass = 0.511e-3;
-  Float m2 = (105.65837) * (105.65837); // <--- Units? We are shooting muons now. 
-  Float poti = 16.e-9 * pow(material->GetZ(),  0.9) ;// = 16 eV * Z**0.9, 
-  Float eplasma = 28.816e-9 * sqrt( (material->GetDensity()/(g/cm3)) * material->GetZ() / (material->GetA()/(g/mole)) );
-  Float delta0 = 2*log(eplasma/poti) - 1.;
+    G4ParticleDefinition *particleDef = step->GetTrack()->GetDefinition();
+    G4EmCalculator emCalculator;
 
+    const G4VTouchable* tch= prePoint->GetTouchable();
+    G4ThreeVector localPre = tch->GetHistory()->GetTopTransform().TransformPoint(step->GetPreStepPoint()->GetPosition());
+    Float p2 = localPre.mag2();
+    Float m2 = (105.65837) * (105.65837); // <--- Units? We are shooting muons now. In MeV here. 
+    Float e2     = p2 + m2;
+    Float e = std::sqrt(e2);
 
-  // calculate general physics things
-  Float im2 = Float(1.)/m2;
-  Float e2     = p2 + m2;
-  Float e = std::sqrt(e2);
-  Float beta2  = p2/e2;
-  Float eta2  = p2*im2;
-  Float ratio2 = (emass*emass)*im2;
-  Float emax  = Float(2.)*emass*eta2/(Float(1.) + Float(2.)*emass*e*im2 + ratio2);
-  
-  //xi here is K *  Z/A * 1/2 =  d[g/cm3] * 0.307075[MeV/(g/cm2)] * Z/A * 1/2 -> MeV/cm
-  Xi = (material->GetDensity()/(g/cm3)) * 0.307075 * (1/2.)  * material->GetZ() / (material->GetA()/(g/mole)); 
-  Float xi = Xi*xf; xi /= beta2;
-  //This should be the linear stopping power since in the Xi the density is there.
-  Float dEdx = xi*(unsafe_logf<2>(Float(2.)*emass*emax/(poti*poti)) - Float(2.)*(beta2) - delta0);
-  Float dEdx2 = xi*emax*(Float(1.)-Float(0.5)*beta2);
-  Float dP = dEdx/std::sqrt(beta2);
-  Float sigp2 = dEdx2/(beta2*p2*p2);
+    //Get always get value of dEdx or cross section from precomputed table. At 300 GeV this table provides restricted dEdx. 
+    //If you are using "Compute" method and set by hand cut value above initial energy (300 GeV) you will have mean unrestricted energy loss. 
+    G4double dEdxTable = emCalculator.GetDEDX(e,particleDef,material);
+    G4double dEdxFull = emCalculator.ComputeTotalDEDX(e,particleDef,material);    
+    // -- std::cout << "Mat "   << material->GetName()  << " step length " << length << " dEdxTable " << dEdxTable/(MeV/cm) << " dEdxFull " << dEdxFull/(MeV/cm) << std::endl;
 
-  std::cout << "Mat "   << material->GetName()  << " step length " << length << " dEdx " << dEdx << " dP " << dP << " sigp2 " << sigp2 << " Plasma energy " << eplasma << " Density (g/cm3) " << material->GetDensity()/(g/cm3) << " Mat GetZ " << material->GetZ() << " Mat GetA " << material->GetA()/(g/mole) << std::endl;
-  //====================================================================================================
+    //We should add the cos factor and make the energy in MeV. If testing the Bethe-Bloch above 
+    //uncomment the lines below. 
+    energyLoss = length * (dEdxTable/(MeV/cm)); //It should be cm * MeV/cm -> MeV
+    totallosinmatEtable = totallosinmatEtable + (energyLoss * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
+    energyLoss = length * (dEdxFull/(MeV/cm)); //It should be cm * MeV/cm -> MeV
+    totallosinmatEfull = totallosinmatEfull + (energyLoss * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
+    // Or keeping the Initial Xi approximation with neutrinos below, but change in the python gun. 
+    // -- totallosinmat = totallosinmat + (energyLoss * 1000. * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
 
-  //We should add the cos factor and make the energy in MeV. If testing the Bethe-Bloch above 
-  //uncomment the two lines below. 
-  // energyLoss = length * dEdx; //It should be cm * MeV/cm -> MeV
-  // totallosinmat = totallosinmat + (energyLoss * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
-  // Or keeping the Initial Xi approximation with neutrinos below, but change in the python gun. 
-  totallosinmat = totallosinmat + (energyLoss * 1000. * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
+    //A step never spans across boundaries: geometry or physics define the end points
+    //If the step is limited by a boundary, the post-step point stands on the
+    //boundary and it logically belongs to the next volume. 
 
-  //A step never spans across boundaries: geometry or physics define the end points
-  //If the step is limited by a boundary, the post-step point stands on the
-  //boundary and it logically belongs to the next volume. 
+    //However, for the energy loss we should keep it when the post step point is in the boundary. 
+    //If we do not, it will be a step inside the new volume. 
+    if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 2.0 && fabs(postPoint->GetMomentum().eta()) < 2.4){
+      //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
+      //So, premat - postz - posteta - postR - premattotalenergyloss - prez
+      std::cout << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
 
-  //However, for the energy loss we should keep it when the post step point is in the boundary. 
-  //If we do not, it will be a step inside the new volume. 
-  if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 2.0 && fabs(postPoint->GetMomentum().eta()) < 2.4){
-    //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
-    //So, premat - post material - postz - posteta - postR - premattotalenergyloss - prez
-     std::cout << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmat << std::endl;
+      //We should initialize to zero here since next step is in the new volume. 
+      totallosinmatEtable = 0.;
+      totallosinmatEfull = 0.;
 
-    //We should initialize to zero here since next step is in the new volume. 
-    totallosinmat = 0.;
     
-    
+    }
   }
 
+  //====================================================================================================
 
   // check for a sensitive detector
   bool enter_sensitive = false;

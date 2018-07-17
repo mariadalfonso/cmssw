@@ -57,7 +57,8 @@ private:
   std::vector<const G4LogicalVolume *>  m_selectedVolumes;
   MaterialAccountingTrack               m_track;
   std::vector<MaterialAccountingTrack>* m_tracks;  
-  double totallosinmat;
+  double totallosinmatEtable;
+  double totallosinmatEfull;
   TFile * output_file_;
   TProfile *  radLen_vs_eta_;
 };
