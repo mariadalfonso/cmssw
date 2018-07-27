@@ -17,7 +17,7 @@ hbheprereco = cms.EDProducer(
     # Label for the input QIE11DigiCollection, and flag indicating
     # whether we should process this collection
     digiLabelQIE11 = cms.InputTag("hcalDigis"),
-    processQIE11 = cms.bool(True),
+    processQIE11 = cms.bool(False),
 
     # Get the "sample of interest" index from DB?
     # If not, it is taken from the dataframe.
