@@ -88,8 +88,9 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
   edm::ParameterSet config = iPSet.getParameter<edm::ParameterSet>("TrackingMaterialProducer");
   m_selectedNames       = config.getParameter< std::vector<std::string> >("SelectedVolumes");
   m_primaryTracks       = config.getParameter<bool>("PrimaryTracksOnly");
-  txtOutFile_           = config.getUntrackedParameter<std::string>("txtOutFile");
-  hgcalzfront_           = config.getParameter<double>("hgcalzfront");
+  //The two lines below will conflict with Tracker. 
+  // txtOutFile_           = config.getUntrackedParameter<std::string>("txtOutFile");
+  // hgcalzfront_           = config.getParameter<double>("hgcalzfront");
   m_tracks              = nullptr;
 
   produces< std::vector<MaterialAccountingTrack> >();
@@ -97,6 +98,8 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
   output_file_->cd();
   radLen_vs_eta_ = new TProfile("radLen", "radLen", 250., -5., 5., 0, 10.);
 
+  txtOutFile_ = "VolumesZPosition.txt";
+  hgcalzfront_ = 3190.5;
   outVolumeZpositionTxt.open(txtOutFile_.c_str(), std::ios::out);
   //Check if HGCal volumes are selected
   isHGCal = false;
