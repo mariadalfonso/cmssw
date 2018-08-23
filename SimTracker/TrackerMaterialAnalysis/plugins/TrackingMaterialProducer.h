@@ -2,7 +2,8 @@
 #define TrackingMaterialProducer_h
 #include <string>
 #include <vector>
- 
+#include <fstream>
+
 #include "SimG4Core/Watcher/interface/SimProducer.h"
 #include "SimG4Core/Notification/interface/Observer.h"
 
@@ -61,6 +62,11 @@ private:
   double totallosinmatEfull;
   TFile * output_file_;
   TProfile *  radLen_vs_eta_;
+  std::string txtOutFile_;
+  bool isHGCal;
+  double hgcalzfront_;
+  std::ofstream outVolumeZpositionTxt; 
+  
 };
 
 #endif // TrackingMaterialProducer_h

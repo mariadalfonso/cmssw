@@ -88,12 +88,20 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
   edm::ParameterSet config = iPSet.getParameter<edm::ParameterSet>("TrackingMaterialProducer");
   m_selectedNames       = config.getParameter< std::vector<std::string> >("SelectedVolumes");
   m_primaryTracks       = config.getParameter<bool>("PrimaryTracksOnly");
+  txtOutFile_           = config.getUntrackedParameter<std::string>("txtOutFile");
+  hgcalzfront_           = config.getParameter<double>("hgcalzfront");
   m_tracks              = nullptr;
 
   produces< std::vector<MaterialAccountingTrack> >();
   output_file_ = new TFile("radLen_vs_eta_fromProducer.root", "RECREATE");
   output_file_->cd();
   radLen_vs_eta_ = new TProfile("radLen", "radLen", 250., -5., 5., 0, 10.);
+
+  outVolumeZpositionTxt.open(txtOutFile_.c_str(), std::ios::out);
+  //Check if HGCal volumes are selected
+  isHGCal = false;
+  if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HGCal" ) != m_selectedNames.end()){isHGCal = true;}
+
 }
 
 //-------------------------------------------------------------------------
@@ -145,6 +153,22 @@ void TrackingMaterialProducer::update(const BeginOfTrack* event)
   if (m_primaryTracks and track->GetParentID() != 0) {
     track->SetTrackStatus(fStopAndKill);
   }
+
+  //For the HGCal case: 
+  //In the beginning of each track, the track will first hit SS and it will 
+  //save the upper z volume boundary. So, the low boundary of the first SS 
+  //volume is never saved. So, here we give the low boundary hardcoded. 
+  //This can be found by running
+  //Geometry/HGCalCommonData/test/testHGCalParameters_cfg.py
+  //on the geometry under study and looking for zFront print out. 
+  if (isHGCal && track->GetTrackStatus() != fStopAndKill && fabs(track->GetMomentum().eta()) > 2.0 && fabs(track->GetMomentum().eta()) < 2.4){
+    if(track->GetMomentum().eta() > 0.){
+      outVolumeZpositionTxt << "StainlessSteel " << hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+    } else if (track->GetMomentum().eta() <= 0.){
+      outVolumeZpositionTxt << "StainlessSteel " << - hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+    }
+  }
+
 }
 
 bool TrackingMaterialProducer::isSelectedFast(const G4TouchableHistory* touchable) {
@@ -191,9 +215,6 @@ void TrackingMaterialProducer::update(const G4Step* step)
   CLHEP::Hep3Vector postPos = postPoint->GetPosition();
   //====================================================================================================
   //Go below only in HGCal case
-  bool isHGCal = false;
-  if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HGCal" ) != m_selectedNames.end()){isHGCal = true;}
-
   if (isHGCal){
 
     G4ParticleDefinition *particleDef = step->GetTrack()->GetDefinition();
@@ -205,7 +226,7 @@ void TrackingMaterialProducer::update(const G4Step* step)
     Float m2 = (105.65837) * (105.65837); // <--- Units? We are shooting muons now. In MeV here. 
     Float e2     = p2 + m2;
     Float e = std::sqrt(e2);
-
+     
     //Get always get value of dEdx or cross section from precomputed table. At 300 GeV this table provides restricted dEdx. 
     //If you are using "Compute" method and set by hand cut value above initial energy (300 GeV) you will have mean unrestricted energy loss. 
     G4double dEdxTable = emCalculator.GetDEDX(e,particleDef,material);
@@ -230,7 +251,7 @@ void TrackingMaterialProducer::update(const G4Step* step)
     if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 2.0 && fabs(postPoint->GetMomentum().eta()) < 2.4){
       //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
       //So, premat - postz - posteta - postR - premattotalenergyloss - prez
-      std::cout << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
+      outVolumeZpositionTxt << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
 
       //We should initialize to zero here since next step is in the new volume. 
       totallosinmatEtable = 0.;

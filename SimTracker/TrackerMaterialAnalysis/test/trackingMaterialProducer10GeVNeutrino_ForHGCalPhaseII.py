@@ -26,7 +26,9 @@ process.load('Configuration.StandardSequences.Generator_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 
 ### Loading 10GeV neutrino gun generator
-process.load("SimTracker.TrackerMaterialAnalysis.single10GeVNeutrino_cfi")
+#process.load("SimTracker.TrackerMaterialAnalysis.single10GeVNeutrino_cfi")
+### Loading 10GeV muon gun generator
+process.load("SimTracker.TrackerMaterialAnalysis.single10GeVMuon_cfi")
 
 ### Load vertex generator w/o smearing
 from Configuration.StandardSequences.VtxSmeared import VtxSmeared
@@ -64,7 +66,7 @@ def customizeMessageLogger(process):
     process.MessageLogger.debugModules.extend(['*'])
     # 2. Define destination and its default logging properties
     destination = 'debugTrackingMaterialProducer'
-    how_to_debug = cms.untracked.PSet(threshold = cms.untracked.string("DEBUG"),
+    how_to_debug = cms.untracked.PSet(threshold = cms.untracked.string("ERROR"),#was DEBUG
                                       DEBUG = cms.untracked.PSet(limit = cms.untracked.int32(0)),
                                       default = cms.untracked.PSet(limit = cms.untracked.int32(0)),
                                       )
