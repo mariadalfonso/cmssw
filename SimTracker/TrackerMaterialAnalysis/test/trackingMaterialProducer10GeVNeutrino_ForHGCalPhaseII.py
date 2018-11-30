@@ -26,9 +26,9 @@ process.load('Configuration.StandardSequences.Generator_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 
 ### Loading 10GeV neutrino gun generator
-#process.load("SimTracker.TrackerMaterialAnalysis.single10GeVNeutrino_cfi")
+process.load("SimTracker.TrackerMaterialAnalysis.single10GeVNeutrino_cfi")
 ### Loading 10GeV muon gun generator
-process.load("SimTracker.TrackerMaterialAnalysis.single10GeVMuon_cfi")
+#process.load("SimTracker.TrackerMaterialAnalysis.single10GeVMuon_cfi")
 
 ### Load vertex generator w/o smearing
 from Configuration.StandardSequences.VtxSmeared import VtxSmeared

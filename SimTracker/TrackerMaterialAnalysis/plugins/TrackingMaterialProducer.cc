@@ -234,7 +234,7 @@ void TrackingMaterialProducer::update(const G4Step* step)
     //If you are using "Compute" method and set by hand cut value above initial energy (300 GeV) you will have mean unrestricted energy loss. 
     G4double dEdxTable = emCalculator.GetDEDX(e,particleDef,material);
     G4double dEdxFull = emCalculator.ComputeTotalDEDX(e,particleDef,material);    
-    // -- std::cout << "Mat "   << material->GetName()  << " step length " << length << " dEdxTable " << dEdxTable/(MeV/cm) << " dEdxFull " << dEdxFull/(MeV/cm) << std::endl;
+    std::cout << "Mat "   << material->GetName()  << " mat radiation length" << material->GetRadlen() << " mat interaction length "  << material->GetNuclearInterLength() << " step length " << length << " dEdxTable " << dEdxTable/(MeV/cm) << " dEdxFull " << dEdxFull/(MeV/cm) << std::endl;
 
     //We should add the cos factor and make the energy in MeV. If testing the Bethe-Bloch above 
     //uncomment the lines below. 

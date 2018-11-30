@@ -10,7 +10,7 @@ generator = cms.EDProducer("FlatRandomPtGunProducer",
         MinPhi = cms.double(-3.14159265359),
         MaxPhi = cms.double( 3.14159265359),
         MinPt  = cms.double( 9.99),
-        MaxPt  = cms.double(10.01)
+        MaxPt  = cms.double( 10.01)
     ),
     AddAntiParticle = cms.bool(False),
     Verbosity       = cms.untracked.int32(0),
