@@ -251,7 +251,9 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
 
   if(applyTimeSlew_) {
     if(itQ<=1.0) t0+=tsDelay1GeV_;
-    else t0+=hcalTimeSlewDelay_->delay(itQ,slewFlavor_);
+    // COMMENT: not ported to GPU yet
+    //    else t0+=hcalTimeSlewDelay_->delay(itQ,slewFlavor_);
+    else t0+=0.0;
   }
 
   nnlsWork_.pulseN.fill(0);

@@ -182,6 +182,9 @@ float SimpleHBHEPhase1Algo::m0Energy(const HBHEChannelInfo& info,
         ibeg = 0;
     double e = info.energyInWindow(ibeg, ibeg + nSamplesToAdd);
 
+    /*
+    // COMMENT: not yet implemented on GPU
+
     // Pulse containment correction
     {    
         double corrFactor = 1.0;
@@ -189,6 +192,7 @@ float SimpleHBHEPhase1Algo::m0Energy(const HBHEChannelInfo& info,
             corrFactor = pulseCorr_.get(info.id(), nSamplesToAdd, phaseNs)->getCorrection(fc_ampl);
         e *= corrFactor;
     }
+    */
 
     return e;
 }
@@ -232,7 +236,8 @@ float SimpleHBHEPhase1Algo::m0Time(const HBHEChannelInfo& info,
             time = (maxI - soi)*25.f + timeshift_ns_hbheho(wpksamp);
 
             // Legacy QIE8 timing correction
-            time -= hcalTimeSlew_delay_->delay(std::max(1.0, fc_ampl), HcalTimeSlew::Medium);
+	    // COMMENT: as not yet ported to GPU
+	    //            time -= hcalTimeSlew_delay_->delay(std::max(1.0, fc_ampl), HcalTimeSlew::Medium);
             // Time calibration
             time -= calibs.timecorr();
         }
