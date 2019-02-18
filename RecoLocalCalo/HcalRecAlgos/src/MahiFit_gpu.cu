@@ -260,15 +260,15 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
   const double xxp[4]={ nnlsWork_.dt+t0, 1.0, 0.0, 3};
 
 //  (*pfunctor_)(&xx[0]);
-  functor_.singlePulseShapeFunc(&xx[0]);
+  functor_.singlePulseShapeFuncMahi(&xx[0]);
   functor_.getPulseShape(pulseN);
 
 //  (*pfunctor_)(&xxm[0]);
-  functor_.singlePulseShapeFunc(&xxm[0]);
+  functor_.singlePulseShapeFuncMahi(&xxm[0]);
   functor_.getPulseShape(pulseM);
   
 //  (*pfunctor_)(&xxp[0]);
-  functor_.singlePulseShapeFunc(&xxp[0]);
+  functor_.singlePulseShapeFuncMahi(&xxp[0]);
   functor_.getPulseShape(pulseP);
 
   //in the 2018+ case where the sample of interest (SOI) is in TS3, add an extra offset to align 

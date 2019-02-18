@@ -122,7 +122,19 @@ namespace FitterFuncs{
   }
 
   __device__
-  double PulseShapeFunctor::EvalPulse(const double *pars, const unsigned nPars) {
+  double PulseShapeFunctor::EvalPulse(const double *pars) {
+
+      double chisq  = 0;
+
+      int time = (pars[0]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
+      funcShape(pulse_shape_, pars[0],pars[1],psFit_slew[time]);
+
+      return chisq;
+
+  }
+
+  __device__
+  double PulseShapeFunctor::EvalPulseM2(const double *pars, const unsigned nPars) {
 
       unsigned i =0, j=0;
 
@@ -196,18 +208,23 @@ namespace FitterFuncs{
    }
 
   __device__
+  double PulseShapeFunctor::singlePulseShapeFuncMahi( const double *x ) {
+    return EvalPulse(x);
+  }
+
+  __device__
   double PulseShapeFunctor::singlePulseShapeFunc( const double *x ) {
-    return EvalPulse(x,3);
+    return EvalPulseM2(x,3);
   }
   
   __device__
   double PulseShapeFunctor::doublePulseShapeFunc( const double *x ) {
-    return EvalPulse(x,5);
+    return EvalPulseM2(x,5);
   }
   
   __device__
   double PulseShapeFunctor::triplePulseShapeFunc( const double *x ) {
-    return EvalPulse(x,7);
+    return EvalPulseM2(x,7);
   }
 
 }
