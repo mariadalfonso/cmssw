@@ -29,8 +29,20 @@ MaterialAccountingGroup::MaterialAccountingGroup( const std::string & name, cons
   m_counted( false ),
   m_file( nullptr )
 {
+
   // retrieve the elements from DDD
-  DDSpecificsMatchesValueFilter filter{DDValue("TrackingMaterialGroup", name)};
+  DDValue namevalue;
+  if ( TString(name.c_str()).Contains( "Tracker" )  ){
+         namevalue = DDValue("TrackingMaterialGroup", name);
+  } else if ( TString(name.c_str()).Contains( "HGCal" )  ){
+    namevalue = DDValue("Volume", name);
+  } else{
+    std::cout << name  << std::endl;
+    std::cerr << "Only Tracker and HGCal is supported" << std::endl;
+  }
+  
+  // retrieve the elements from DDD
+  DDSpecificsMatchesValueFilter filter{namevalue};
   DDFilteredView fv( geometry,filter );
   LogTrace("MaterialAccountingGroup") << "Elements within: " << name << std::endl;
   while (fv.next()) {

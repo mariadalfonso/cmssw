@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 generator = cms.EDProducer("FlatRandomPtGunProducer",
     PGunParameters = cms.PSet(
         # you can request more than 1 particle
-        PartID = cms.vint32(14),
+        PartID = cms.vint32(13),
         MinEta = cms.double(-4.0),
         MaxEta = cms.double( 4.0),
         MinPhi = cms.double(-3.14159265359),

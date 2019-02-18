@@ -17,6 +17,7 @@
 #include "SimG4Core/Notification/interface/EndOfTrack.h"
 
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
+#include "DataFormats/Math/interface/approx_log.h"
 
 // GEANT4
 #include "G4Step.hh"
@@ -26,6 +27,7 @@
 #include "G4TouchableHistory.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4AffineTransform.hh"
+#include "G4EmCalculator.hh"
 
 #include "TrackingMaterialProducer.h"
 
@@ -86,12 +88,23 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
   edm::ParameterSet config = iPSet.getParameter<edm::ParameterSet>("TrackingMaterialProducer");
   m_selectedNames       = config.getParameter< std::vector<std::string> >("SelectedVolumes");
   m_primaryTracks       = config.getParameter<bool>("PrimaryTracksOnly");
+  //The two lines below will conflict with Tracker. 
+  // txtOutFile_           = config.getUntrackedParameter<std::string>("txtOutFile");
+  // hgcalzfront_           = config.getParameter<double>("hgcalzfront");
   m_tracks              = nullptr;
 
   produces< std::vector<MaterialAccountingTrack> >();
   output_file_ = new TFile("radLen_vs_eta_fromProducer.root", "RECREATE");
   output_file_->cd();
   radLen_vs_eta_ = new TProfile("radLen", "radLen", 250., -5., 5., 0, 10.);
+
+  txtOutFile_ = "VolumesZPosition.txt";
+  hgcalzfront_ = 3190.5;
+  outVolumeZpositionTxt.open(txtOutFile_.c_str(), std::ios::out);
+  //Check if HGCal volumes are selected
+  isHGCal = false;
+  if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HGCal" ) != m_selectedNames.end()){isHGCal = true;}
+
 }
 
 //-------------------------------------------------------------------------
@@ -128,6 +141,8 @@ void TrackingMaterialProducer::update(const BeginOfJob* event)
 void TrackingMaterialProducer::update(const BeginOfEvent* event)
 {
   m_tracks = new std::vector<MaterialAccountingTrack>();
+  totallosinmatEtable = 0.;
+  totallosinmatEfull = 0.;
 }
 
 
@@ -141,6 +156,22 @@ void TrackingMaterialProducer::update(const BeginOfTrack* event)
   if (m_primaryTracks and track->GetParentID() != 0) {
     track->SetTrackStatus(fStopAndKill);
   }
+
+  //For the HGCal case: 
+  //In the beginning of each track, the track will first hit SS and it will 
+  //save the upper z volume boundary. So, the low boundary of the first SS 
+  //volume is never saved. So, here we give the low boundary hardcoded. 
+  //This can be found by running
+  //Geometry/HGCalCommonData/test/testHGCalParameters_cfg.py
+  //on the geometry under study and looking for zFront print out. 
+  if (isHGCal && track->GetTrackStatus() != fStopAndKill && fabs(track->GetMomentum().eta()) > 2.0 && fabs(track->GetMomentum().eta()) < 2.4){
+    if(track->GetMomentum().eta() > 0.){
+      outVolumeZpositionTxt << "StainlessSteel " << hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+    } else if (track->GetMomentum().eta() <= 0.){
+      outVolumeZpositionTxt << "StainlessSteel " << - hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+    }
+  }
+
 }
 
 bool TrackingMaterialProducer::isSelectedFast(const G4TouchableHistory* touchable) {
@@ -180,6 +211,60 @@ void TrackingMaterialProducer::update(const G4Step* step)
   G4ThreeVector globalPosPost = step->GetPostStepPoint()->GetPosition();
   GlobalPoint globalPositionIn(  globalPosPre.x()  / cm, globalPosPre.y()  / cm, globalPosPre.z() / cm );    // mm -> cm
   GlobalPoint globalPositionOut( globalPosPost.x() / cm, globalPosPost.y() / cm, globalPosPost.z() / cm );   // mm -> cm
+
+  G4StepPoint* prePoint  = step->GetPreStepPoint();
+  G4StepPoint* postPoint = step->GetPostStepPoint();
+  CLHEP::Hep3Vector prePos  = prePoint->GetPosition();
+  CLHEP::Hep3Vector postPos = postPoint->GetPosition();
+  //====================================================================================================
+  //Go below only in HGCal case
+  if (isHGCal){
+
+    G4ParticleDefinition *particleDef = step->GetTrack()->GetDefinition();
+    G4EmCalculator emCalculator;
+
+    const G4VTouchable* tch= prePoint->GetTouchable();
+    G4ThreeVector localPre = tch->GetHistory()->GetTopTransform().TransformPoint(step->GetPreStepPoint()->GetPosition());
+    Float p2 = localPre.mag2();
+    Float m2 = (105.65837) * (105.65837); // <--- Units? We are shooting muons now. In MeV here. 
+    Float e2     = p2 + m2;
+    Float e = std::sqrt(e2);
+     
+    //Get always get value of dEdx or cross section from precomputed table. At 300 GeV this table provides restricted dEdx. 
+    //If you are using "Compute" method and set by hand cut value above initial energy (300 GeV) you will have mean unrestricted energy loss. 
+    G4double dEdxTable = emCalculator.GetDEDX(e,particleDef,material);
+    G4double dEdxFull = emCalculator.ComputeTotalDEDX(e,particleDef,material);    
+    std::cout << "Mat "   << material->GetName()  << " mat radiation length" << material->GetRadlen() << " mat interaction length "  << material->GetNuclearInterLength() << " step length " << length << " dEdxTable " << dEdxTable/(MeV/cm) << " dEdxFull " << dEdxFull/(MeV/cm) << std::endl;
+
+    //We should add the cos factor and make the energy in MeV. If testing the Bethe-Bloch above 
+    //uncomment the lines below. 
+    energyLoss = length * (dEdxTable/(MeV/cm)); //It should be cm * MeV/cm -> MeV
+    totallosinmatEtable = totallosinmatEtable + (energyLoss * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
+    energyLoss = length * (dEdxFull/(MeV/cm)); //It should be cm * MeV/cm -> MeV
+    totallosinmatEfull = totallosinmatEfull + (energyLoss * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
+    // Or keeping the Initial Xi approximation with neutrinos below, but change in the python gun. 
+    // -- totallosinmat = totallosinmat + (energyLoss * 1000. * cos( 2 * atan(exp(-fabs( prePoint->GetMomentum().eta() ))) ) ); //In MeV
+
+    //A step never spans across boundaries: geometry or physics define the end points
+    //If the step is limited by a boundary, the post-step point stands on the
+    //boundary and it logically belongs to the next volume. 
+
+    //However, for the energy loss we should keep it when the post step point is in the boundary. 
+    //If we do not, it will be a step inside the new volume. 
+    if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 2.0 && fabs(postPoint->GetMomentum().eta()) < 2.4){
+      //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
+      //So, premat - postz - posteta - postR - premattotalenergyloss - prez
+      outVolumeZpositionTxt << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
+
+      //We should initialize to zero here since next step is in the new volume. 
+      totallosinmatEtable = 0.;
+      totallosinmatEfull = 0.;
+
+    
+    }
+  }
+
+  //====================================================================================================
 
   // check for a sensitive detector
   bool enter_sensitive = false;
