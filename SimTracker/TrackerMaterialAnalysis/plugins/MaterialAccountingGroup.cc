@@ -36,9 +36,11 @@ MaterialAccountingGroup::MaterialAccountingGroup( const std::string & name, cons
          namevalue = DDValue("TrackingMaterialGroup", name);
   } else if ( TString(name.c_str()).Contains( "HGCal" )  ){
     namevalue = DDValue("Volume", name);
+  } else if ( TString(name.c_str()).Contains( "HFNose" )  ){
+    namevalue = DDValue("Volume", name);
   } else{
     std::cout << name  << std::endl;
-    std::cerr << "Only Tracker and HGCal is supported" << std::endl;
+    std::cerr << "Only Tracker, HGCal, HFNose is supported" << std::endl;
   }
   
   // retrieve the elements from DDD

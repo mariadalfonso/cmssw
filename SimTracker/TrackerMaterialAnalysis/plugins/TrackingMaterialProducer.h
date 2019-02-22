@@ -64,6 +64,7 @@ private:
   TProfile *  radLen_vs_eta_;
   std::string txtOutFile_;
   bool isHGCal;
+  bool isHGCNose;
   double hgcalzfront_;
   std::ofstream outVolumeZpositionTxt; 
   

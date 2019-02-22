@@ -16,7 +16,8 @@ if readGeometryFromDB:
   from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
   process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 else:
-  process.load('Configuration.Geometry.GeometryExtended2023D28Reco_cff')
+##  process.load('Configuration.Geometry.GeometryExtended2023D28Reco_cff')
+  process.load('Configuration.Geometry.GeometryExtended2023D31_cff')
   #process.load("Geometry.HGCalCommonData.testHGCV9XML_cfi")
   #process.load("Geometry.HGCalCommonData.hgcalParametersInitialization_cfi")
 

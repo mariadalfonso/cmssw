@@ -77,6 +77,8 @@ std::tuple<const G4VPhysicalVolume*, int> GetSensitiveVolume( const G4VTouchable
     const G4VPhysicalVolume* volume = touchable->GetVolume(level);
     if (volume->GetLogicalVolume()->GetSensitiveDetector() != nullptr) {
       return std::make_tuple(volume, level);
+      std::cout << " (*volume)->GetName() = " << volume->GetName() << std::endl;
+
     }
   }
   return std::tuple<const G4VPhysicalVolume*, int>(nullptr, 0);
@@ -98,12 +100,15 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
   output_file_->cd();
   radLen_vs_eta_ = new TProfile("radLen", "radLen", 250., -5., 5., 0, 10.);
 
-  txtOutFile_ = "VolumesZPosition.txt";
+  txtOutFile_ = "VolumesZPosition_HGC_HFnose.txt";
   hgcalzfront_ = 3190.5;
   outVolumeZpositionTxt.open(txtOutFile_.c_str(), std::ios::out);
   //Check if HGCal volumes are selected
   isHGCal = false;
   if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HGCal" ) != m_selectedNames.end()){isHGCal = true;}
+
+  isHGCNose = false;
+  if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HFNose" ) != m_selectedNames.end()){isHGCNose = true;}
 
 }
 
@@ -172,6 +177,20 @@ void TrackingMaterialProducer::update(const BeginOfTrack* event)
     }
   }
 
+  /////
+
+  if (isHGCNose && track->GetTrackStatus() != fStopAndKill && fabs(track->GetMomentum().eta()) > 3.0 && fabs(track->GetMomentum().eta()) < 4) {
+    if(track->GetMomentum().eta() > 0.){
+
+      outVolumeZpositionTxt << "StainlessSteel " << hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+    } else if (track->GetMomentum().eta() <= 0.){
+      outVolumeZpositionTxt << "StainlessSteel " << - hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+    }
+  }
+
+
+
+
 }
 
 bool TrackingMaterialProducer::isSelectedFast(const G4TouchableHistory* touchable) {
@@ -216,9 +235,10 @@ void TrackingMaterialProducer::update(const G4Step* step)
   G4StepPoint* postPoint = step->GetPostStepPoint();
   CLHEP::Hep3Vector prePos  = prePoint->GetPosition();
   CLHEP::Hep3Vector postPos = postPoint->GetPosition();
+
   //====================================================================================================
   //Go below only in HGCal case
-  if (isHGCal){
+  if (isHGCal || isHGCNose){
 
     G4ParticleDefinition *particleDef = step->GetTrack()->GetDefinition();
     G4EmCalculator emCalculator;
@@ -256,12 +276,26 @@ void TrackingMaterialProducer::update(const G4Step* step)
       //So, premat - postz - posteta - postR - premattotalenergyloss - prez
       outVolumeZpositionTxt << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
 
-      //We should initialize to zero here since next step is in the new volume. 
+      std::cout << "HERE THERE IS A HGCal volume: " << postPoint->GetMomentum().eta() << std::endl;
+
+      //We should initialize to zero here since next step is in the new volume.
       totallosinmatEtable = 0.;
       totallosinmatEfull = 0.;
+    }
 
+    if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 3.0 && fabs(postPoint->GetMomentum().eta()) < 4.0){
+      //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
+      //So, premat - postz - posteta - postR - premattotalenergyloss - prez
+      outVolumeZpositionTxt << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
+
+      std::cout << "HERE THERE IS A HGCnose volume: " << postPoint->GetMomentum().eta() << std::endl;
+
+      //We should initialize to zero here since next step is in the new volume.
+      totallosinmatEtable = 0.;
+      totallosinmatEfull = 0.;
     
     }
+
   }
 
   //====================================================================================================
@@ -275,6 +309,7 @@ void TrackingMaterialProducer::update(const G4Step* step)
   const G4VPhysicalVolume* sensitive = nullptr;
   GlobalPoint position;
   std::tie(sensitive, level) = GetSensitiveVolume(touchable);
+
   if (sensitive) {
     const G4VSolid &          solid     = *touchable->GetSolid( level );
     const G4AffineTransform & transform = GetTransform( touchable, level );
@@ -299,8 +334,10 @@ void TrackingMaterialProducer::update(const G4Step* step)
       G4ThreeVector localDirPost  = transform.TransformAxis( globalDirPost );
       G4ThreeVector normalPost    = solid.SurfaceNormal( localPosPost );
       cosThetaPost = normalPost.cosTheta( localDirPost );
+
     }
   }
+
 
   // update track accounting
   if (enter_sensitive)

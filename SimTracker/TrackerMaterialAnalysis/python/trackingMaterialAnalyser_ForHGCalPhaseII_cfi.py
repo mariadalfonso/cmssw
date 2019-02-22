@@ -14,6 +14,7 @@ trackingMaterialAnalyser = cms.EDAnalyzer("TrackingMaterialAnalyser",
     Groups = cms.vstring(
         "HGCalEESensitive",
         "HGCalHESiliconSensitive",
-        "HGCalHEScintillatorSensitive"
+        "HGCalHEScintillatorSensitive",
+        "HGCalHFNoseSensitive"
     )
 )
