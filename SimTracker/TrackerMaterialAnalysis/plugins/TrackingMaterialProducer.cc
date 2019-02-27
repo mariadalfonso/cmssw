@@ -100,8 +100,7 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
   output_file_->cd();
   radLen_vs_eta_ = new TProfile("radLen", "radLen", 250., -5., 5., 0, 10.);
 
-  txtOutFile_ = "VolumesZPosition_HGC_HFnose.txt";
-  hgcalzfront_ = 3190.5;
+  txtOutFile_ = "VolumesZPosition_HFnose.txt";
   outVolumeZpositionTxt.open(txtOutFile_.c_str(), std::ios::out);
   //Check if HGCal volumes are selected
   isHGCal = false;
@@ -109,6 +108,11 @@ TrackingMaterialProducer::TrackingMaterialProducer(const edm::ParameterSet& iPSe
 
   isHGCNose = false;
   if(std::find(m_selectedNames.begin(), m_selectedNames.end(), "HFNose" ) != m_selectedNames.end()){isHGCNose = true;}
+
+  if(isHGCal) hgcalzfront_ = 3190.5;
+  if(isHGCNose) hgcalzfront_ = 10484;
+  //  Polyethylene is at 10484, should be wide ~ 5 cm
+
 
 }
 
@@ -182,9 +186,9 @@ void TrackingMaterialProducer::update(const BeginOfTrack* event)
   if (isHGCNose && track->GetTrackStatus() != fStopAndKill && fabs(track->GetMomentum().eta()) > 3.0 && fabs(track->GetMomentum().eta()) < 4) {
     if(track->GetMomentum().eta() > 0.){
 
-      outVolumeZpositionTxt << "StainlessSteel " << hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+      outVolumeZpositionTxt << "Polyethylene " << hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
     } else if (track->GetMomentum().eta() <= 0.){
-      outVolumeZpositionTxt << "StainlessSteel " << - hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
+      outVolumeZpositionTxt << "Polyethylene " << - hgcalzfront_ << " " << 0 << " " << 0 << " " << 0 << " " << 0 <<std::endl;
     }
   }
 
@@ -271,7 +275,7 @@ void TrackingMaterialProducer::update(const G4Step* step)
 
     //However, for the energy loss we should keep it when the post step point is in the boundary. 
     //If we do not, it will be a step inside the new volume. 
-    if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 2.0 && fabs(postPoint->GetMomentum().eta()) < 2.4){
+    if ( isHGCal && postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 2.0 && fabs(postPoint->GetMomentum().eta()) < 2.4){
       //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
       //So, premat - postz - posteta - postR - premattotalenergyloss - prez
       outVolumeZpositionTxt << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
@@ -283,9 +287,10 @@ void TrackingMaterialProducer::update(const G4Step* step)
       totallosinmatEfull = 0.;
     }
 
-    if ( postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 3.0 && fabs(postPoint->GetMomentum().eta()) < 4.0){
+    if ( isHGCNose && postPoint->GetStepStatus() == fGeomBoundary && fabs(postPoint->GetMomentum().eta()) > 3.0 && fabs(postPoint->GetMomentum().eta()) < 4.0){
       //Post point position is the low z edge of the new volume, or the upper for the prepoint volume.
       //So, premat - postz - posteta - postR - premattotalenergyloss - prez
+
       outVolumeZpositionTxt << prePoint->GetMaterial()->GetName() << " " <<  postPos.z() << " " << postPoint->GetMomentum().eta() << " " << sqrt(postPos.x()*postPos.x()+postPos.y()*postPos.y()) << " " << totallosinmatEtable << " " << totallosinmatEfull <<std::endl;
 
       std::cout << "HERE THERE IS A HGCnose volume: " << postPoint->GetMomentum().eta() << std::endl;

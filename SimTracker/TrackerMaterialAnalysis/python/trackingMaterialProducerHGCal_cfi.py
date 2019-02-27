@@ -32,9 +32,9 @@ trackingMaterialProducer.Watchers = cms.VPSet(cms.PSet(
         #SelectedVolumes = cms.vstring('BEAM', 
         #    'Tracker')
 #        SelectedVolumes = cms.vstring('HGCal')
-#        SelectedVolumes = cms.vstring('HFNose')
-        SelectedVolumes = cms.vstring('HGCal',
-                                      'HFNose')
+        SelectedVolumes = cms.vstring('HFNose')
+#        SelectedVolumes = cms.vstring('HGCal',
+#                                      'HFNose')
     ),
     type = cms.string('TrackingMaterialProducer')
 ))
