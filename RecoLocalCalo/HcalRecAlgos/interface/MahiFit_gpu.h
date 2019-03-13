@@ -3,7 +3,7 @@
 
 #include "DataFormats/HcalDetId/interface/HcalSubdetector.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
-#include "RecoLocalCalo/HcalRecAlgos/interface/EigenMatrixTypes.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/EigenMatrixTypes_gpu.h"
 #include "DataFormats/HcalRecHit/interface/HBHEChannelInfo.h"
 
 #include "RecoLocalCalo/HcalRecAlgos/interface/PulseShapeFunctor_gpu.h"
@@ -18,7 +18,7 @@ struct MahiNnlsWorkspace {
   unsigned int fullTSOffset;
   int bxOffset;
   int maxoffset;
-  double dt;
+  float dt;
 
   //holds active bunch crossings
   BXVector bxs;  
@@ -126,20 +126,20 @@ class MahiFit
  private:
 
   __device__
-  double minimize() const;
+  float minimize() const;
   __device__
   void onePulseMinimize() const;
   __device__
   void updateCov() const;
   __device__
-  void updatePulseShape(double itQ, FullSampleVector &pulseShape, 
+  void updatePulseShape(float itQ, FullSampleVector &pulseShape, 
 			FullSampleVector &pulseDeriv,
 			FullSampleMatrix &pulseCov) const;
 
   __device__
   float calculateArrivalTime() const;
   __device__
-  double calculateChiSq() const;
+  float calculateChiSq() const;
   __device__
   void nnls() const;
   __device__
