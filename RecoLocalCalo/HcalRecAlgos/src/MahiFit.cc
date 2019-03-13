@@ -370,14 +370,14 @@ void MahiFit::nnls() const {
   nnlsWork_.aTaMat = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
   nnlsWork_.aTbVec = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes));
   
-  int iter = 0;
   Index idxwmax = 0;
   float wmax = 0.0;
   float threshold = nnlsThresh_;
 
   nnlsWork_.nP=0;
   
-  while (true) {    
+  for (auto iter = 0; iter < nMaxItersNNLS_; ++iter) {
+
     if (iter>0 || nnlsWork_.nP==0) {
       if ( nnlsWork_.nP==std::min(npulse, nsamples)) break;
       
@@ -392,10 +392,6 @@ void MahiFit::nnls() const {
 	break;
       }
       
-      if (iter>=nMaxItersNNLS_) {
-	break;
-      }
-
       //unconstrain parameter
       Index idxp = nnlsWork_.nP + idxwmax;
       nnlsUnconstrainParameter(idxp);
@@ -416,7 +412,7 @@ void MahiFit::nnls() const {
       if (positive) {
         nnlsWork_.ampVec.head(nnlsWork_.nP) = ampvecpermtest.head(nnlsWork_.nP);
         break;
-      } 
+      }
 
       //update parameter vector
       Index minratioidx=0;
@@ -433,6 +429,13 @@ void MahiFit::nnls() const {
 	  }
 	}
       }
+
+      /* THIS ADDED BY VIKTOR */
+      if (std::numeric_limits<float>::max() == minratio) {
+        nnlsWork_.ampVec.head(nnlsWork_.nP) = ampvecpermtest.head(nnlsWork_.nP);
+        break;
+      }
+
       nnlsWork_.ampVec.head(nnlsWork_.nP) += minratio*(ampvecpermtest.head(nnlsWork_.nP) - nnlsWork_.ampVec.head(nnlsWork_.nP));
       
       //avoid numerical problems with later ==0. check
@@ -440,8 +443,6 @@ void MahiFit::nnls() const {
       
       nnlsConstrainParameter(minratioidx);
     }
-   
-    ++iter;
 
     //adaptive convergence threshold to avoid infinite loops but still
     //ensure best value is used
@@ -498,9 +499,9 @@ void MahiFit::nnlsUnconstrainParameter(Index idxp) const {
   nnlsWork_.aTaMat.row(nnlsWork_.nP).swap(nnlsWork_.aTaMat.row(idxp));
   nnlsWork_.pulseMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseMat.col(idxp));
   nnlsWork_.pulseDerivMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseDerivMat.col(idxp));
-  std::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP),nnlsWork_.aTbVec.coeffRef(idxp));
-  std::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP),nnlsWork_.ampVec.coeffRef(idxp));
-  std::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP),nnlsWork_.bxs.coeffRef(idxp));
+  Eigen::numext::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP),nnlsWork_.aTbVec.coeffRef(idxp));
+  Eigen::numext::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP),nnlsWork_.ampVec.coeffRef(idxp));
+  Eigen::numext::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP),nnlsWork_.bxs.coeffRef(idxp));
   ++nnlsWork_.nP;
 }
 
@@ -509,9 +510,9 @@ void MahiFit::nnlsConstrainParameter(Index minratioidx) const {
   nnlsWork_.aTaMat.row(nnlsWork_.nP-1).swap(nnlsWork_.aTaMat.row(minratioidx));
   nnlsWork_.pulseMat.col(nnlsWork_.nP-1).swap(nnlsWork_.pulseMat.col(minratioidx));
   nnlsWork_.pulseDerivMat.col(nnlsWork_.nP-1).swap(nnlsWork_.pulseDerivMat.col(minratioidx));
-  std::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP-1),nnlsWork_.aTbVec.coeffRef(minratioidx));
-  std::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP-1),nnlsWork_.ampVec.coeffRef(minratioidx));
-  std::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP-1),nnlsWork_.bxs.coeffRef(minratioidx));
+  Eigen::numext::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP-1),nnlsWork_.aTbVec.coeffRef(minratioidx));
+  Eigen::numext::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP-1),nnlsWork_.ampVec.coeffRef(minratioidx));
+  Eigen::numext::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP-1),nnlsWork_.bxs.coeffRef(minratioidx));
   --nnlsWork_.nP;
 
 }
