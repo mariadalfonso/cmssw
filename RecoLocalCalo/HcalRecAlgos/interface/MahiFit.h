@@ -22,7 +22,7 @@ struct MahiNnlsWorkspace {
   unsigned int fullTSOffset;
   int bxOffset;
   int maxoffset;
-  double dt;
+  float dt;
 
   //holds active bunch crossings
   BXVector bxs;  
@@ -127,15 +127,15 @@ class MahiFit
 
  private:
 
-  double minimize() const;
+  float minimize() const;
   void onePulseMinimize() const;
   void updateCov() const;
-  void updatePulseShape(double itQ, FullSampleVector &pulseShape, 
+  void updatePulseShape(float itQ, FullSampleVector &pulseShape, 
 			FullSampleVector &pulseDeriv,
 			FullSampleMatrix &pulseCov) const;
 
   float calculateArrivalTime() const;
-  double calculateChiSq() const;
+  float calculateChiSq() const;
   void nnls() const;
   void resetWorkspace() const;
 
