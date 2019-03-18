@@ -180,7 +180,7 @@ class MahiFit
 
   int activeBXs_[8] = {-3, -2, -1, 0, 1, 2, 3, 4};
 
-  int nMaxItersMin_{500}; 
+  int nMaxItersMin_{2}; 
   int nMaxItersNNLS_{500}; 
 
   float deltaChiSqThresh_{1e-3}; 

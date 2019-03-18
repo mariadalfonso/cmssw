@@ -75,8 +75,10 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
 
   if(tstrig >= ts4Thresh_ && tsTOT > 0) {
 
+    doFit(reconstructedVals,0);
     useTriple=false;
 
+/*
     // only do pre-fit with 1 pulse if chiSq threshold is positive
     if (chiSqSwitch_>0) {
       doFit(reconstructedVals,1);
@@ -89,6 +91,8 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
       doFit(reconstructedVals,0);
       useTriple=true;
     }
+*/
+
   }
   else{
     reconstructedVals[0] = 0.; //energy
@@ -178,7 +182,8 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
   if (foundintime) {
     correctedOutput[0] = nnlsWork_.ampVec.coeff(ipulseintime); //charge
     if (correctedOutput[0]!=0) {
-	float arrivalTime = calculateArrivalTime();
+//	float arrivalTime = calculateArrivalTime();
+	float arrivalTime = 0.;
 	correctedOutput[1] = arrivalTime; //time
     }
     else correctedOutput[1] = -9999;//time
