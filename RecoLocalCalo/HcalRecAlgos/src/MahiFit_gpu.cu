@@ -229,7 +229,7 @@ double MahiFit::minimize() const {
 }
 
 __device__
-void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSampleVector &pulseDeriv,
+void MahiFit::updatePulseShape(float itQ, FullSampleVector &pulseShape, FullSampleVector &pulseDeriv,
 			       FullSampleMatrix &pulseCov) const {
   
   float t0=meanTime_;
@@ -355,14 +355,13 @@ void MahiFit::nnls() const {
   nnlsWork_.aTaMat = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
   nnlsWork_.aTbVec = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes));
   
-  int iter = 0;
   Index idxwmax = 0;
   double wmax = 0.0;
   double threshold = nnlsThresh_;
 
   nnlsWork_.nP=0;
   
-  while (true) {    
+  for (auto iter = 0; iter < nMaxItersNNLS_; ++iter) {
     if (iter>0 || nnlsWork_.nP==0) {
       if ( nnlsWork_.nP==std::min(npulse, nsamples)) break;
       
@@ -377,10 +376,6 @@ void MahiFit::nnls() const {
 	break;
       }
       
-      if (iter>=nMaxItersNNLS_) {
-	break;
-      }
-
       //unconstrain parameter
       Index idxp = nnlsWork_.nP + idxwmax;
       nnlsUnconstrainParameter(idxp);
@@ -426,8 +421,6 @@ void MahiFit::nnls() const {
       nnlsConstrainParameter(minratioidx);
     }
    
-    ++iter;
-
     //adaptive convergence threshold to avoid infinite loops but still
     //ensure best value is used
     if (iter%10==0) {
@@ -444,8 +437,8 @@ void MahiFit::onePulseMinimize() const {
 
   nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
 
-  SingleMatrix aTamatval = nnlsWork_.invcovp.transpose()*nnlsWork_.invcovp;
-  SingleVector aTbvecval = nnlsWork_.invcovp.transpose()*nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes);
+  SingleMatrix aTamatval = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
+  SingleVector aTbvecval = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes));
 
   nnlsWork_.ampVec.coeffRef(0) = std::max(0., aTbvecval.coeff(0)/aTamatval.coeff(0));
 
