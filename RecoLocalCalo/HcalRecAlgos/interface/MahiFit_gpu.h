@@ -15,7 +15,7 @@ struct MahiNnlsWorkspace {
   unsigned int nPulseTot;
   unsigned int tsSize;
   unsigned int tsOffset;
-  unsigned int fullTSOffset;
+  //  unsigned int fullTSOffset;
   int bxOffset;
   int maxoffset;
   double dt;
@@ -156,8 +156,8 @@ class MahiFit
   mutable MahiNnlsWorkspace nnlsWork_;
 
   //hard coded in initializer
-  const unsigned int fullTSSize_;
-  const unsigned int fullTSofInterest_;
+  //  const unsigned int fullTSSize_;
+  //  const unsigned int fullTSofInterest_;
 
   static constexpr int pedestalBX_ = 100;
 
