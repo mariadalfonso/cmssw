@@ -138,8 +138,8 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
   nnlsWork_.maxoffset = nnlsWork_.bxs.coeffRef(bxSize-1);
 //    if (dynamicPed_) nnlsWork_.bxs[nnlsWork_.nPulseTot-1] = pedestalBX_;
 
-  nnlsWork_.pulseMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);  
-  nnlsWork_.pulseDerivMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
+//  nnlsWork_.pulseMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
+//  nnlsWork_.pulseDerivMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
 
   FullSampleVector pulseShapeArray;
   FullSampleVector pulseDerivArray;
@@ -197,10 +197,10 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
 __device__
 double MahiFit::minimize() const {
 
-  nnlsWork_.invcovp.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
+//  nnlsWork_.invcovp.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
   nnlsWork_.ampVec.setZero(nnlsWork_.nPulseTot);
   nnlsWork_.aTaMat.setZero(nnlsWork_.nPulseTot, nnlsWork_.nPulseTot);
-  nnlsWork_.aTbVec.setZero(nnlsWork_.nPulseTot);
+//  nnlsWork_.aTbVec.setZero(nnlsWork_.nPulseTot);
 
   double oldChiSq=9999;
   double chiSq=oldChiSq;
@@ -351,10 +351,10 @@ void MahiFit::nnls() const {
   const unsigned int nsamples = nnlsWork_.tsSize;
 
   PulseVector updateWork;
-  updateWork.setZero(npulse);
+//  updateWork.setZero(npulse);
 
   PulseVector ampvecpermtest;
-  ampvecpermtest.setZero(npulse);
+//  ampvecpermtest.setZero(npulse);
 
   nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
   nnlsWork_.aTaMat = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
@@ -442,7 +442,7 @@ void MahiFit::onePulseMinimize() const {
 
   nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
 
-  Eigen::Matrix<double,MaxPVSize,MaxSVSize> invcovpT = nnlsWork_.invcovp.transpose();
+  PulseSampleMatrix invcovpT = nnlsWork_.invcovp.transpose();
 
   double aTaCoeff =  (invcovpT.lazyProduct(nnlsWork_.invcovp)).coeff(0);
   double aTbCoeff = invcovpT.lazyProduct(nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes)).coeff(0);
