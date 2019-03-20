@@ -19,9 +19,9 @@ using FullSampleMatrix=Eigen::Matrix<double,MaxFSVSize,MaxFSVSize>;
 
 using SampleMatrix=Eigen::Matrix<double,MaxSVSize,MaxSVSize>;
 
-typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,0,MaxPVSize,MaxPVSize> PulseMatrix;
+//typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,0,MaxPVSize,MaxPVSize> PulseMatrix;
 //typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,0,MaxSVSize,MaxPVSize> SamplePulseMatrix;
-//using PulseMatrix=Eigen::Matrix<double,MaxPVSize,MaxPVSize>;
+using PulseMatrix=Eigen::Matrix<double,MaxPVSize,MaxPVSize>;
 using SamplePulseMatrix=Eigen::Matrix<double,MaxSVSize,MaxPVSize>;
 using PulseSampleMatrix=Eigen::Matrix<double,MaxPVSize,MaxSVSize>;
 

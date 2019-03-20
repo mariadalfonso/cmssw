@@ -601,6 +601,7 @@ __device__
 void MahiFit::solveSubmatrix(PulseMatrix& mat, PulseVector& invec, PulseVector& outvec, unsigned nP) const {
   using namespace Eigen;
   switch( nP ) { // pulse matrix is always square.
+/*
   case 10:
     {
       Matrix<double,10,10> temp = mat;
@@ -613,6 +614,7 @@ void MahiFit::solveSubmatrix(PulseMatrix& mat, PulseVector& invec, PulseVector& 
       outvec.head<9>() = temp.ldlt().solve(invec.head<9>());
     }
     break;
+*/
   case 8:
     {
       Matrix<double,8,8> temp = mat.topLeftCorner<8,8>();
