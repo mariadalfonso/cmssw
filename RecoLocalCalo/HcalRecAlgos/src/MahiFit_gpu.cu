@@ -307,7 +307,7 @@ void MahiFit::updateCov() const {
 //  SampleMatrix invCovMat;
 //  invCovMat.setZero(nnlsWork_.tsSize, nnlsWork_.tsSize);
   SampleMatrix invCovMat = nnlsWork_.noiseTerms.asDiagonal();
-  invCovMat +=nnlsWork_.pedConstraint;
+  invCovMat.triangularView<Eigen::Lower>() +=nnlsWork_.pedConstraint;
 
   for (unsigned int iBX=0; iBX<nnlsWork_.nPulseTot; ++iBX) {
     if (nnlsWork_.ampVec.coeff(iBX)==0) continue;
@@ -316,8 +316,8 @@ void MahiFit::updateCov() const {
 
 //    if (offset==pedestalBX_) continue;
 //    else {
-      invCovMat += nnlsWork_.ampVec.coeff(iBX)*nnlsWork_.ampVec.coeff(iBX)
-	*nnlsWork_.pulseCovArray[offset+nnlsWork_.bxOffset].block(nnlsWork_.maxoffset-offset, nnlsWork_.maxoffset-offset, nnlsWork_.tsSize, nnlsWork_.tsSize);
+      invCovMat.triangularView<Eigen::Lower>() += nnlsWork_.ampVec.coeff(iBX)*nnlsWork_.ampVec.coeff(iBX)
+	*nnlsWork_.pulseCovArray[offset+nnlsWork_.bxOffset].block(nnlsWork_.maxoffset-offset, nnlsWork_.maxoffset-offset, nnlsWork_.tsSize, nnlsWork_.tsSize).matrix();
 //    }
   }
   
