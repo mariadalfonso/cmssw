@@ -22,7 +22,7 @@ struct MahiNnlsWorkspace {
   unsigned int fullTSOffset;
   int bxOffset;
   int maxoffset;
-  double dt;
+  float dt;
 
   //holds active bunch crossings
   BXVector bxs;  
@@ -36,6 +36,9 @@ struct MahiNnlsWorkspace {
   //holds flat pedestal uncertainty
   SampleMatrix pedConstraint;
   
+  //holds flat noise and pedestal matrix
+  SampleMatrix invCovMatInit;
+
   //holds full covariance matrix for a pulse shape 
   //varied in time
   std::array<FullSampleMatrix, MaxPVSize> pulseCovArray;
@@ -118,8 +121,8 @@ class MahiFit
 
   void doFit(std::array<float,3> &correctedOutput, const int nbx) const;
 
-  void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps,const HcalTimeSlew * hcalTimeSlewDelay);
-  void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps);
+  void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps, bool hasTimeInfo,  const HcalTimeSlew * hcalTimeSlewDelay, unsigned int nSamples);
+  void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps, bool hasTimeInfo, unsigned int nSamples);
 
   typedef BXVector::Index Index;
   const HcalPulseShapes::Shape* currentPulseShape_=nullptr;
@@ -147,7 +150,6 @@ class MahiFit
   mutable MahiNnlsWorkspace nnlsWork_;
 
   //hard coded in initializer
-  const unsigned int fullTSSize_;
   const unsigned int fullTSofInterest_;
 
   static constexpr int pedestalBX_ = 100;
