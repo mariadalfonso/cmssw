@@ -92,6 +92,10 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
     }
   }
 
+  nnlsWork_.invCovMatInit.setZero(nnlsWork_.tsSize, nnlsWork_.tsSize);
+  nnlsWork_.invCovMatInit = nnlsWork_.noiseTerms.asDiagonal();
+  nnlsWork_.invCovMatInit +=nnlsWork_.pedConstraint;
+
   useTriple=false;
   if(tstrig >= ts4Thresh_ && tsTOT > 0) {
     // only do pre-fit with 1 pulse if chiSq threshold is positive
@@ -303,10 +307,7 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
 
 void MahiFit::updateCov() const {
 
-  SampleMatrix invCovMat;
-  invCovMat.setZero(nnlsWork_.tsSize, nnlsWork_.tsSize);
-  invCovMat = nnlsWork_.noiseTerms.asDiagonal();
-  invCovMat +=nnlsWork_.pedConstraint;
+  SampleMatrix invCovMat = nnlsWork_.invCovMatInit;
 
   for (unsigned int iBX=0; iBX<nnlsWork_.nPulseTot; ++iBX) {
     if (nnlsWork_.ampVec.coeff(iBX)==0) continue;

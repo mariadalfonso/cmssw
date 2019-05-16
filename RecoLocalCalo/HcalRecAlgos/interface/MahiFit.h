@@ -36,6 +36,9 @@ struct MahiNnlsWorkspace {
   //holds flat pedestal uncertainty
   SampleMatrix pedConstraint;
   
+  //holds flat noise and pedestal matrix
+  SampleMatrix invCovMatInit;
+
   //holds full covariance matrix for a pulse shape 
   //varied in time
   std::array<FullSampleMatrix, MaxPVSize> pulseCovArray;
