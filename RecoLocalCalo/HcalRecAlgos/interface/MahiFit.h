@@ -118,8 +118,8 @@ class MahiFit
 
   void doFit(std::array<float,3> &correctedOutput, const int nbx) const;
 
-  void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps,const HcalTimeSlew * hcalTimeSlewDelay);
-  void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps);
+  void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps, bool hasTimeInfo,  const HcalTimeSlew * hcalTimeSlewDelay);
+  void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps, bool hasTimeInfo);
 
   typedef BXVector::Index Index;
   const HcalPulseShapes::Shape* currentPulseShape_=nullptr;
