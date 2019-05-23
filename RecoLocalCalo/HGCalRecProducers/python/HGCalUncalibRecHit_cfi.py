@@ -61,7 +61,8 @@ HGCalUncalibRecHit = cms.EDProducer(
         tdcSaturation = hfnoseDigitizer.digiCfg.feCfg.tdcSaturation_fC,
         tdcOnset      = hfnoseDigitizer.digiCfg.feCfg.tdcOnset_fC,
         toaLSB_ns     = hfnoseDigitizer.digiCfg.feCfg.toaLSB_ns,
-        fCPerMIP      = cms.vdouble(1.25,2.57,3.88) #100um, 200um, 300um
+#        fCPerMIP      = cms.vdouble(1.25,2.57,3.88) #100um, 200um, 300um
+        fCPerMIP      = fCPerMIP_v9
         ),
 
     algo = cms.string("HGCalUncalibRecHitWorkerWeights")
