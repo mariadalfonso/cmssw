@@ -21,6 +21,7 @@ adcNbitsBH = digiparam.hgchebackDigitizer.digiCfg.feCfg.adcNbits
 fCPerMIPee = recoparam.HGCalUncalibRecHit.HGCEEConfig.fCPerMIP
 fCPerMIPfh = recoparam.HGCalUncalibRecHit.HGCHEFConfig.fCPerMIP
 layerWeights = layercalibparam.TrgLayer_dEdX_weights
+layerWeightsNose = layercalibparam.Nose_dEdX_weights
 thicknessCorrection = recocalibparam.HGCalRecHit.thicknessCorrection
 
 # Equalization in the frontend of the sensor responses to 200um sensors
@@ -56,6 +57,7 @@ vfe_proc = cms.PSet( ProcessorName = cms.string('HGCalVFEProcessorSums'),
                      # Trigger cell calibration
                      fCperMIP = cms.double(fCPerMIP_200),
                      dEdXweights = layerWeights,
+                     dEdXweightsNose = layerWeightsNose,
                      ThicknessCorrections = cms.vdouble(frontend_thickness_corrections),
                      thickCorr = cms.double(thicknessCorrection_200)
                      )
@@ -72,6 +74,7 @@ hgcalVFEProducer = cms.EDProducer(
         eeDigis = cms.InputTag('simHGCalUnsuppressedDigis:EE'),
         fhDigis = cms.InputTag('simHGCalUnsuppressedDigis:HEfront'),
         bhDigis = cms.InputTag('simHGCalUnsuppressedDigis:HEback'),
+        noseDigis = cms.InputTag('simHFNoseUnsuppressedDigis:HFNose'),
         ProcessorParameters = vfe_proc.clone()
        )
 

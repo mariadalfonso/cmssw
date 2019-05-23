@@ -4,50 +4,51 @@
 
 #include "TTree.h"
 
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDAnalyzer.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/ESTransientHandle.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESTransientHandle.h"
-#include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-#include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
 #include "DataFormats/ForwardDetId/interface/ForwardSubdetector.h"
+#include "DataFormats/ForwardDetId/interface/HFNoseTriggerDetId.h"
+#include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCalTriggerDetId.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 
-#include "Geometry/Records/interface/CaloGeometryRecord.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
-#include "Geometry/HGCalCommonData/interface/HGCalGeometryMode.h"
-#include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
 #include "DataFormats/ForwardDetId/interface/HGCScintillatorDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCSiliconDetId.h"
+#include "Geometry/HGCalCommonData/interface/HGCalGeometryMode.h"
+#include "Geometry/HGCalGeometry/interface/HGCalGeometry.h"
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/Records/interface/IdealGeometryRecord.h"
 
 #include "L1Trigger/L1THGCal/interface/HGCalTriggerGeometryBase.h"
 
 #include <cstdlib>
 
 namespace {
-  template <typename T>
-  struct array_deleter {
-    void operator()(T* arr) { delete[] arr; }
-  };
+template <typename T>
+struct array_deleter {
+  void operator()(T* arr) { delete[] arr; }
+};
 }  // namespace
 
 class HGCalTriggerGeomTesterV9Imp2 : public edm::stream::EDAnalyzer<> {
-public:
+ public:
   explicit HGCalTriggerGeomTesterV9Imp2(const edm::ParameterSet&);
   ~HGCalTriggerGeomTesterV9Imp2();
 
   virtual void beginRun(const edm::Run&, const edm::EventSetup&);
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
 
-private:
+ private:
   void fillTriggerGeometry();
   bool checkMappingConsistency();
   bool checkNeighborConsistency();
@@ -58,9 +59,6 @@ private:
   void setTreeTriggerCellNeighborSize(const size_t n);
 
   edm::ESHandle<HGCalTriggerGeometryBase> triggerGeometry_;
-  edm::ESHandle<HGCalGeometry> eeGeometry_;
-  edm::ESHandle<HGCalGeometry> hsiGeometry_;
-  edm::ESHandle<HGCalGeometry> hscGeometry_;
   edm::Service<TFileService> fs_;
   bool no_trigger_;
   bool no_neighbors_;
@@ -68,6 +66,7 @@ private:
   TTree* treeTriggerCells_;
   TTree* treeCells_;
   TTree* treeCellsBH_;
+  TTree* treeCellsNose_;
   // tree variables
   int moduleId_;
   int moduleSide_;
@@ -184,12 +183,14 @@ private:
   float cellBHX4_;
   float cellBHY4_;
 
-private:
-  typedef std::unordered_map<uint32_t, std::unordered_set<uint32_t>> trigger_map_set;
+ private:
+  typedef std::unordered_map<uint32_t, std::unordered_set<uint32_t>>
+      trigger_map_set;
 };
 
 /*****************************************************************/
-HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterSet& conf)
+HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(
+    const edm::ParameterSet& conf)
     : no_trigger_(false),
       no_neighbors_(false)
 /*****************************************************************/
@@ -221,10 +222,13 @@ HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterS
   moduleTC_z_.reset(new float[1], array_deleter<float>());
   treeModules_->Branch("tc_id", moduleTC_id_.get(), "tc_id[tc_n]/I");
   treeModules_->Branch("tc_zside", moduleTC_zside_.get(), "tc_zside[tc_n]/I");
-  treeModules_->Branch("tc_subdet", moduleTC_subdet_.get(), "tc_subdet[tc_n]/I");
+  treeModules_->Branch("tc_subdet", moduleTC_subdet_.get(),
+                       "tc_subdet[tc_n]/I");
   treeModules_->Branch("tc_layer", moduleTC_layer_.get(), "tc_layer[tc_n]/I");
-  treeModules_->Branch("tc_waferu", moduleTC_waferU_.get(), "tc_waferu[tc_n]/I");
-  treeModules_->Branch("tc_waferv", moduleTC_waferV_.get(), "tc_waferv[tc_n]/I");
+  treeModules_->Branch("tc_waferu", moduleTC_waferU_.get(),
+                       "tc_waferu[tc_n]/I");
+  treeModules_->Branch("tc_waferv", moduleTC_waferV_.get(),
+                       "tc_waferv[tc_n]/I");
   treeModules_->Branch("tc_cellu", moduleTC_cellU_.get(), "tc_cellu[tc_n]/I");
   treeModules_->Branch("tc_cellv", moduleTC_cellV_.get(), "tc_cellv[tc_n]/I");
   treeModules_->Branch("tc_ieta", moduleTC_ieta_.get(), "tc_ieta[tc_n]/I");
@@ -256,7 +260,8 @@ HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterS
   treeModules_->Branch("c_y", moduleCell_y_.get(), "c_y[c_n]/F");
   treeModules_->Branch("c_z", moduleCell_z_.get(), "c_z[c_n]/F");
   //
-  treeTriggerCells_ = fs_->make<TTree>("TreeTriggerCells", "Tree of all HGC trigger cells");
+  treeTriggerCells_ =
+      fs_->make<TTree>("TreeTriggerCells", "Tree of all HGC trigger cells");
   treeTriggerCells_->Branch("id", &triggerCellId_, "id/I");
   treeTriggerCells_->Branch("zside", &triggerCellSide_, "zside/I");
   treeTriggerCells_->Branch("subdet", &triggerCellSubdet_, "subdet/I");
@@ -265,12 +270,15 @@ HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterS
   treeTriggerCells_->Branch("waferv", &triggerCellWaferV_, "waferv/I");
   treeTriggerCells_->Branch("triggercellu", &triggerCellU_, "triggercellu/I");
   treeTriggerCells_->Branch("triggercellv", &triggerCellV_, "triggercellv/I");
-  treeTriggerCells_->Branch("triggercellieta", &triggerCellIEta_, "triggercellieta/I");
-  treeTriggerCells_->Branch("triggercelliphi", &triggerCellIPhi_, "triggercelliphi/I");
+  treeTriggerCells_->Branch("triggercellieta", &triggerCellIEta_,
+                            "triggercellieta/I");
+  treeTriggerCells_->Branch("triggercelliphi", &triggerCellIPhi_,
+                            "triggercelliphi/I");
   treeTriggerCells_->Branch("x", &triggerCellX_, "x/F");
   treeTriggerCells_->Branch("y", &triggerCellY_, "y/F");
   treeTriggerCells_->Branch("z", &triggerCellZ_, "z/F");
-  treeTriggerCells_->Branch("neighbor_n", &triggerCellNeighbor_N_, "neighbor_n/I");
+  treeTriggerCells_->Branch("neighbor_n", &triggerCellNeighbor_N_,
+                            "neighbor_n/I");
   triggerCellNeighbor_id_.reset(new int[1], array_deleter<int>());
   triggerCellNeighbor_zside_.reset(new int[1], array_deleter<int>());
   triggerCellNeighbor_subdet_.reset(new int[1], array_deleter<int>());
@@ -280,16 +288,28 @@ HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterS
   triggerCellNeighbor_cellU_.reset(new int[1], array_deleter<int>());
   triggerCellNeighbor_cellV_.reset(new int[1], array_deleter<int>());
   triggerCellNeighbor_distance_.reset(new float[1], array_deleter<float>());
-  treeTriggerCells_->Branch("neighbor_id", triggerCellNeighbor_id_.get(), "neighbor_id[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_zside", triggerCellNeighbor_zside_.get(), "neighbor_zside[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_subdet", triggerCellNeighbor_subdet_.get(), "neighbor_subdet[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_layer", triggerCellNeighbor_layer_.get(), "neighbor_layer[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_waferu", triggerCellNeighbor_waferU_.get(), "neighbor_waferu[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_waferv", triggerCellNeighbor_waferV_.get(), "neighbor_waferv[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_cellu", triggerCellNeighbor_cellU_.get(), "neighbor_cellu[neighbor_n]/I");
-  treeTriggerCells_->Branch("neighbor_cellv", triggerCellNeighbor_cellV_.get(), "neighbor_cellv[neighbor_n]/I");
-  treeTriggerCells_->Branch(
-      "neighbor_distance", triggerCellNeighbor_distance_.get(), "neighbor_distance[neighbor_n]/F");
+  treeTriggerCells_->Branch("neighbor_id", triggerCellNeighbor_id_.get(),
+                            "neighbor_id[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_zside", triggerCellNeighbor_zside_.get(),
+                            "neighbor_zside[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_subdet",
+                            triggerCellNeighbor_subdet_.get(),
+                            "neighbor_subdet[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_layer", triggerCellNeighbor_layer_.get(),
+                            "neighbor_layer[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_waferu",
+                            triggerCellNeighbor_waferU_.get(),
+                            "neighbor_waferu[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_waferv",
+                            triggerCellNeighbor_waferV_.get(),
+                            "neighbor_waferv[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_cellu", triggerCellNeighbor_cellU_.get(),
+                            "neighbor_cellu[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_cellv", triggerCellNeighbor_cellV_.get(),
+                            "neighbor_cellv[neighbor_n]/I");
+  treeTriggerCells_->Branch("neighbor_distance",
+                            triggerCellNeighbor_distance_.get(),
+                            "neighbor_distance[neighbor_n]/F");
   treeTriggerCells_->Branch("c_n", &triggerCellCell_N_, "c_n/I");
   triggerCellCell_id_.reset(new int[1], array_deleter<int>());
   triggerCellCell_zside_.reset(new int[1], array_deleter<int>());
@@ -305,15 +325,24 @@ HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterS
   triggerCellCell_y_.reset(new float[1], array_deleter<float>());
   triggerCellCell_z_.reset(new float[1], array_deleter<float>());
   treeTriggerCells_->Branch("c_id", triggerCellCell_id_.get(), "c_id[c_n]/I");
-  treeTriggerCells_->Branch("c_zside", triggerCellCell_zside_.get(), "c_zside[c_n]/I");
-  treeTriggerCells_->Branch("c_subdet", triggerCellCell_subdet_.get(), "c_subdet[c_n]/I");
-  treeTriggerCells_->Branch("c_layer", triggerCellCell_layer_.get(), "c_layer[c_n]/I");
-  treeTriggerCells_->Branch("c_waferu", triggerCellCell_waferU_.get(), "c_waferu[c_n]/I");
-  treeTriggerCells_->Branch("c_waferv", triggerCellCell_waferV_.get(), "c_waferv[c_n]/I");
-  treeTriggerCells_->Branch("c_cellu", triggerCellCell_cellU_.get(), "c_cellu[c_n]/I");
-  treeTriggerCells_->Branch("c_cellv", triggerCellCell_cellV_.get(), "c_cellv[c_n]/I");
-  treeTriggerCells_->Branch("c_ieta", triggerCellCell_ieta_.get(), "c_cell[c_n]/I");
-  treeTriggerCells_->Branch("c_iphi", triggerCellCell_iphi_.get(), "c_cell[c_n]/I");
+  treeTriggerCells_->Branch("c_zside", triggerCellCell_zside_.get(),
+                            "c_zside[c_n]/I");
+  treeTriggerCells_->Branch("c_subdet", triggerCellCell_subdet_.get(),
+                            "c_subdet[c_n]/I");
+  treeTriggerCells_->Branch("c_layer", triggerCellCell_layer_.get(),
+                            "c_layer[c_n]/I");
+  treeTriggerCells_->Branch("c_waferu", triggerCellCell_waferU_.get(),
+                            "c_waferu[c_n]/I");
+  treeTriggerCells_->Branch("c_waferv", triggerCellCell_waferV_.get(),
+                            "c_waferv[c_n]/I");
+  treeTriggerCells_->Branch("c_cellu", triggerCellCell_cellU_.get(),
+                            "c_cellu[c_n]/I");
+  treeTriggerCells_->Branch("c_cellv", triggerCellCell_cellV_.get(),
+                            "c_cellv[c_n]/I");
+  treeTriggerCells_->Branch("c_ieta", triggerCellCell_ieta_.get(),
+                            "c_cell[c_n]/I");
+  treeTriggerCells_->Branch("c_iphi", triggerCellCell_iphi_.get(),
+                            "c_cell[c_n]/I");
   treeTriggerCells_->Branch("c_x", triggerCellCell_x_.get(), "c_x[c_n]/F");
   treeTriggerCells_->Branch("c_y", triggerCellCell_y_.get(), "c_y[c_n]/F");
   treeTriggerCells_->Branch("c_z", triggerCellCell_z_.get(), "c_z[c_n]/F");
@@ -359,6 +388,30 @@ HGCalTriggerGeomTesterV9Imp2::HGCalTriggerGeomTesterV9Imp2(const edm::ParameterS
   treeCellsBH_->Branch("y3", &cellBHY3_, "y3/F");
   treeCellsBH_->Branch("x4", &cellBHX4_, "x4/F");
   treeCellsBH_->Branch("y4", &cellBHY4_, "y4/F");
+  //
+  treeCellsNose_ =
+      fs_->make<TTree>("TreeCellsNose", "Tree of all HGCnose cells");
+  treeCellsNose_->Branch("id", &cellId_, "id/I");
+  treeCellsNose_->Branch("zside", &cellSide_, "zside/I");
+  treeCellsNose_->Branch("subdet", &cellSubdet_, "subdet/I");
+  treeCellsNose_->Branch("layer", &cellLayer_, "layer/I");
+  treeCellsNose_->Branch("waferu", &cellWaferU_, "waferu/I");
+  treeCellsNose_->Branch("waferv", &cellWaferV_, "waferv/I");
+  treeCellsNose_->Branch("wafertype", &cellWaferType_, "wafertype/I");
+  treeCellsNose_->Branch("waferrow", &cellWaferRow_, "waferrow/I");
+  treeCellsNose_->Branch("wafercolumn", &cellWaferColumn_, "wafercolumn/I");
+  treeCellsNose_->Branch("cellu", &cellU_, "cellu/I");
+  treeCellsNose_->Branch("cellv", &cellV_, "cellv/I");
+  treeCellsNose_->Branch("x", &cellX_, "x/F");
+  treeCellsNose_->Branch("y", &cellY_, "y/F");
+  treeCellsNose_->Branch("z", &cellZ_, "z/F");
+  treeCellsNose_->Branch("corner_n", &cellCornersN_, "corner_n/I");
+  treeCellsNose_->Branch("corner_x", cellCornersX_.get(),
+                         "corner_x[corner_n]/F");
+  treeCellsNose_->Branch("corner_y", cellCornersY_.get(),
+                         "corner_y[corner_n]/F");
+  treeCellsNose_->Branch("corner_z", cellCornersZ_.get(),
+                         "corner_z[corner_n]/F");
 }
 
 /*****************************************************************/
@@ -367,13 +420,18 @@ HGCalTriggerGeomTesterV9Imp2::~HGCalTriggerGeomTesterV9Imp2()
 {}
 
 /*****************************************************************/
-void HGCalTriggerGeomTesterV9Imp2::beginRun(const edm::Run& /*run*/, const edm::EventSetup& es)
+void HGCalTriggerGeomTesterV9Imp2::beginRun(const edm::Run& /*run*/,
+                                            const edm::EventSetup& es)
 /*****************************************************************/
 {
   es.get<CaloGeometryRecord>().get("", triggerGeometry_);
 
   no_trigger_ = !checkMappingConsistency();
   no_neighbors_ = !checkNeighborConsistency();
+
+  no_trigger_ = false;
+  no_neighbors_ = false;
+
   fillTriggerGeometry();
 }
 
@@ -382,38 +440,36 @@ bool HGCalTriggerGeomTesterV9Imp2::checkMappingConsistency() {
     trigger_map_set modules_to_triggercells;
     trigger_map_set modules_to_cells;
     trigger_map_set triggercells_to_cells;
-
     // EE
     for (const auto& id : triggerGeometry_->eeGeometry()->getValidDetIds()) {
       HGCSiliconDetId detid(id);
-      if (!triggerGeometry_->eeTopology().valid(id))
-        continue;
+      if (!triggerGeometry_->eeTopology().valid(id)) continue;
       // fill trigger cells
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      HGCalTriggerDetId tcid(trigger_cell);
-      auto itr_insert = triggercells_to_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
       // fill modules
       uint32_t module = triggerGeometry_->getModuleFromCell(id);
       if (module != 0) {
-        itr_insert = modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
+        itr_insert =
+            modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
         itr_insert.first->second.emplace(id);
       }
     }
     // HSi
     for (const auto& id : triggerGeometry_->hsiGeometry()->getValidDetIds()) {
-      HGCSiliconDetId detid(id);
-      if (!triggerGeometry_->hsiTopology().valid(id))
-        continue;
+      if (!triggerGeometry_->hsiTopology().valid(id)) continue;
       // fill trigger cells
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      HGCalTriggerDetId tcid(trigger_cell);
-      auto itr_insert = triggercells_to_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
       // fill modules
       uint32_t module = triggerGeometry_->getModuleFromCell(id);
       if (module != 0) {
-        itr_insert = modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
+        itr_insert =
+            modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
         itr_insert.first->second.emplace(id);
       }
     }
@@ -421,52 +477,95 @@ bool HGCalTriggerGeomTesterV9Imp2::checkMappingConsistency() {
     for (const auto& id : triggerGeometry_->hscGeometry()->getValidDetIds()) {
       // fill trigger cells
       unsigned layer = HGCScintillatorDetId(id).layer();
-      if (HGCScintillatorDetId(id).type() != triggerGeometry_->hscTopology().dddConstants().getTypeTrap(layer)) {
+      if (HGCScintillatorDetId(id).type() !=
+          triggerGeometry_->hscTopology().dddConstants().getTypeTrap(layer)) {
         std::cout << "Sci cell type = " << HGCScintillatorDetId(id).type()
-                  << " != " << triggerGeometry_->hscTopology().dddConstants().getTypeTrap(layer) << "\n";
+                  << " != "
+                  << triggerGeometry_->hscTopology().dddConstants().getTypeTrap(
+                         layer)
+                  << "\n";
       }
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      auto itr_insert = triggercells_to_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
       // fill modules
       uint32_t module = triggerGeometry_->getModuleFromCell(id);
       if (module != 0) {
-        itr_insert = modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
+        itr_insert =
+            modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
+        itr_insert.first->second.emplace(id);
+      }
+    }
+    // NOSE
+    for (const auto& id : triggerGeometry_->noseGeometry()->getValidDetIds()) {
+      if (!triggerGeometry_->noseTopology().valid(id)) continue;
+      // fill trigger cells
+      uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
+      itr_insert.first->second.emplace(id);
+      // fill modules
+      uint32_t module = triggerGeometry_->getModuleFromCell(id);
+      if (module != 0) {
+        itr_insert =
+            modules_to_cells.emplace(module, std::unordered_set<uint32_t>());
         itr_insert.first->second.emplace(id);
       }
     }
 
-    edm::LogPrint("TriggerCellCheck") << "Checking cell -> trigger cell -> cell consistency";
+    edm::LogPrint("TriggerCellCheck")
+        << "Checking cell -> trigger cell -> cell consistency";
     // Loop over trigger cells
     for (const auto& triggercell_cells : triggercells_to_cells) {
       DetId id(triggercell_cells.first);
-      HGCalTriggerDetId trig_id(triggercell_cells.first);
+
       // fill modules
       uint32_t module = triggerGeometry_->getModuleFromTriggerCell(id);
       if (module != 0) {
         if (id.det() != DetId::HGCalHSc) {
-          auto itr_insert = modules_to_triggercells.emplace(module, std::unordered_set<uint32_t>());
+          auto itr_insert = modules_to_triggercells.emplace(
+              module, std::unordered_set<uint32_t>());
           itr_insert.first->second.emplace(id);
         }
       }
+
       // Check consistency of cells included in trigger cell
-      HGCalTriggerGeometryBase::geom_set cells_geom = triggerGeometry_->getCellsFromTriggerCell(id);
+      HGCalTriggerGeometryBase::geom_set cells_geom =
+          triggerGeometry_->getCellsFromTriggerCell(id);
       const auto& cells = triggercell_cells.second;
       for (auto cell : cells) {
         if (cells_geom.find(cell) == cells_geom.end()) {
           if (id.det() == DetId::HGCalHSc) {
             edm::LogProblem("BadTriggerCell")
-                << "Error: \n Cell " << cell << "(" << HGCScintillatorDetId(cell)
-                << ")\n has not been found in \n trigger cell " << HGCScintillatorDetId(id);
+                << "Error: \n Cell " << cell << "("
+                << HGCScintillatorDetId(cell)
+                << ")\n has not been found in \n trigger cell "
+                << HGCScintillatorDetId(id);
             std::stringstream output;
             output << " Available cells are:\n";
             for (auto cell_geom : cells_geom)
               output << "     " << HGCScintillatorDetId(cell_geom) << "\n";
             edm::LogProblem("BadTriggerCell") << output.str();
-          } else if (trig_id.subdet() == HGCalTriggerSubdetector::HGCalEETrigger ||
-                     trig_id.subdet() == HGCalTriggerSubdetector::HGCalHSiTrigger) {
-            edm::LogProblem("BadTriggerCell") << "Error: \n Cell " << cell << "(" << HGCSiliconDetId(cell)
-                                              << ")\n has not been found in \n trigger cell " << trig_id;
+          } else if (HFNoseTriggerDetId(id).subdet() ==
+                     HGCalTriggerSubdetector::HFNoseTrigger) {
+            edm::LogProblem("BadTriggerCell")
+                << "Error: \n Cell " << cell << "(" << HFNoseDetId(cell)
+                << ")\n has not been found in \n trigger cell "
+                << HFNoseTriggerDetId(triggercell_cells.first);
+            std::stringstream output;
+            output << " Available cells are:\n";
+            for (auto cell_geom : cells_geom)
+              output << "     " << HFNoseDetId(cell_geom) << "\n";
+            edm::LogProblem("BadTriggerCell") << output.str();
+          } else if (HGCalTriggerDetId(id).subdet() ==
+                         HGCalTriggerSubdetector::HGCalEETrigger ||
+                     HGCalTriggerDetId(id).subdet() ==
+                         HGCalTriggerSubdetector::HGCalHSiTrigger) {
+            edm::LogProblem("BadTriggerCell")
+                << "Error: \n Cell " << cell << "(" << HGCSiliconDetId(cell)
+                << ")\n has not been found in \n trigger cell "
+                << HGCalTriggerDetId(triggercell_cells.first);
             std::stringstream output;
             output << " Available cells are:\n";
             for (auto cell_geom : cells_geom)
@@ -474,27 +573,38 @@ bool HGCalTriggerGeomTesterV9Imp2::checkMappingConsistency() {
             edm::LogProblem("BadTriggerCell") << output.str();
           } else {
             edm::LogProblem("BadTriggerCell")
-                << "Unknown detector type " << id.det() << " " << trig_id.subdet() << "\n";
-            edm::LogProblem("BadTriggerCell") << "Cell ID " << HGCSiliconDetId(cell) << "\n";
+                << "Unknown detector type " << id.det() << " " << id.subdetId()
+                << " " << id.rawId() << "\n";
+            edm::LogProblem("BadTriggerCell")
+                << " cell " << std::hex << cell << std::dec << " "
+                << "\n";
+            edm::LogProblem("BadTriggerCell")
+                << "Cell ID " << HGCSiliconDetId(cell) << " or "
+                << HFNoseDetId(cell) << "\n";
           }
           throw cms::Exception("BadGeometry")
-              << "HGCalTriggerGeometry: Found inconsistency in cell <-> trigger cell mapping";
+              << "HGCalTriggerGeometry: Found inconsistency in cell <-> "
+                 "trigger cell mapping";
         }
       }
     }
-    edm::LogPrint("ModuleCheck") << "Checking trigger cell -> module -> trigger cell consistency";
+    edm::LogPrint("ModuleCheck")
+        << "Checking trigger cell -> module -> trigger cell consistency";
     // Loop over modules
     for (const auto& module_triggercells : modules_to_triggercells) {
       DetId id(module_triggercells.first);
       // Check consistency of trigger cells included in module
-      HGCalTriggerGeometryBase::geom_set triggercells_geom = triggerGeometry_->getTriggerCellsFromModule(id);
+      HGCalTriggerGeometryBase::geom_set triggercells_geom =
+          triggerGeometry_->getTriggerCellsFromModule(id);
       const auto& triggercells = module_triggercells.second;
       for (auto cell : triggercells) {
         if (triggercells_geom.find(cell) == triggercells_geom.end()) {
           if (id.det() == DetId::HGCalHSc) {
             HGCScintillatorDetId cellid(cell);
-            edm::LogProblem("BadModule") << "Error: \n Trigger cell " << cell << "(" << cellid
-                                         << ")\n has not been found in \n module " << HGCScintillatorDetId(id);
+            edm::LogProblem("BadModule")
+                << "Error: \n Trigger cell " << cell << "(" << cellid
+                << ")\n has not been found in \n module "
+                << HGCScintillatorDetId(id);
             std::stringstream output;
             output << " Available trigger cells are:\n";
             for (auto cell_geom : triggercells_geom) {
@@ -502,11 +612,28 @@ bool HGCalTriggerGeomTesterV9Imp2::checkMappingConsistency() {
             }
             edm::LogProblem("BadModule") << output.str();
             throw cms::Exception("BadGeometry")
-                << "HGCalTriggerGeometry: Found inconsistency in trigger cell <->  module mapping";
+                << "HGCalTriggerGeometry: Found inconsistency in trigger cell "
+                   "<->  module mapping";
+          } else if (id.det() == DetId::Forward and
+                     id.subdetId() == ForwardSubdetector::HFNose) {
+            HFNoseTriggerDetId cellid(cell);
+            edm::LogProblem("BadModule")
+                << "Error : \n Trigger cell " << cell << "(" << cellid
+                << ")\n has not been found in \n module " << HFNoseDetId(id);
+            std::stringstream output;
+            output << " Available trigger cells are:\n";
+            for (auto cell_geom : triggercells_geom) {
+              output << "     " << HFNoseTriggerDetId(cell_geom) << "\n";
+            }
+            edm::LogProblem("BadModule") << output.str();
+            throw cms::Exception("BadGeometry")
+                << "HGCalTriggerGeometry: Found inconsistency in trigger cell "
+                   "<->  module mapping";
           } else {
             HGCalTriggerDetId cellid(cell);
-            edm::LogProblem("BadModule") << "Error: \n Trigger cell " << cell << "(" << cellid
-                                         << ")\n has not been found in \n module " << HGCalDetId(id);
+            edm::LogProblem("BadModule")
+                << "Error : \n Trigger cell " << cell << "(" << cellid
+                << ")\n has not been found in \n module " << HGCalDetId(id);
             std::stringstream output;
             output << " Available trigger cells are:\n";
             for (auto cell_geom : triggercells_geom) {
@@ -514,25 +641,37 @@ bool HGCalTriggerGeomTesterV9Imp2::checkMappingConsistency() {
             }
             edm::LogProblem("BadModule") << output.str();
             throw cms::Exception("BadGeometry")
-                << "HGCalTriggerGeometry: Found inconsistency in trigger cell <->  module mapping";
+                << "HGCalTriggerGeometry: Found inconsistency in trigger cell "
+                   "<->  module mapping";
           }
         }
       }
     }
-    edm::LogPrint("ModuleCheck") << "Checking cell -> module -> cell consistency";
+    edm::LogPrint("ModuleCheck")
+        << "Checking cell -> module -> cell consistency";
     for (const auto& module_cells : modules_to_cells) {
       DetId id(module_cells.first);
       // Check consistency of cells included in module
-      HGCalTriggerGeometryBase::geom_set cells_geom = triggerGeometry_->getCellsFromModule(id);
+      HGCalTriggerGeometryBase::geom_set cells_geom =
+          triggerGeometry_->getCellsFromModule(id);
       const auto& cells = module_cells.second;
       for (auto cell : cells) {
         if (cells_geom.find(cell) == cells_geom.end()) {
           if (id.det() == DetId::HGCalHSc) {
-            edm::LogProblem("BadModule") << "Error: \n Cell " << cell << "(" << HGCScintillatorDetId(cell)
-                                         << ")\n has not been found in \n module " << HGCScintillatorDetId(id);
+            edm::LogProblem("BadModule")
+                << "Error: \n Cell " << cell << "("
+                << HGCScintillatorDetId(cell)
+                << ")\n has not been found in \n module "
+                << HGCScintillatorDetId(id);
+          } else if (id.det() == DetId::Forward &&
+                     id.subdetId() == ForwardSubdetector::HFNose) {
+            edm::LogProblem("BadModule")
+                << "Error: \n Cell " << cell << "(" << HFNoseDetId(cell)
+                << ")\n has not been found in \n module " << HFNoseDetId(id);
           } else {
-            edm::LogProblem("BadModule") << "Error: \n Cell " << cell << "(" << HGCSiliconDetId(cell)
-                                         << ")\n has not been found in \n module " << HGCalDetId(id);
+            edm::LogProblem("BadModule")
+                << "Error: \n Cell " << cell << "(" << HGCSiliconDetId(cell)
+                << ")\n has not been found in \n module " << HGCalDetId(id);
           }
           std::stringstream output;
           output << " Available cells are:\n";
@@ -541,13 +680,15 @@ bool HGCalTriggerGeomTesterV9Imp2::checkMappingConsistency() {
           }
           edm::LogProblem("BadModule") << output.str();
           throw cms::Exception("BadGeometry")
-              << "HGCalTriggerGeometry: Found inconsistency in cell <->  module mapping";
+              << "HGCalTriggerGeometry: Found inconsistency in cell <->  "
+                 "module mapping";
         }
       }
     }
   } catch (const cms::Exception& e) {
     edm::LogWarning("HGCalTriggerGeometryTester")
-        << "Problem with the trigger geometry detected. Only the basic cells tree will be filled\n";
+        << "Problem with the trigger geometry detected. Only the basic cells "
+           "tree will be filled\n";
     edm::LogWarning("HGCalTriggerGeometryTester") << e.message() << "\n";
     return false;
   }
@@ -560,57 +701,77 @@ bool HGCalTriggerGeomTesterV9Imp2::checkNeighborConsistency() {
 
     // EE
     for (const auto& id : triggerGeometry_->eeGeometry()->getValidDetIds()) {
-      if (!triggerGeometry_->eeTopology().valid(id))
-        continue;
+      if (!triggerGeometry_->eeTopology().valid(id)) continue;
       // fill trigger cells
       // Skip trigger cells in module 0
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      uint32_t module = triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
-      if (HGCalDetId(module).wafer() == 0)
-        continue;
-      auto itr_insert = triggercells_to_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      if (HGCalDetId(module).wafer() == 0) continue;
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
     }
     // HSi
     for (const auto& id : triggerGeometry_->hsiGeometry()->getValidDetIds()) {
-      if (!triggerGeometry_->hsiTopology().valid(id))
-        continue;
+      if (!triggerGeometry_->hsiTopology().valid(id)) continue;
       // fill trigger cells
       // Skip trigger cells in module 0
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      uint32_t module = triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
-      if (HGCalDetId(module).wafer() == 0)
-        continue;
-      auto itr_insert = triggercells_to_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      if (HGCalDetId(module).wafer() == 0) continue;
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
     }
-
     // HSc
     for (const auto& id : triggerGeometry_->hscGeometry()->getValidDetIds()) {
-      if (!triggerGeometry_->hscTopology().valid(id))
-        continue;
+      if (!triggerGeometry_->hscTopology().valid(id)) continue;
       // fill trigger cells
       // Skip trigger cells in module 0
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      uint32_t module = triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      if (HGCalDetId(module).wafer() == 0) continue;
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
+      itr_insert.first->second.emplace(id);
+    }
+    // NOSE
+    for (const auto& id : triggerGeometry_->noseGeometry()->getValidDetIds()) {
+      if (!triggerGeometry_->noseTopology().valid(id)) continue;
+      // fill trigger cells
+      // FIXME ??? waferU vs wafer
+      // Skip trigger cells in module 0
+      uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
       if (HGCalDetId(module).wafer() == 0)
+        //      if (HFNoseDetId(module).waferU() == 0)
         continue;
-      auto itr_insert = triggercells_to_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      auto itr_insert = triggercells_to_cells.emplace(
+          trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
     }
 
-    edm::LogPrint("NeighborCheck") << "Checking trigger cell neighbor consistency";
+    edm::LogPrint("NeighborCheck")
+        << "Checking trigger cell neighbor consistency";
     // Loop over trigger cells
     for (const auto& triggercell_cells : triggercells_to_cells) {
       unsigned triggercell_id(triggercell_cells.first);
-      const auto neighbors = triggerGeometry_->getNeighborsFromTriggerCell(triggercell_id);
+      const auto neighbors =
+          triggerGeometry_->getNeighborsFromTriggerCell(triggercell_id);
       for (const auto neighbor : neighbors) {
-        const auto neighbors_of_neighbor = triggerGeometry_->getNeighborsFromTriggerCell(neighbor);
+        const auto neighbors_of_neighbor =
+            triggerGeometry_->getNeighborsFromTriggerCell(neighbor);
         // check if the original cell is included in the neigbors of neighbor
-        if (neighbors_of_neighbor.find(triggercell_id) == neighbors_of_neighbor.end()) {
-          edm::LogProblem("BadNeighbor") << "Error: \n Trigger cell " << HGCalDetId(neighbor)
-                                         << "\n is a neighbor of \n"
-                                         << HGCalDetId(triggercell_id);
+        if (neighbors_of_neighbor.find(triggercell_id) ==
+            neighbors_of_neighbor.end()) {
+          edm::LogProblem("BadNeighbor")
+              << "Error: \n Trigger cell " << HGCalDetId(neighbor)
+              << "\n is a neighbor of \n"
+              << HGCalDetId(triggercell_id);
           edm::LogProblem("BadNeighbor") << " But the opposite is not true";
           std::stringstream output;
           output << " List of neighbors of neighbor = \n";
@@ -623,7 +784,8 @@ bool HGCalTriggerGeomTesterV9Imp2::checkNeighborConsistency() {
     }
   } catch (const cms::Exception& e) {
     edm::LogWarning("HGCalTriggerGeometryTester")
-        << "Problem with the trigger neighbors detected. No neighbor information will be filled\n";
+        << "Problem with the trigger neighbors detected. No neighbor "
+           "information will be filled\n";
     edm::LogWarning("HGCalTriggerGeometryTester") << e.message() << "\n";
     return false;
   }
@@ -652,7 +814,8 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     cellU_ = detid.cellU();
     cellV_ = detid.cellV();
     int type1 = detid.type();
-    int type2 = triggerGeometry_->eeTopology().dddConstants().getTypeHex(cellLayer_, cellWaferU_, cellWaferV_);
+    int type2 = triggerGeometry_->eeTopology().dddConstants().getTypeHex(
+        cellLayer_, cellWaferU_, cellWaferV_);
     if (type1 != type2) {
       std::cout << "Found incompatible wafer types:\n  " << detid << "\n";
     }
@@ -661,7 +824,8 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     cellX_ = center.x();
     cellY_ = center.y();
     cellZ_ = center.z();
-    std::vector<GlobalPoint> corners = triggerGeometry_->eeGeometry()->getCorners(id);
+    std::vector<GlobalPoint> corners =
+        triggerGeometry_->eeGeometry()->getCorners(id);
     cellCornersN_ = corners.size();
     setTreeCellCornerSize(cellCornersN_);
     for (unsigned i = 0; i < corners.size(); i++) {
@@ -674,10 +838,11 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     if (!no_trigger_) {
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
       // Skip trigger cells in module 0
-      uint32_t module = triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
-      if (HGCalDetId(module).wafer() == 0)
-        continue;
-      auto itr_insert = trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      if (HGCalDetId(module).wafer() == 0) continue;
+      auto itr_insert =
+          trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
     }
   }
@@ -693,7 +858,8 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     cellU_ = detid.cellU();
     cellV_ = detid.cellV();
     int type1 = detid.type();
-    int type2 = triggerGeometry_->hsiTopology().dddConstants().getTypeHex(cellLayer_, cellWaferU_, cellWaferV_);
+    int type2 = triggerGeometry_->hsiTopology().dddConstants().getTypeHex(
+        cellLayer_, cellWaferU_, cellWaferV_);
     if (type1 != type2) {
       std::cout << "Found incompatible wafer types:\n  " << detid << "\n";
     }
@@ -702,7 +868,8 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     cellX_ = center.x();
     cellY_ = center.y();
     cellZ_ = center.z();
-    std::vector<GlobalPoint> corners = triggerGeometry_->hsiGeometry()->getCorners(id);
+    std::vector<GlobalPoint> corners =
+        triggerGeometry_->hsiGeometry()->getCorners(id);
     cellCornersN_ = corners.size();
     setTreeCellCornerSize(cellCornersN_);
     for (unsigned i = 0; i < corners.size(); i++) {
@@ -715,10 +882,11 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     if (!no_trigger_) {
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
       // Skip trigger cells in module 0
-      uint32_t module = triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
-      if (HGCalDetId(module).wafer() == 0)
-        continue;
-      auto itr_insert = trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      if (HGCalDetId(module).wafer() == 0) continue;
+      auto itr_insert =
+          trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
     }
   }
@@ -754,37 +922,98 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     // fill trigger cells
     if (!no_trigger_) {
       uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
-      auto itr_insert = trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      auto itr_insert =
+          trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
+      itr_insert.first->second.emplace(id);
+    }
+  }
+
+  // NOSE
+  std::cout << "Filling NOSE geometry\n";
+  for (const auto& id : triggerGeometry_->noseGeometry()->getValidDetIds()) {
+    HFNoseDetId detid(id);
+    cellId_ = detid.rawId();
+    cellSide_ = detid.zside();
+    cellSubdet_ = detid.subdet();
+    cellLayer_ = detid.layer();
+    cellWaferU_ = detid.waferU();
+    cellWaferV_ = detid.waferV();
+    cellU_ = detid.cellU();
+    cellV_ = detid.cellV();
+    int type1 = detid.type();
+    int type2 = triggerGeometry_->noseTopology().dddConstants().getTypeHex(
+        cellLayer_, cellWaferU_, cellWaferV_);
+    if (type1 != type2) {
+      std::cout << "Found incompatible wafer types:\n  " << detid << "\n";
+    }
+    //
+    GlobalPoint center = triggerGeometry_->noseGeometry()->getPosition(id);
+    cellX_ = center.x();
+    cellY_ = center.y();
+    cellZ_ = center.z();
+    std::vector<GlobalPoint> corners =
+        triggerGeometry_->noseGeometry()->getCorners(id);
+    cellCornersN_ = corners.size();
+    setTreeCellCornerSize(cellCornersN_);
+    for (unsigned i = 0; i < corners.size(); i++) {
+      cellCornersX_.get()[i] = corners[i].x();
+      cellCornersY_.get()[i] = corners[i].y();
+      cellCornersZ_.get()[i] = corners[i].z();
+    }
+    treeCellsNose_->Fill();
+    // fill trigger cells
+    if (!no_trigger_) {
+      uint32_t trigger_cell = triggerGeometry_->getTriggerCellFromCell(id);
+      // Skip trigger cells in module 0
+      uint32_t module =
+          triggerGeometry_->getModuleFromTriggerCell(trigger_cell);
+      if (HGCalDetId(module).wafer() == 0) continue;
+      auto itr_insert =
+          trigger_cells.emplace(trigger_cell, std::unordered_set<uint32_t>());
       itr_insert.first->second.emplace(id);
     }
   }
 
   // if problem detected in the trigger geometry, don't produce trigger trees
-  if (no_trigger_)
-    return;
+  if (no_trigger_) return;
 
   // Loop over trigger cells
   edm::LogPrint("TreeFilling") << "Filling trigger cells tree";
   for (const auto& triggercell_cells : trigger_cells) {
     DetId id(triggercell_cells.first);
-    HGCalTriggerDetId id_trig(triggercell_cells.first);
-    HGCScintillatorDetId id_sc(triggercell_cells.first);
-    GlobalPoint position = triggerGeometry_->getTriggerCellPosition(id);
+    GlobalPoint position =
+        triggerGeometry_->getTriggerCellPosition(triggercell_cells.first);
     triggerCellId_ = id.rawId();
     if (id.det() == DetId::HGCalHSc) {
+      HGCScintillatorDetId id_sc(triggercell_cells.first);
       triggerCellSide_ = id_sc.zside();
       triggerCellSubdet_ = id_sc.subdet();
       triggerCellLayer_ = id_sc.layer();
       triggerCellIEta_ = id_sc.ietaAbs();
       triggerCellIPhi_ = id_sc.iphi();
+      //    } else if (id.det()==DetId::Forward &&
+      //    id.subdetId()==ForwardSubdetector::HFNose)  {
+    } else if (HFNoseTriggerDetId(triggercell_cells.first).det() ==
+                   DetId::HGCalTrigger &&
+               HFNoseTriggerDetId(triggercell_cells.first).subdet() ==
+                   HGCalTriggerSubdetector::HFNoseTrigger) {
+      HFNoseTriggerDetId id_nose_trig(triggercell_cells.first);
+      triggerCellSide_ = id_nose_trig.zside();
+      triggerCellSubdet_ = id_nose_trig.subdet();
+      triggerCellLayer_ = id_nose_trig.layer();
+      triggerCellWaferU_ = id_nose_trig.waferU();
+      triggerCellWaferV_ = id_nose_trig.waferV();
+      triggerCellU_ = id_nose_trig.triggerCellU();
+      triggerCellV_ = id_nose_trig.triggerCellV();
     } else {
-      triggerCellSide_ = id_trig.zside();
-      triggerCellSubdet_ = id_trig.subdet();
-      triggerCellLayer_ = id_trig.layer();
-      triggerCellWaferU_ = id_trig.waferU();
-      triggerCellWaferV_ = id_trig.waferV();
-      triggerCellU_ = id_trig.triggerCellU();
-      triggerCellV_ = id_trig.triggerCellV();
+      HGCalTriggerDetId id_si_trig(triggercell_cells.first);
+      triggerCellSide_ = id_si_trig.zside();
+      triggerCellSubdet_ = id_si_trig.subdet();
+      triggerCellLayer_ = id_si_trig.layer();
+      triggerCellWaferU_ = id_si_trig.waferU();
+      triggerCellWaferV_ = id_si_trig.waferV();
+      triggerCellU_ = id_si_trig.triggerCellU();
+      triggerCellV_ = id_si_trig.triggerCellV();
     }
     triggerCellX_ = position.x();
     triggerCellY_ = position.y();
@@ -796,7 +1025,8 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     for (const auto& c : triggercell_cells.second) {
       if (id.det() == DetId::HGCalHSc) {
         HGCScintillatorDetId cId(c);
-        GlobalPoint cell_position = triggerGeometry_->hscGeometry()->getPosition(cId);
+        GlobalPoint cell_position =
+            triggerGeometry_->hscGeometry()->getPosition(cId);
         triggerCellCell_id_.get()[ic] = c;
         triggerCellCell_zside_.get()[ic] = cId.zside();
         triggerCellCell_subdet_.get()[ic] = cId.subdetId();
@@ -810,10 +1040,32 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         triggerCellCell_x_.get()[ic] = cell_position.x();
         triggerCellCell_y_.get()[ic] = cell_position.y();
         triggerCellCell_z_.get()[ic] = cell_position.z();
+      } else if (HFNoseTriggerDetId(triggercell_cells.first).det() ==
+                     DetId::HGCalTrigger &&
+                 HFNoseTriggerDetId(triggercell_cells.first).subdet() ==
+                     HGCalTriggerSubdetector::HFNoseTrigger) {
+        HFNoseDetId cId(c);
+        GlobalPoint cell_position =
+            triggerGeometry_->noseGeometry()->getPosition(cId);
+        triggerCellCell_id_.get()[ic] = c;
+        triggerCellCell_zside_.get()[ic] = cId.zside();
+        triggerCellCell_subdet_.get()[ic] = cId.subdet();
+        triggerCellCell_layer_.get()[ic] = cId.layer();
+        triggerCellCell_waferU_.get()[ic] = cId.waferU();
+        triggerCellCell_waferV_.get()[ic] = cId.waferV();
+        triggerCellCell_cellU_.get()[ic] = cId.cellU();
+        triggerCellCell_cellV_.get()[ic] = cId.cellV();
+        triggerCellCell_ieta_.get()[ic] = 0;
+        triggerCellCell_iphi_.get()[ic] = 0;
+        triggerCellCell_x_.get()[ic] = cell_position.x();
+        triggerCellCell_y_.get()[ic] = cell_position.y();
+        triggerCellCell_z_.get()[ic] = cell_position.z();
       } else {
         HGCSiliconDetId cId(c);
-        GlobalPoint cell_position = (cId.det() == DetId::HGCalEE ? triggerGeometry_->eeGeometry()->getPosition(cId)
-                                                                 : triggerGeometry_->hsiGeometry()->getPosition(cId));
+        GlobalPoint cell_position =
+            (cId.det() == DetId::HGCalEE
+                 ? triggerGeometry_->eeGeometry()->getPosition(cId)
+                 : triggerGeometry_->hsiGeometry()->getPosition(cId));
         triggerCellCell_id_.get()[ic] = c;
         triggerCellCell_zside_.get()[ic] = cId.zside();
         triggerCellCell_subdet_.get()[ic] = cId.subdet();
@@ -831,14 +1083,20 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
       ic++;
     }
 
-    treeTriggerCells_->Fill();
+    // TEMPORARY
+    //    treeTriggerCells_->Fill();
+
     // fill modules
     uint32_t module = triggerGeometry_->getModuleFromTriggerCell(id);
     auto itr_insert = modules.emplace(module, std::unordered_set<uint32_t>());
     itr_insert.first->second.emplace(id);
   }
+
   // Loop over modules
   edm::LogPrint("TreeFilling") << "Filling modules tree";
+
+  std::cout << " looping in modules " << std::endl;
+
   for (const auto& module_triggercells : modules) {
     DetId id(module_triggercells.first);
     GlobalPoint position = triggerGeometry_->getModulePosition(id);
@@ -854,6 +1112,15 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
       moduleIEta_ = sc_id.ietaAbs();
       moduleIPhi_ = sc_id.iphi();
       module_ = 0;
+    } else if (id.det() == DetId::Forward and
+               id.subdetId() == ForwardSubdetector::HFNose) {
+      HGCalDetId nose_id(module_triggercells.first);
+      moduleSide_ = nose_id.zside();
+      moduleSubdet_ = nose_id.subdetId();
+      moduleLayer_ = nose_id.layer();
+      moduleIEta_ = 0;
+      moduleIPhi_ = 0;
+      module_ = nose_id.wafer();
     } else {
       HGCalDetId si_id(module_triggercells.first);
       moduleSide_ = si_id.zside();
@@ -869,6 +1136,7 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     } else {
       moduleLinks_ = triggerGeometry_->getLinksInModule(id);
     }
+
     //
     setTreeModuleSize(moduleTC_N_);
     size_t itc = 0;
@@ -885,6 +1153,18 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         moduleTC_cellV_.get()[itc] = 0;
         moduleTC_ieta_.get()[itc] = tcId.ietaAbs();
         moduleTC_iphi_.get()[itc] = tcId.iphi();
+      } else if (id.det() == DetId::Forward and
+                 id.subdetId() == ForwardSubdetector::HFNose) {
+        HFNoseTriggerDetId tcId(tc);
+        moduleTC_zside_.get()[itc] = tcId.zside();
+        moduleTC_subdet_.get()[itc] = tcId.subdet();
+        moduleTC_layer_.get()[itc] = tcId.layer();
+        moduleTC_waferU_.get()[itc] = tcId.waferU();
+        moduleTC_waferV_.get()[itc] = tcId.waferV();
+        moduleTC_cellU_.get()[itc] = tcId.triggerCellU();
+        moduleTC_cellV_.get()[itc] = tcId.triggerCellV();
+        moduleTC_ieta_.get()[itc] = 0;
+        moduleTC_iphi_.get()[itc] = 0;
       } else {
         HGCalTriggerDetId tcId(tc);
         moduleTC_zside_.get()[itc] = tcId.zside();
@@ -911,7 +1191,8 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     for (const auto& c : cells_in_module) {
       if (id.det() == DetId::HGCalHSc) {
         HGCScintillatorDetId cId(c);
-        GlobalPoint cell_position = triggerGeometry_->hscGeometry()->getPosition(cId);
+	  GlobalPoint cell_position =
+	  triggerGeometry_->hscGeometry()->getPosition(cId);
         triggerCellCell_id_.get()[ic] = c;
         triggerCellCell_zside_.get()[ic] = cId.zside();
         triggerCellCell_subdet_.get()[ic] = cId.subdetId();
@@ -922,13 +1203,14 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         triggerCellCell_cellV_.get()[ic] = 0;
         triggerCellCell_ieta_.get()[ic] = cId.ietaAbs();
         triggerCellCell_iphi_.get()[ic] = cId.iphi();
-        triggerCellCell_x_.get()[ic] = cell_position.x();
-        triggerCellCell_y_.get()[ic] = cell_position.y();
-        triggerCellCell_z_.get()[ic] = cell_position.z();
-      } else {
-        HGCSiliconDetId cId(c);
-        const GlobalPoint position = (cId.det() == DetId::HGCalEE ? triggerGeometry_->eeGeometry()->getPosition(cId)
-                                                                  : triggerGeometry_->hsiGeometry()->getPosition(cId));
+	triggerCellCell_x_.get()[ic] = cell_position.x();
+	triggerCellCell_y_.get()[ic] = cell_position.y();
+	triggerCellCell_z_.get()[ic] = cell_position.z();
+      } else if (id.det() == DetId::Forward and
+                 id.subdetId() == ForwardSubdetector::HFNose) {
+        HFNoseDetId cId(c);
+	const GlobalPoint position =
+	  triggerGeometry_->noseGeometry()->getPosition(cId);
         moduleCell_id_.get()[ic] = c;
         moduleCell_zside_.get()[ic] = cId.zside();
         moduleCell_subdet_.get()[ic] = cId.subdetId();
@@ -937,19 +1219,37 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         moduleCell_waferV_.get()[ic] = cId.waferV();
         moduleCell_cellU_.get()[ic] = cId.cellU();
         moduleCell_cellV_.get()[ic] = cId.cellV();
-        moduleCell_x_.get()[ic] = position.x();
-        moduleCell_y_.get()[ic] = position.y();
-        moduleCell_z_.get()[ic] = position.z();
+	moduleCell_x_.get()[ic] = position.x();
+	moduleCell_y_.get()[ic] = position.y();
+	moduleCell_z_.get()[ic] = position.z();
+      } else {
+        HGCSiliconDetId cId(c);
+        const GlobalPoint position = (cId.det() == DetId::HGCalEE ?
+          triggerGeometry_->eeGeometry()->getPosition(cId) :
+	  triggerGeometry_->hsiGeometry()->getPosition(cId));
+        moduleCell_id_.get()[ic] = c;
+        moduleCell_zside_.get()[ic] = cId.zside();
+        moduleCell_subdet_.get()[ic] = cId.subdetId();
+        moduleCell_layer_.get()[ic] = cId.layer();
+        moduleCell_waferU_.get()[ic] = cId.waferU();
+        moduleCell_waferV_.get()[ic] = cId.waferV();
+        moduleCell_cellU_.get()[ic] = cId.cellU();
+        moduleCell_cellV_.get()[ic] = cId.cellV();
+	moduleCell_x_.get()[ic] = position.x();
+	moduleCell_y_.get()[ic] = position.y();
+	moduleCell_z_.get()[ic] = position.z();
         ic++;
       }
     }
     //
-    treeModules_->Fill();
+    // TEMPORARY
+    //    treeModules_->Fill();
   }
 }
 
 /*****************************************************************/
-void HGCalTriggerGeomTesterV9Imp2::analyze(const edm::Event& e, const edm::EventSetup& es)
+void HGCalTriggerGeomTesterV9Imp2::analyze(const edm::Event& e,
+                                           const edm::EventSetup& es)
 /*****************************************************************/
 {}
 
@@ -1034,15 +1334,24 @@ void HGCalTriggerGeomTesterV9Imp2::setTreeTriggerCellSize(const size_t n)
   triggerCellCell_z_.reset(new float[n], array_deleter<float>());
 
   treeTriggerCells_->GetBranch("c_id")->SetAddress(triggerCellCell_id_.get());
-  treeTriggerCells_->GetBranch("c_zside")->SetAddress(triggerCellCell_zside_.get());
-  treeTriggerCells_->GetBranch("c_subdet")->SetAddress(triggerCellCell_subdet_.get());
-  treeTriggerCells_->GetBranch("c_layer")->SetAddress(triggerCellCell_layer_.get());
-  treeTriggerCells_->GetBranch("c_waferu")->SetAddress(triggerCellCell_waferU_.get());
-  treeTriggerCells_->GetBranch("c_waferv")->SetAddress(triggerCellCell_waferV_.get());
-  treeTriggerCells_->GetBranch("c_cellu")->SetAddress(triggerCellCell_cellU_.get());
-  treeTriggerCells_->GetBranch("c_cellv")->SetAddress(triggerCellCell_cellV_.get());
-  treeTriggerCells_->GetBranch("c_ieta")->SetAddress(triggerCellCell_ieta_.get());
-  treeTriggerCells_->GetBranch("c_iphi")->SetAddress(triggerCellCell_iphi_.get());
+  treeTriggerCells_->GetBranch("c_zside")->SetAddress(
+      triggerCellCell_zside_.get());
+  treeTriggerCells_->GetBranch("c_subdet")
+      ->SetAddress(triggerCellCell_subdet_.get());
+  treeTriggerCells_->GetBranch("c_layer")->SetAddress(
+      triggerCellCell_layer_.get());
+  treeTriggerCells_->GetBranch("c_waferu")
+      ->SetAddress(triggerCellCell_waferU_.get());
+  treeTriggerCells_->GetBranch("c_waferv")
+      ->SetAddress(triggerCellCell_waferV_.get());
+  treeTriggerCells_->GetBranch("c_cellu")->SetAddress(
+      triggerCellCell_cellU_.get());
+  treeTriggerCells_->GetBranch("c_cellv")->SetAddress(
+      triggerCellCell_cellV_.get());
+  treeTriggerCells_->GetBranch("c_ieta")->SetAddress(
+      triggerCellCell_ieta_.get());
+  treeTriggerCells_->GetBranch("c_iphi")->SetAddress(
+      triggerCellCell_iphi_.get());
   treeTriggerCells_->GetBranch("c_x")->SetAddress(triggerCellCell_x_.get());
   treeTriggerCells_->GetBranch("c_y")->SetAddress(triggerCellCell_y_.get());
   treeTriggerCells_->GetBranch("c_z")->SetAddress(triggerCellCell_z_.get());
@@ -1062,7 +1371,8 @@ void HGCalTriggerGeomTesterV9Imp2::setTreeCellCornerSize(const size_t n)
 }
 
 /*****************************************************************/
-void HGCalTriggerGeomTesterV9Imp2::setTreeTriggerCellNeighborSize(const size_t n)
+void HGCalTriggerGeomTesterV9Imp2::setTreeTriggerCellNeighborSize(
+    const size_t n)
 /*****************************************************************/
 {
   triggerCellNeighbor_id_.reset(new int[n], array_deleter<int>());
@@ -1074,16 +1384,25 @@ void HGCalTriggerGeomTesterV9Imp2::setTreeTriggerCellNeighborSize(const size_t n
   triggerCellNeighbor_cellU_.reset(new int[n], array_deleter<int>());
   triggerCellNeighbor_cellV_.reset(new int[n], array_deleter<int>());
   triggerCellNeighbor_distance_.reset(new float[n], array_deleter<float>());
-  treeTriggerCells_->GetBranch("neighbor_id")->SetAddress(triggerCellNeighbor_id_.get());
-  treeTriggerCells_->GetBranch("neighbor_zside")->SetAddress(triggerCellNeighbor_zside_.get());
-  treeTriggerCells_->GetBranch("neighbor_subdet")->SetAddress(triggerCellNeighbor_subdet_.get());
-  treeTriggerCells_->GetBranch("neighbor_layer")->SetAddress(triggerCellNeighbor_layer_.get());
-  treeTriggerCells_->GetBranch("neighbor_waferu")->SetAddress(triggerCellNeighbor_waferU_.get());
-  treeTriggerCells_->GetBranch("neighbor_waferv")->SetAddress(triggerCellNeighbor_waferV_.get());
-  treeTriggerCells_->GetBranch("neighbor_cellu")->SetAddress(triggerCellNeighbor_cellU_.get());
-  treeTriggerCells_->GetBranch("neighbor_cellv")->SetAddress(triggerCellNeighbor_cellV_.get());
-  treeTriggerCells_->GetBranch("neighbor_distance")->SetAddress(triggerCellNeighbor_distance_.get());
+  treeTriggerCells_->GetBranch("neighbor_id")
+      ->SetAddress(triggerCellNeighbor_id_.get());
+  treeTriggerCells_->GetBranch("neighbor_zside")
+      ->SetAddress(triggerCellNeighbor_zside_.get());
+  treeTriggerCells_->GetBranch("neighbor_subdet")
+      ->SetAddress(triggerCellNeighbor_subdet_.get());
+  treeTriggerCells_->GetBranch("neighbor_layer")
+      ->SetAddress(triggerCellNeighbor_layer_.get());
+  treeTriggerCells_->GetBranch("neighbor_waferu")
+      ->SetAddress(triggerCellNeighbor_waferU_.get());
+  treeTriggerCells_->GetBranch("neighbor_waferv")
+      ->SetAddress(triggerCellNeighbor_waferV_.get());
+  treeTriggerCells_->GetBranch("neighbor_cellu")
+      ->SetAddress(triggerCellNeighbor_cellU_.get());
+  treeTriggerCells_->GetBranch("neighbor_cellv")
+      ->SetAddress(triggerCellNeighbor_cellV_.get());
+  treeTriggerCells_->GetBranch("neighbor_distance")
+      ->SetAddress(triggerCellNeighbor_distance_.get());
 }
 
-//define this as a plug-in
+// define this as a plug-in
 DEFINE_FWK_MODULE(HGCalTriggerGeomTesterV9Imp2);
