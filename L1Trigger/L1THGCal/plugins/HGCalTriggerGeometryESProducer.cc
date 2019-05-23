@@ -52,10 +52,13 @@ HGCalTriggerGeometryESProducer::ReturnType HGCalTriggerGeometryESProducer::produ
     edm::ESHandle<HGCalGeometry> ee_geometry;
     edm::ESHandle<HGCalGeometry> hsi_geometry;
     edm::ESHandle<HGCalGeometry> hsc_geometry;
+    edm::ESHandle<HGCalGeometry> nose_geometry;
     iRecord.getRecord<IdealGeometryRecord>().get("HGCalEESensitive", ee_geometry);
     iRecord.getRecord<IdealGeometryRecord>().get("HGCalHESiliconSensitive", hsi_geometry);
     iRecord.getRecord<IdealGeometryRecord>().get("HGCalHEScintillatorSensitive", hsc_geometry);
-    geometry->initialize(ee_geometry, hsi_geometry, hsc_geometry);
+    iRecord.getRecord<IdealGeometryRecord>().get("HGCalHFNoseSensitive", nose_geometry);
+    geometry->initialize(ee_geometry, hsi_geometry, hsc_geometry, nose_geometry);
+
   }
   return geometry;
 }

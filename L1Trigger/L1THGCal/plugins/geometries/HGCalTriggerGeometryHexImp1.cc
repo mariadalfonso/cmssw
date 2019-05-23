@@ -17,6 +17,10 @@ public:
   void initialize(const edm::ESHandle<HGCalGeometry>&,
                   const edm::ESHandle<HGCalGeometry>&,
                   const edm::ESHandle<HGCalGeometry>&) final;
+  void initialize(const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&) final;
 
 private:
   edm::FileInPath l1tCellsMapping_;
@@ -55,6 +59,20 @@ void HGCalTriggerGeometryHexImp1::initialize(const edm::ESHandle<HGCalGeometry>&
   throw cms::Exception("BadGeometry")
       << "HGCalTriggerGeometryHexImp1 geometry cannot be initialized with the V9 HGCAL geometry";
 }
+
+
+/*****************************************************************/
+void HGCalTriggerGeometryHexImp1::initialize(const edm::ESHandle<HGCalGeometry>& hgc_ee_geometry,
+                                             const edm::ESHandle<HGCalGeometry>& hgc_hsi_geometry,
+                                             const edm::ESHandle<HGCalGeometry>& hgc_hsc_geometry,
+                                             const edm::ESHandle<HGCalGeometry>& hgc_nose_geometry)
+/*****************************************************************/
+{
+  throw cms::Exception("BadGeometry")
+      << "HGCalTriggerGeometryHexImp1 geometry cannot be initialized with the V9 HGCAL+NOSE geometry";
+}
+
+
 
 /*****************************************************************/
 void HGCalTriggerGeometryHexImp1::fillMaps()

@@ -1,5 +1,18 @@
 import FWCore.ParameterSet.Config as cms
 
+Nose_dEdX_weights = cms.vdouble(0.0,
+                               39.5,
+                               39.76,
+                               39.75,
+                               39.75,
+                               39.75,
+                               66.02,
+                               92.28,
+                               92.28
+)
+
+
+
 AllLayer_weights = cms.vdouble(0.0,
                                0.0158115,
                                0.0286877,

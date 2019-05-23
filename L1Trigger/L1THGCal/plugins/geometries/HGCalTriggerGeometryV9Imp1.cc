@@ -18,6 +18,10 @@ public:
   void initialize(const edm::ESHandle<HGCalGeometry>&,
                   const edm::ESHandle<HGCalGeometry>&,
                   const edm::ESHandle<HGCalGeometry>&) final;
+  void initialize(const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&) final;
   void reset() final;
 
   unsigned getTriggerCellFromCell(const unsigned) const final;
@@ -139,6 +143,34 @@ void HGCalTriggerGeometryV9Imp1::initialize(const edm::ESHandle<CaloGeometry>& c
 void HGCalTriggerGeometryV9Imp1::initialize(const edm::ESHandle<HGCalGeometry>& hgc_ee_geometry,
                                             const edm::ESHandle<HGCalGeometry>& hgc_hsi_geometry,
                                             const edm::ESHandle<HGCalGeometry>& hgc_hsc_geometry) {
+  setEEGeometry(hgc_ee_geometry);
+  setHSiGeometry(hgc_hsi_geometry);
+  setHScGeometry(hgc_hsc_geometry);
+  heOffset_ = eeTopology().dddConstants().layers(true);
+  totalLayers_ = heOffset_ + hsiTopology().dddConstants().layers(true);
+  trigger_layers_.resize(totalLayers_ + 1);
+  trigger_layers_[0] = 0;  // layer number 0 doesn't exist
+  unsigned trigger_layer = 1;
+  for (unsigned layer = 1; layer < trigger_layers_.size(); layer++) {
+    if (disconnected_layers_.find(layer) == disconnected_layers_.end()) {
+      // Increase trigger layer number if the layer is not disconnected
+      trigger_layers_[layer] = trigger_layer;
+      trigger_layer++;
+    } else {
+      trigger_layers_[layer] = 0;
+    }
+  }
+  fillMaps();
+  fillNeighborMap(l1tCellNeighborsMapping_, trigger_cell_neighbors_, false);        // silicon
+  fillNeighborMap(l1tCellNeighborsSciMapping_, trigger_cell_neighbors_sci_, true);  // scintillator
+  fillInvalidTriggerCells();
+}
+
+
+void HGCalTriggerGeometryV9Imp1::initialize(const edm::ESHandle<HGCalGeometry>& hgc_ee_geometry,
+                                            const edm::ESHandle<HGCalGeometry>& hgc_hsi_geometry,
+                                            const edm::ESHandle<HGCalGeometry>& hgc_hsc_geometry,
+                                            const edm::ESHandle<HGCalGeometry>& hgc_nose_geometry) {
   setEEGeometry(hgc_ee_geometry);
   setHSiGeometry(hgc_hsi_geometry);
   setHScGeometry(hgc_hsc_geometry);

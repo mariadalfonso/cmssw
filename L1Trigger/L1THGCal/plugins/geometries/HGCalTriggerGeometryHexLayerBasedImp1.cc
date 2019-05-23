@@ -18,6 +18,10 @@ public:
   void initialize(const edm::ESHandle<HGCalGeometry>&,
                   const edm::ESHandle<HGCalGeometry>&,
                   const edm::ESHandle<HGCalGeometry>&) final;
+  void initialize(const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&,
+                  const edm::ESHandle<HGCalGeometry>&) final;
   void reset() final;
 
   unsigned getTriggerCellFromCell(const unsigned) const final;
@@ -149,6 +153,16 @@ void HGCalTriggerGeometryHexLayerBasedImp1::initialize(const edm::ESHandle<HGCal
   throw cms::Exception("BadGeometry")
       << "HGCalTriggerGeometryHexLayerBasedImp1 geometry cannot be initialized with the V9 HGCAL geometry";
 }
+
+
+void HGCalTriggerGeometryHexLayerBasedImp1::initialize(const edm::ESHandle<HGCalGeometry>& hgc_ee_geometry,
+                                                       const edm::ESHandle<HGCalGeometry>& hgc_hsi_geometry,
+                                                       const edm::ESHandle<HGCalGeometry>& hgc_hsc_geometry,
+                                                       const edm::ESHandle<HGCalGeometry>& hgc_nose_geometry) {
+  throw cms::Exception("BadGeometry")
+      << "HGCalTriggerGeometryHexLayerBasedImp1 geometry cannot be initialized with the V9 HGCAL+Nose geometry";
+}
+
 
 unsigned HGCalTriggerGeometryHexLayerBasedImp1::getTriggerCellFromCell(const unsigned cell_id) const {
   unsigned subdet = 0;
