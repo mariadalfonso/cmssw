@@ -480,8 +480,8 @@ void HBHEPhase1Reconstructor::processData(const Collection& coll,
 
         // Basic ADC decoding tools
         const HcalRecoParam* param_ts = paramTS_->getValues(cell.rawId());
-        const HcalCalibrations& calib = cond.getHcalCalibrations(cell);
-        const HcalCalibrationWidths& calibWidth = cond.getHcalCalibrationWidths(cell);
+        const HcalCalibrations& calib = cond.getHcalCalibrationsHcalDetId(cell);
+        const HcalCalibrationWidths& calibWidth = cond.getHcalCalibrationWidthsHcalDetId(cell);
         const HcalQIECoder* channelCoder = cond.getHcalCoder(cell);
         const HcalQIEShape* shape = cond.getHcalShape(channelCoder);
         const HcalCoderDb coder(*channelCoder, *shape);

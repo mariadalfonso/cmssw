@@ -8,6 +8,16 @@
 HcalCalibrationWidthsSet::HcalCalibrationWidthsSet() 
 {}
 
+
+const HcalCalibrationWidths& HcalCalibrationWidthsSet::getCalibrationWidthsHcalDetId(const HcalDetId fId2) const {
+  //  DetId fId2(hcalTransformedId(fId));
+  auto cell = mItems.find(fId2);
+  //  if ((cell == mItems.end()) || (!hcalEqualDetId(cell->first,fId2)))
+  //    throw cms::Exception ("Conditions not found") << "Unavailable HcalCalibrationWidths for cell " << HcalGenericDetId(fId);
+  return cell->second.calib;
+}
+
+
 const HcalCalibrationWidths& HcalCalibrationWidthsSet::getCalibrationWidths(const DetId fId) const {
   DetId fId2(hcalTransformedId(fId));
   auto cell = mItems.find(fId2);

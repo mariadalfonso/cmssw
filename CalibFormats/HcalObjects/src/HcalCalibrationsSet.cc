@@ -16,6 +16,15 @@ const HcalCalibrations& HcalCalibrationsSet::getCalibrations(const DetId fId) co
   return cell->second.calib;
 }
 
+const HcalCalibrations& HcalCalibrationsSet::getCalibrationsHcalDetId(const HcalDetId fId2) const {
+  //  DetId fId2(hcalTransformedId(fId));
+  auto cell = mItems.find(fId2);
+  //  if ((cell == mItems.end()) || (!hcalEqualDetId(cell->first,fId2)))
+  //    throw cms::Exception ("Conditions not found") << "Unavailable HcalCalibrations for cell " << HcalGenericDetId(fId);
+  return cell->second.calib;
+}
+
+
 void HcalCalibrationsSet::setCalibrations(DetId fId, const HcalCalibrations& ca) {
   DetId fId2(hcalTransformedId(fId));
   auto cell = mItems.find(fId2);

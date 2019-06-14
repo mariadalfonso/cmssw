@@ -32,6 +32,8 @@ class HcalDbService {
 
   const HcalCalibrations& getHcalCalibrations(const HcalGenericDetId& fId) const;
   const HcalCalibrationWidths& getHcalCalibrationWidths(const HcalGenericDetId& fId) const;
+  const HcalCalibrations& getHcalCalibrationsHcalDetId(const HcalDetId& fId) const;
+  const HcalCalibrationWidths& getHcalCalibrationWidthsHcalDetId(const HcalDetId& fId) const;
   const HcalCalibrationsSet* getHcalCalibrationsSet() const;
   const HcalCalibrationWidthsSet* getHcalCalibrationWidthsSet() const;
 
