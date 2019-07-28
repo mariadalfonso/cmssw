@@ -63,6 +63,17 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
                                              const HcalCalibrations& calibs,
                                              const bool isData)
 {
+
+  // dummy
+    HBHERecHit rh;
+    return rh;
+
+}
+
+HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
+                                             const HcalRecoParam* params,
+                                             const bool isData)
+{
     HBHERecHit rh;
 
     const HcalDetId channelId(info.id());
@@ -79,7 +90,7 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
         const float phasens = params ? params->correctionPhaseNS() : phaseNS_;
         m0E = m0Energy(info, fc_ampl, applyContainment, phasens, nSamplesToAdd);
         m0E *= hbminusCorrectionFactor(channelId, m0E, isData);
-        m0t = m0Time(info, fc_ampl, calibs, nSamplesToAdd);
+        m0t = m0Time(info, fc_ampl, nSamplesToAdd);
     }
 
     // Run "Method 2"
@@ -197,7 +208,6 @@ float SimpleHBHEPhase1Algo::m0Energy(const HBHEChannelInfo& info,
 
 float SimpleHBHEPhase1Algo::m0Time(const HBHEChannelInfo& info,
                                    const double fc_ampl,
-                                   const HcalCalibrations& calibs,
                                    const int nSamplesToExamine) const
 {
     float time = -9999.f; // historic value

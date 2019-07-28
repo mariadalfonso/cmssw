@@ -62,6 +62,11 @@ public:
                                    const HcalRecoParam* params,
                                    const HcalCalibrations& calibs,
                                    bool isRealData) override;
+
+    HBHERecHit reconstruct(const HBHEChannelInfo& info,
+                                   const HcalRecoParam* params,
+                                   bool isRealData) override;
+
     // Basic accessors
     inline int getFirstSampleShift() const {return firstSampleShift_;}
     inline int getSamplesToAdd() const {return samplesToAdd_;}
@@ -88,7 +93,6 @@ protected:
     // "Method 0" rechit timing (original low-pileup QIE8 algorithm)
     float m0Time(const HBHEChannelInfo& info,
                  double reconstructedCharge,
-                 const HcalCalibrations& calibs,
                  int nSamplesToExamine) const;
 private:
     HcalPulseContainmentManager pulseCorr_;

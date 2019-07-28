@@ -555,7 +555,7 @@ void HBHEPhase1Reconstructor::processData(const Collection& coll,
             const HcalRecoParam* pptr = nullptr;
             if (recoParamsFromDB_)
                 pptr = param_ts;
-            HBHERecHit rh = reco_->reconstruct(*channelInfo, pptr, calib, isRealData);
+            HBHERecHit rh = reco_->reconstruct(*channelInfo, pptr, /*calib,*/ isRealData);
             if (rh.id().rawId())
             {
                 setAsicSpecificBits(frame, coder, *channelInfo, calib, &rh);
