@@ -1,9 +1,9 @@
 #include "FWCore/ParameterSet/interface/FileInPath.h"
-
 #include "L1Trigger/L1THGCal/interface/HGCalTriggerGeometryBase.h"
 #include "DataFormats/ForwardDetId/interface/HGCalDetId.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCalTriggerDetId.h"
+#include "DataFormats/ForwardDetId/interface/HFNoseTriggerDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCScintillatorDetId.h"
 #include "DataFormats/ForwardDetId/interface/ForwardSubdetector.h"
 #include "DataFormats/ForwardDetId/interface/HGCSiliconDetIdToROC.h"
@@ -19,6 +19,8 @@ public:
 
   void initialize(const CaloGeometry*) final;
   void initialize(const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*) final;
+  void initialize(const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*) final;
+
   void reset() final;
 
   unsigned getTriggerCellFromCell(const unsigned) const final;
@@ -66,6 +68,7 @@ private:
 
   // layer offsets
   unsigned heOffset_ = 0;
+  unsigned noseLayers_ = 0;
   unsigned totalLayers_ = 0;
 
   void fillMaps();
@@ -127,6 +130,36 @@ void HGCalTriggerGeometryV9Imp2::initialize(const HGCalGeometry* hgc_ee_geometry
   fillMaps();
 }
 
+
+void HGCalTriggerGeometryV9Imp2::initialize(const HGCalGeometry* hgc_ee_geometry,
+                                            const HGCalGeometry* hgc_hsi_geometry,
+                                            const HGCalGeometry* hgc_hsc_geometry,
+                                            const HGCalGeometry* hgc_nose_geometry) {
+  setEEGeometry(hgc_ee_geometry);
+  setHSiGeometry(hgc_hsi_geometry);
+  setHScGeometry(hgc_hsc_geometry);
+  setNoseGeometry(hgc_nose_geometry);
+
+  heOffset_ = eeTopology().dddConstants().layers(true);
+  totalLayers_ = heOffset_ + hsiTopology().dddConstants().layers(true);
+  noseLayers_ = noseTopology().dddConstants().layers(true);
+  totalLayers_ += noseLayers_;
+
+  trigger_layers_.resize(totalLayers_ + 1);
+  trigger_layers_[0] = 0;  // layer number 0 doesn't exist
+  unsigned trigger_layer = 1;
+  for (unsigned layer = 1; layer < trigger_layers_.size(); layer++) {
+    if (disconnected_layers_.find(layer) == disconnected_layers_.end()) {
+      // Increase trigger layer number if the layer is not disconnected
+      trigger_layers_[layer] = trigger_layer;
+      trigger_layer++;
+    } else {
+      trigger_layers_[layer] = 0;
+    }
+  }
+  fillMaps();
+}
+
 unsigned HGCalTriggerGeometryV9Imp2::getTriggerCellFromCell(const unsigned cell_id) const {
   unsigned det = DetId(cell_id).det();
   unsigned trigger_cell_id = 0;
@@ -137,6 +170,18 @@ unsigned HGCalTriggerGeometryV9Imp2::getTriggerCellFromCell(const unsigned cell_
     int ieta = ((cell_sc_id.ietaAbs() - 1) / hSc_triggercell_size_ + 1) * cell_sc_id.zside();
     int iphi = (cell_sc_id.iphi() - 1) / hSc_triggercell_size_ + 1;
     trigger_cell_id = HGCScintillatorDetId(cell_sc_id.type(), cell_sc_id.layer(), ieta, iphi);
+  }
+  // HFNose
+  else if (det == DetId::Forward && DetId(cell_id).subdetId()==ForwardSubdetector::HFNose) {
+    HFNoseDetId cell_nose_id(cell_id);
+    trigger_cell_id = HFNoseTriggerDetId(HGCalTriggerSubdetector::HFNoseTrigger,
+        cell_nose_id.zside(),
+        cell_nose_id.type(),
+        cell_nose_id.layer(),
+        cell_nose_id.waferU(),
+        cell_nose_id.waferV(),
+        cell_nose_id.cellU(),
+        cell_nose_id.cellV());
   }
   // Silicon
   else if (det == DetId::HGCalEE || det == DetId::HGCalHSi) {
@@ -178,6 +223,11 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleFromTriggerCell(const unsigned tri
     int iphi = (trigger_cell_sc_id.iphi() - 1) / hSc_module_size_ + 1;
     module_id = HGCScintillatorDetId(tc_type, layer, ieta, iphi);
   }
+  // HFNose
+  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+    HFNoseTriggerDetId trigger_cell_trig_id(trigger_cell_id);
+    module_id = trigger_cell_id;
+  }
   // Silicon
   else {
     HGCalTriggerDetId trigger_cell_trig_id(trigger_cell_id);
@@ -204,8 +254,7 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleFromTriggerCell(const unsigned tri
   return module_id;
 }
 
-HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getCellsFromTriggerCell(
-    const unsigned trigger_cell_id) const {
+HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getCellsFromTriggerCell(const unsigned trigger_cell_id) const {
   DetId trigger_cell_det_id(trigger_cell_id);
   unsigned det = trigger_cell_det_id.det();
   geom_set cell_det_ids;
@@ -222,6 +271,19 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getCellsFromTrigg
           cell_det_ids.emplace(cell_id);
       }
     }
+  }
+  // HFNose
+  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+    HFNoseTriggerDetId trigger_cell_nose_id(trigger_cell_id);
+    int layer = trigger_cell_nose_id.layer();
+    int zside = trigger_cell_nose_id.zside();
+    int type = trigger_cell_nose_id.type();
+    int waferu = trigger_cell_nose_id.waferU();
+    int waferv = trigger_cell_nose_id.waferV();
+    int cellus = trigger_cell_nose_id.triggerCellU();
+    int cellvs = trigger_cell_nose_id.triggerCellV();
+    HFNoseDetId cell_det_id(zside, type, layer, waferu, waferv, cellus, cellvs);
+    cell_det_ids.emplace(cell_det_id.rawId());
   }
   // Silicon
   else {
@@ -287,6 +349,11 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getTriggerCellsFr
       }
     }
   }
+  // HFNose
+  else if (det == DetId::Forward && DetId(module_det_id).subdetId()==ForwardSubdetector::HFNose) {
+    HFNoseDetId module_nose_id(module_id);
+    trigger_cell_det_ids.emplace(module_nose_id);
+  }
   // Silicon
   else {
     HGCalDetId module_si_id(module_id);
@@ -318,6 +385,7 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getTriggerCellsFr
       }
     }
   }
+
   return trigger_cell_det_ids;
 }
 
@@ -339,6 +407,11 @@ HGCalTriggerGeometryBase::geom_ordered_set HGCalTriggerGeometryV9Imp2::getOrdere
           trigger_cell_det_ids.emplace(trigger_cell_id);
       }
     }
+  }
+  // HFNose
+  else if (det == DetId::Forward && DetId(module_det_id).subdetId()==ForwardSubdetector::HFNose) {
+    HFNoseDetId module_nose_id(module_id);
+    trigger_cell_det_ids.emplace(module_nose_id);
   }
   // EE or FH
   else {
@@ -426,6 +499,12 @@ GlobalPoint HGCalTriggerGeometryV9Imp2::getTriggerCellPosition(const unsigned tr
       triggerCellVector += hscGeometry()->getPosition(cell).basicVector();
     }
   }
+  // HFNose
+  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_det_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+    for (const auto& cell : cell_ids) {
+      triggerCellVector += noseGeometry()->getPosition(cell).basicVector();
+    }
+  }
   // Silicon
   else {
     for (const auto& cell : cell_ids) {
@@ -435,6 +514,7 @@ GlobalPoint HGCalTriggerGeometryV9Imp2::getTriggerCellPosition(const unsigned tr
                                .basicVector();
     }
   }
+
   return GlobalPoint(triggerCellVector / cell_ids.size());
 }
 
@@ -449,7 +529,12 @@ GlobalPoint HGCalTriggerGeometryV9Imp2::getModulePosition(const unsigned module_
       moduleVector += hscGeometry()->getPosition(cell).basicVector();
     }
   }
-  // Silicon
+  // HFNose
+  else if (det == DetId::Forward && DetId(module_det_id).subdetId()==ForwardSubdetector::HFNose) {
+    for (const auto& cell : cell_ids) {
+      moduleVector += noseGeometry()->getPosition(cell).basicVector();
+    }
+  }  // Silicon
   else {
     for (const auto& cell : cell_ids) {
       HGCSiliconDetId cellDetId(cell);
@@ -458,6 +543,7 @@ GlobalPoint HGCalTriggerGeometryV9Imp2::getModulePosition(const unsigned module_
                           .basicVector();
     }
   }
+
   return GlobalPoint(moduleVector / cell_ids.size());
 }
 
@@ -467,6 +553,9 @@ void HGCalTriggerGeometryV9Imp2::fillMaps() {
   if (!l1tModulesMappingStream.is_open()) {
     throw cms::Exception("MissingDataFile") << "Cannot open HGCalTriggerGeometry L1TModulesMapping file\n";
   }
+
+  std::cout << l1tModulesMapping_.fullPath() << std::endl;
+
   short waferu = 0;
   short waferv = 0;
   short module = 0;
@@ -599,6 +688,9 @@ bool HGCalTriggerGeometryV9Imp2::validCellId(unsigned subdet, unsigned cell_id) 
     case DetId::HGCalHSc:
       is_valid = hscTopology().valid(cell_id);
       break;
+    case DetId::Forward:
+      is_valid = noseTopology().valid(cell_id);
+      break;
     default:
       is_valid = false;
       break;
@@ -630,6 +722,8 @@ unsigned HGCalTriggerGeometryV9Imp2::layerWithOffset(unsigned id) const {
       layer = HGCalTriggerDetId(id).layer();
     } else if (subdet == HGCalTriggerSubdetector::HGCalHSiTrigger) {
       layer = heOffset_ + HGCalTriggerDetId(id).layer();
+    } else if (subdet == HGCalTriggerSubdetector::HFNoseTrigger) {
+      layer = HFNoseTriggerDetId(id).layer();
     }
   } else if (det == DetId::HGCalHSc) {
     layer = heOffset_ + HGCScintillatorDetId(id).layer();

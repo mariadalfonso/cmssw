@@ -11,6 +11,6 @@ enum ForwardSubdetector {
   HFNose = 6,
   HGCTrigger = 7
 };
-enum HGCalTriggerSubdetector { HGCalEmptyTrigger = 0, HGCalEETrigger = 1, HGCalHSiTrigger = 2, HGCalHScTrigger = 3 };
+enum HGCalTriggerSubdetector { HGCalEmptyTrigger = 0, HGCalEETrigger = 1, HGCalHSiTrigger = 2, HGCalHScTrigger = 3, HFNoseTrigger=4};
 
 #endif
