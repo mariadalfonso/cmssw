@@ -96,6 +96,7 @@ unsigned HGCalTriggerGeometryGenericMapping::getLinksInModule(const unsigned mod
 unsigned HGCalTriggerGeometryGenericMapping::getModuleSize(const unsigned module_id) const { return 1; }
 
 GlobalPoint HGCalTriggerGeometryGenericMapping::getTriggerCellPosition(const unsigned trigger_cell_det_id) const {
+  std::cout << "HGCalTriggerGeometryGenericMapping::getTriggerCellPosition::::::: " << trigger_cell_det_id << std::endl;
   return trigger_cells_.find(trigger_cell_det_id)->second->position();
 }
 
@@ -111,6 +112,7 @@ bool HGCalTriggerGeometryGenericMapping::disconnectedModule(const unsigned modul
 
 unsigned HGCalTriggerGeometryGenericMapping::lastTriggerLayer() const {
   return eeTopology().dddConstants().layers(true);
+  // HFNOSE to update
 }
 
 unsigned HGCalTriggerGeometryGenericMapping::triggerLayer(const unsigned id) const { return HGCalDetId(id).layer(); }

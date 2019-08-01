@@ -102,7 +102,8 @@ private:
   HGCalTriggerTools triggerTools_;
 
   static constexpr unsigned neighbour_weights_size_ = 9;
-  static constexpr double kROverZMin_ = 0.076;
+  //  static constexpr double kROverZMin_ = 0.076;
+  static constexpr double kROverZMin_ = 0.02; // r=30 cm at z=1000 cm
   static constexpr double kROverZMax_ = 0.58;
 };
 
