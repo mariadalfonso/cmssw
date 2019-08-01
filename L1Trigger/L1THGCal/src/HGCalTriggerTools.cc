@@ -238,8 +238,10 @@ int HGCalTriggerTools::thicknessIndex(const DetId& id, bool tc) const {
     thickness = HGCSiliconDetId(id).type();
   } else if (det == DetId::Forward && id.subdetId()==ForwardSubdetector::HFNose) {
     thickness = HFNoseTriggerDetId(id).type();
-  } else if (det == DetId::HGCalTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     thickness = HGCalTriggerDetId(id).type();
+  } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger)) {
+    thickness = HFNoseTriggerDetId(id).type();
   }
   return thickness;
 }

@@ -52,7 +52,7 @@ public:
   int zside() const { return (((id_>>kHFNoseZsideOffset) & kHFNoseZsideMask) ? -1 : 1); }
 
   /// get the layer #
-  int layer() const { return (id_ >> kHFNoseLayerOffset) & kHFNoseLayerMask; }
+  int layer() const { return ((id_ >> kHFNoseLayerOffset) & kHFNoseLayerMask) + 1; }
 
   /// get the cell #'s in u,v or in x,y
   int triggerCellU() const { return (id_>>kHFNoseCellUOffset)&kHFNoseCellUMask; }
@@ -95,18 +95,18 @@ public:
   static const int kHFNoseCellVOffset      = 5;
   static const int kHFNoseCellVMask        = 0x1F;
   static const int kHFNoseWaferUOffset     = 10;
-  static const int kHFNoseWaferUMask       = 0x7;
-  static const int kHFNoseWaferUSignOffset = 13;
+  static const int kHFNoseWaferUMask       = 0xF;
+  static const int kHFNoseWaferUSignOffset = 14;
   static const int kHFNoseWaferUSignMask   = 0x1;
-  static const int kHFNoseWaferVOffset     = 14;
-  static const int kHFNoseWaferVMask       = 0x7;
-  static const int kHFNoseWaferVSignOffset = 17;
+  static const int kHFNoseWaferVOffset     = 15;
+  static const int kHFNoseWaferVMask       = 0xF;
+  static const int kHFNoseWaferVSignOffset = 19;
   static const int kHFNoseWaferVSignMask   = 0x1;
-  static const int kHFNoseLayerOffset      = 18;
-  static const int kHFNoseLayerMask        = 0xF;
+  static const int kHFNoseLayerOffset      = 20;
+  static const int kHFNoseLayerMask        = 0x7;
   static const int kHFNoseTypeOffset       = 23;
   static const int kHFNoseTypeMask         = 0x3;
-  static const int kHFNoseZsideOffset      = 22;
+  static const int kHFNoseZsideOffset      = 24;
   static const int kHFNoseZsideMask        = 0x1;
   // added
   static const int kHFNoseLayerEEmax       = 6;
