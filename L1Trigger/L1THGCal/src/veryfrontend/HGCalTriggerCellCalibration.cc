@@ -49,7 +49,7 @@ void HGCalTriggerCellCalibration::calibrateMipTinGeV(l1t::HGCalTriggerCell& trgC
 
   unsigned trgCellLayer = triggerTools_.layerWithOffset(trgCell.detId());
 
-  if(trgCell.subdetId() == HGCalTriggerSubdetector::HFNoseTrigger) {
+  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and DetId(trgCell.detId()).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger ) {
 
     /* weight the amplitude by the absorber coefficient in MeV/mip + bring it in GeV */
     trgCellEt = trgCell.mipPt() * dEdX_weights_Nose_.at(trgCellLayer) * MevToGeV;

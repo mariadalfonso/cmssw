@@ -157,6 +157,7 @@ void HGCalTriggerGeometryV9Imp2::initialize(const HGCalGeometry* hgc_ee_geometry
       trigger_layers_[layer] = 0;
     }
   }
+  last_trigger_layer_ = trigger_layer - 1;
   fillMaps();
 }
 
@@ -169,7 +170,7 @@ unsigned HGCalTriggerGeometryV9Imp2::getTriggerCellFromCell(const unsigned cell_
     HGCScintillatorDetId cell_sc_id(cell_id);
     int ieta = ((cell_sc_id.ietaAbs() - 1) / hSc_triggercell_size_ + 1) * cell_sc_id.zside();
     int iphi = (cell_sc_id.iphi() - 1) / hSc_triggercell_size_ + 1;
-    trigger_cell_id = HGCScintillatorDetId(cell_sc_id.type(), cell_sc_id.layer(), ieta, iphi);
+    trigger_cell_id = HGCScintillatorDetId(cell_sc_id.type(), cell_sc_id.layer(), ieta, iphi).rawId();
   }
   // HFNose
   else if (det == DetId::Forward && DetId(cell_id).subdetId()==ForwardSubdetector::HFNose) {
@@ -180,8 +181,8 @@ unsigned HGCalTriggerGeometryV9Imp2::getTriggerCellFromCell(const unsigned cell_
         cell_nose_id.layer(),
         cell_nose_id.waferU(),
         cell_nose_id.waferV(),
-        cell_nose_id.cellU(),
-        cell_nose_id.cellV());
+        cell_nose_id.triggerCellU(),
+        cell_nose_id.triggerCellV()).rawId();
   }
   // Silicon
   else if (det == DetId::HGCalEE || det == DetId::HGCalHSi) {
@@ -194,7 +195,7 @@ unsigned HGCalTriggerGeometryV9Imp2::getTriggerCellFromCell(const unsigned cell_
         cell_si_id.waferU(),
         cell_si_id.waferV(),
         cell_si_id.triggerCellU(),
-        cell_si_id.triggerCellV());
+        cell_si_id.triggerCellV()).rawId();
   }
   return trigger_cell_id;
 }
@@ -224,9 +225,14 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleFromTriggerCell(const unsigned tri
     module_id = HGCScintillatorDetId(tc_type, layer, ieta, iphi);
   }
   // HFNose
-  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  else if (det == DetId::HGCalTrigger and HGCalTriggerDetId(trigger_cell_id).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     HFNoseTriggerDetId trigger_cell_trig_id(trigger_cell_id);
-    module_id = trigger_cell_id;
+    tc_type = trigger_cell_trig_id.type();
+    layer = trigger_cell_trig_id.layer();
+    zside = trigger_cell_trig_id.zside();
+    int waferu = trigger_cell_trig_id.waferU();
+    int waferv = trigger_cell_trig_id.waferV();
+    module_id = HFNoseDetId(zside, layer, tc_type, waferu, waferv, 0, 0).rawId();
   }
   // Silicon
   else {
@@ -273,17 +279,19 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getCellsFromTrigg
     }
   }
   // HFNose
-  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  else if (det == DetId::HGCalTrigger and HGCalTriggerDetId(trigger_cell_id).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     HFNoseTriggerDetId trigger_cell_nose_id(trigger_cell_id);
     int layer = trigger_cell_nose_id.layer();
     int zside = trigger_cell_nose_id.zside();
     int type = trigger_cell_nose_id.type();
     int waferu = trigger_cell_nose_id.waferU();
     int waferv = trigger_cell_nose_id.waferV();
-    int cellus = trigger_cell_nose_id.triggerCellU();
-    int cellvs = trigger_cell_nose_id.triggerCellV();
-    HFNoseDetId cell_det_id(zside, type, layer, waferu, waferv, cellus, cellvs);
-    cell_det_ids.emplace(cell_det_id.rawId());
+    std::vector<int> cellus = trigger_cell_nose_id.cellU();
+    std::vector<int> cellvs = trigger_cell_nose_id.cellV();
+    for (unsigned ic = 0; ic < cellus.size(); ic++) {
+      HFNoseDetId cell_det_id(zside, type, layer, waferu, waferv, cellus[ic], cellvs[ic]);
+      cell_det_ids.emplace(cell_det_id.rawId());
+    }
   }
   // Silicon
   else {
@@ -352,7 +360,20 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getTriggerCellsFr
   // HFNose
   else if (det == DetId::Forward && DetId(module_det_id).subdetId()==ForwardSubdetector::HFNose) {
     HFNoseDetId module_nose_id(module_id);
-    trigger_cell_det_ids.emplace(module_nose_id);
+    int layer = module_nose_id.layer();
+    int zside = module_nose_id.zside();
+    int type = module_nose_id.type();
+    int waferu = module_nose_id.waferU();
+    int waferv = module_nose_id.waferV();
+    int nCells = (type == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineN : HFNoseDetId::HFNoseCoarseN;
+    for (int u = 0; u < 2 * nCells; ++u) {
+      for (int v = 0; v < 2 * nCells; ++v) {
+	if (((v - u) < nCells) && (u - v) <= nCells) {
+	  HFNoseDetId nose_id(zside, type, layer, waferu, waferv, u, v);
+	  trigger_cell_det_ids.emplace(nose_id.rawId());
+	}
+      }
+    }
   }
   // Silicon
   else {
@@ -489,6 +510,7 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleSize(const unsigned module_id) con
 }
 
 GlobalPoint HGCalTriggerGeometryV9Imp2::getTriggerCellPosition(const unsigned trigger_cell_det_id) const {
+
   unsigned det = DetId(trigger_cell_det_id).det();
   // Position: barycenter of the trigger cell.
   Basic3DVector<float> triggerCellVector(0., 0., 0.);
@@ -500,9 +522,10 @@ GlobalPoint HGCalTriggerGeometryV9Imp2::getTriggerCellPosition(const unsigned tr
     }
   }
   // HFNose
-  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_det_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  else if (det == DetId::HGCalTrigger and HGCalTriggerDetId(trigger_cell_det_id).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     for (const auto& cell : cell_ids) {
-      triggerCellVector += noseGeometry()->getPosition(cell).basicVector();
+      HFNoseDetId cellDetId(cell);
+      triggerCellVector += noseGeometry()->getPosition(cellDetId).basicVector();
     }
   }
   // Silicon

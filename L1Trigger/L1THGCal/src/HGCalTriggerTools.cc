@@ -159,9 +159,9 @@ bool HGCalTriggerTools::isEm(const DetId& id) const {
     em = true;
   } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger) {
     em = ((HGCalTriggerDetId(id).subdet() == HGCalTriggerSubdetector::HGCalEETrigger));
+  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+    em = HGCalTriggerDetId(id).isEE();
   }
-
-  // FIXME: to do HFNose (for now always false)
   return em;
 }
 
@@ -193,7 +193,7 @@ int HGCalTriggerTools::zside(const DetId& id) const {
     zside = HFNoseTriggerDetId(id).zside();
   } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     zside = HGCalTriggerDetId(id).zside();
-  } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger)) {
+  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
     zside = HFNoseTriggerDetId(id).zside();
   } else if (id.det() == DetId::HGCalHSc) {
     zside = HGCScintillatorDetId(id).zside();
@@ -238,8 +238,10 @@ int HGCalTriggerTools::thicknessIndex(const DetId& id, bool tc) const {
     thickness = HGCSiliconDetId(id).type();
   } else if (det == DetId::Forward && id.subdetId()==ForwardSubdetector::HFNose) {
     thickness = HFNoseTriggerDetId(id).type();
-  } else if (det == DetId::HGCalTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     thickness = HGCalTriggerDetId(id).type();
+  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+    thickness = HFNoseTriggerDetId(id).type();
   }
   return thickness;
 }
