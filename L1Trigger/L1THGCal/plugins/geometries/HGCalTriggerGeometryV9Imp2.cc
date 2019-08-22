@@ -350,7 +350,7 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getTriggerCellsFr
     }
   }
   // HFNose
-  else if (det == DetId::Forward && DetId(module_det_id).subdetId()==ForwardSubdetector::HFNose) {
+  else if (det == DetId::Forward && module_det_id.subdetId()==ForwardSubdetector::HFNose) {
     HFNoseDetId module_nose_id(module_id);
     trigger_cell_det_ids.emplace(module_nose_id);
   }
@@ -409,7 +409,7 @@ HGCalTriggerGeometryBase::geom_ordered_set HGCalTriggerGeometryV9Imp2::getOrdere
     }
   }
   // HFNose
-  else if (det == DetId::Forward && DetId(module_det_id).subdetId()==ForwardSubdetector::HFNose) {
+  else if (det == DetId::Forward && module_det_id.subdetId()==ForwardSubdetector::HFNose) {
     HFNoseDetId module_nose_id(module_id);
     trigger_cell_det_ids.emplace(module_nose_id);
   }
@@ -458,6 +458,11 @@ unsigned HGCalTriggerGeometryV9Imp2::getLinksInModule(const unsigned module_id) 
   if (module_det_id.det() == DetId::HGCalHSc) {
     links = 1;
   }
+  // HFNose
+  else if (module_det_id.det() == DetId::Forward && module_det_id.subdetId()==ForwardSubdetector::HFNose) {
+    HFNoseDetId module_nose_id(module_id);
+    links = 1;
+  }
   // Silicon
   else {
     HGCalDetId module_det_id_si(module_id);
@@ -477,6 +482,13 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleSize(const unsigned module_id) con
   // Scintillator
   if (module_det_id.det() == DetId::HGCalHSc) {
     nWafers = scintillatorDummySize;
+  }
+  // HFNose
+  else if (module_det_id.det() == DetId::Forward && module_det_id.subdetId()==ForwardSubdetector::HFNose) {
+    HFNoseDetId module_nose_id(module_id);
+    unsigned module = module_nose_id.waferU();
+    unsigned layer = layerWithOffset(module_id);
+    nWafers = module_to_wafers_.count(packLayerModuleId(layer, module));
   }
   // Silicon
   else {
