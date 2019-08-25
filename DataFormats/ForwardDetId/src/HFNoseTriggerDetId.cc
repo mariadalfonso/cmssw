@@ -48,20 +48,18 @@ HFNoseTriggerDetId& HFNoseTriggerDetId::operator=(const DetId& gen) {
 }
 
 int HFNoseTriggerDetId::triggerCellX() const {
-  int nT =
-      (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
+  int nT = (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
   int N = nT * HFNoseTriggerCell;
   std::vector<int> vc = cellV();
   int x(0);
   for (auto const& v : vc) {
     x += (3 * (v - N) + 2);
   }
-  return (x / vc.size());
+  return (x / static_cast<int>(vc.size()));
 }
 
 int HFNoseTriggerDetId::triggerCellY() const {
-  int nT =
-      (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
+  int nT = (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
   int N = nT * HFNoseTriggerCell;
   std::vector<int> uc = cellU();
   std::vector<int> vc = cellV();
@@ -69,13 +67,12 @@ int HFNoseTriggerDetId::triggerCellY() const {
   for (unsigned int k = 0; k < uc.size(); ++k) {
     y += (2 * uc[k] - (N + vc[k]));
   }
-  return (y / vc.size());
+  return (y / static_cast<int>(vc.size()));
 }
 
 std::vector<int> HFNoseTriggerDetId::cellU() const {
   std::vector<int> uc;
-  int nT =
-      (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
+  int nT = (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
   if ((triggerCellU() >= HFNoseTriggerCell) && (triggerCellV() >= HFNoseTriggerCell)) {
     int u0 = nT * triggerCellU();
     for (int i = 0; i < nT; ++i) {
@@ -104,8 +101,7 @@ std::vector<int> HFNoseTriggerDetId::cellU() const {
 
 std::vector<int> HFNoseTriggerDetId::cellV() const {
   std::vector<int> vc;
-  int nT =
-      (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
+  int nT = (type() == HFNoseDetId::HFNoseFine) ? HFNoseDetId::HFNoseFineTrigger : HFNoseDetId::HFNoseCoarseTrigger;
   if ((triggerCellU() >= HFNoseTriggerCell) && (triggerCellV() >= HFNoseTriggerCell)) {
     int v0 = nT * triggerCellV();
     for (int i = 0; i < nT; ++i) {
@@ -137,7 +133,7 @@ std::vector<std::pair<int, int> > HFNoseTriggerDetId::cellUV() const {
   std::vector<int> vc = cellV();
   std::vector<std::pair<int, int> > uv;
   for (unsigned int k = 0; k < uc.size(); ++k) {
-    uv.emplace_back(std::pair<int, int>(uc[k], vc[k]));
+    uv.emplace_back(uc[k], vc[k]);
   }
   return uv;
 }
