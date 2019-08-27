@@ -33,6 +33,8 @@ void HGCalClusteringDummyImpl::clusterizeDummy(const std::vector<edm::Ptr<l1t::H
 void HGCalClusteringDummyImpl::calibratePt(l1t::HGCalCluster& cluster) {
   double calibPt = 0.;
 
+  // HFnose to update
+
   if (applyLayerWeights_) {
     unsigned layerN = triggerTools_.layerWithOffset(cluster.detId());
 
