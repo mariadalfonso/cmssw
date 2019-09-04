@@ -975,7 +975,6 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
       ic++;
     }
 
-    // TEMPORARY
     //    treeTriggerCells_->Fill();
 
     // fill modules
@@ -992,14 +991,14 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
 
   for (const auto& module_triggercells : modules) {
     DetId id(module_triggercells.first);
-    /*
-      // TEMPORARY
+
+      // TEMPORARY (this make the code crash)
     GlobalPoint position = triggerGeometry_->getModulePosition(id);
     moduleId_ = id.rawId();
     moduleX_ = position.x();
     moduleY_ = position.y();
     moduleZ_ = position.z();
-    */
+
     if (id.det() == DetId::HGCalHSc) {
       HGCScintillatorDetId sc_id(module_triggercells.first);
       moduleSide_ = sc_id.zside();
@@ -1085,8 +1084,6 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
     for (const auto& c : cells_in_module) {
       if (id.det() == DetId::HGCalHSc) {
         HGCScintillatorDetId cId(c);
-      // TEMPORARY
-	//        GlobalPoint cell_position = triggerGeometry_->hscGeometry()->getPosition(cId);
         triggerCellCell_id_.get()[ic] = c;
         triggerCellCell_zside_.get()[ic] = cId.zside();
         triggerCellCell_subdet_.get()[ic] = cId.subdetId();
@@ -1097,12 +1094,13 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         triggerCellCell_cellV_.get()[ic] = 0;
         triggerCellCell_ieta_.get()[ic] = cId.ietaAbs();
         triggerCellCell_iphi_.get()[ic] = cId.iphi();
-	//        triggerCellCell_x_.get()[ic] = cell_position.x();
-	//        triggerCellCell_y_.get()[ic] = cell_position.y();
-	//        triggerCellCell_z_.get()[ic] = cell_position.z();
+      // TEMPORARY (this make the code crash)  
+	GlobalPoint cell_position = triggerGeometry_->hscGeometry()->getPosition(cId);
+	triggerCellCell_x_.get()[ic] = cell_position.x();
+	triggerCellCell_y_.get()[ic] = cell_position.y();
+	triggerCellCell_z_.get()[ic] = cell_position.z();
       } else if (id.det() == DetId::Forward and id.subdetId() == ForwardSubdetector::HFNose) {
         HFNoseDetId cId(c);
-	//        const GlobalPoint position = triggerGeometry_->noseGeometry()->getPosition(cId);
         moduleCell_id_.get()[ic] = c;
         moduleCell_zside_.get()[ic] = cId.zside();
         moduleCell_subdet_.get()[ic] = cId.subdetId();
@@ -1110,17 +1108,14 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         moduleCell_waferU_.get()[ic] = cId.waferU();
         moduleCell_waferV_.get()[ic] = cId.waferV();
         moduleCell_cellU_.get()[ic] = cId.cellU();
-        moduleCell_cellV_.get()[ic] = cId.cellV();
-	//        moduleCell_x_.get()[ic] = position.x();
-	//        moduleCell_y_.get()[ic] = position.y();
-	//        moduleCell_z_.get()[ic] = position.z();
+        moduleCell_cellV_.get()[ic] = cId.cellV();	
+      // TEMPORARY (this make the code crash)  
+	const GlobalPoint position = triggerGeometry_->noseGeometry()->getPosition(cId);
+	moduleCell_x_.get()[ic] = position.x();
+	moduleCell_y_.get()[ic] = position.y();
+	moduleCell_z_.get()[ic] = position.z();
       } else {
         HGCSiliconDetId cId(c);
-	/*
-      // TEMPORARY
-        const GlobalPoint position = (cId.det() == DetId::HGCalEE ? triggerGeometry_->eeGeometry()->getPosition(cId)
-                                                                  : triggerGeometry_->hsiGeometry()->getPosition(cId));
-	*/
         moduleCell_id_.get()[ic] = c;
         moduleCell_zside_.get()[ic] = cId.zside();
         moduleCell_subdet_.get()[ic] = cId.subdetId();
@@ -1129,9 +1124,12 @@ void HGCalTriggerGeomTesterV9Imp2::fillTriggerGeometry()
         moduleCell_waferV_.get()[ic] = cId.waferV();
         moduleCell_cellU_.get()[ic] = cId.cellU();
         moduleCell_cellV_.get()[ic] = cId.cellV();
-	//        moduleCell_x_.get()[ic] = position.x();
-	//        moduleCell_y_.get()[ic] = position.y();
-	//        moduleCell_z_.get()[ic] = position.z();
+      // TEMPORARY (this make the code crash)  
+        const GlobalPoint position = (cId.det() == DetId::HGCalEE ? triggerGeometry_->eeGeometry()->getPosition(cId)
+                                                                  : triggerGeometry_->hsiGeometry()->getPosition(cId));
+	moduleCell_x_.get()[ic] = position.x();
+	moduleCell_y_.get()[ic] = position.y();
+	moduleCell_z_.get()[ic] = position.z();
         ic++;
       }
     }

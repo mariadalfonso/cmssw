@@ -23,16 +23,20 @@ process.load('Configuration.StandardSequences.DigiToRaw_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1)
+#    input = cms.untracked.int32(1000)
+    input = cms.untracked.int32(200)
 )
 
 # Input source
 process.source = cms.Source("EmptySource")
 
-process.options = cms.untracked.PSet(
-
+process.options = cms.untracked.PSet (
+    wantSummary = cms.untracked.bool(False),
+    numberOfThreads = cms.untracked.uint32(8),
+    numberOfStreams = cms.untracked.uint32(8)
 )
 
 # Production Info
@@ -65,11 +69,12 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     outputCommands = cms.untracked.vstring(
+        'keep *_genParticles_*_*',
         'keep *_hgcalBackEndLayer1Producer_*_*',
         'keep *_hgcalBackEndLayer2Producer_*_*',
         'keep *_hgcalTowerProducer_*_*',
     ),
-    fileName = cms.untracked.string('file:/tmp/dalfonso/test.root')
+    fileName = cms.untracked.string('file:/tmp/dalfonso/test_PhotonPt20_checkScale.root')
 )
 
 ##################
@@ -86,22 +91,21 @@ process.genstepfilter.triggerConditions=cms.vstring("generation_step")
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
 
-
 process.generator = cms.EDFilter("Pythia8PtGun",
     PGunParameters = cms.PSet(
         AddAntiParticle = cms.bool(True),
         MinEta = cms.double(3.499),
         MaxEta = cms.double(3.501),
-#        MinEta = cms.double(1.799),
-#        MaxEta = cms.double(1.801),
-#        MinEta = cms.double(2.199),
-#        MaxEta = cms.double(2.201),
+##        MinEta = cms.double(1.799),
+##        MaxEta = cms.double(1.801),
+##        MinEta = cms.double(2.199),
+##        MaxEta = cms.double(2.201),
         MaxPhi = cms.double(3.14159265359),
         MinPhi = cms.double(-3.14159265359),
         MinPt = cms.double(19.999),
         MaxPt = cms.double(20.001),
-# 13 muon and 11 ele works, pions 211 no
-        ParticleID = cms.vint32(211)
+## 13 muon and 11 ele works, pions 211 no
+        ParticleID = cms.vint32(22)
     ),
     PythiaParameters = cms.PSet(
         parameterSets = cms.vstring()
@@ -141,10 +145,10 @@ process.hgcl1tpg_step = cms.Path(process.hgcalTriggerPrimitives)
 
 # Schedule definition
 # test_step
-#process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.digitisation_step,process.L1simulation_step,process.digi2raw_step,process.test_step,process.endjob_step,process.FEVTDEBUGoutput_step)
+process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.digitisation_step,process.L1simulation_step,process.digi2raw_step,process.test_step,process.endjob_step,process.FEVTDEBUGoutput_step)
 
 # hgcl1tpg_step
-process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.digitisation_step,process.L1simulation_step,process.digi2raw_step,process.hgcl1tpg_step,process.endjob_step,process.FEVTDEBUGoutput_step)
+#process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.digitisation_step,process.L1simulation_step#,process.digi2raw_step,process.hgcl1tpg_step,process.endjob_step,process.FEVTDEBUGoutput_step)
 
 #process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.digitisation_step,process.L1simulation_step,process.digi2raw_step,process.endjob_step,process.FEVTDEBUGoutput_step)
 # filter all path with the production filter sequence
