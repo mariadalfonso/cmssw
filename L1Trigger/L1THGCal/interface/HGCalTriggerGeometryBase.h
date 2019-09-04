@@ -29,6 +29,11 @@ public:
 
   bool isV9Geometry() const { return !calo_geometry_; }
   const CaloGeometry* caloGeometry() const { return calo_geometry_; }
+  const HGCalGeometry* noseGeometry() const {
+    return (hgc_nose_geometry_
+                ? hgc_nose_geometry_
+                : (static_cast<const HGCalGeometry*>(calo_geometry_->getSubdetectorGeometry(DetId::Forward, HFNose))));
+  }
   const HGCalGeometry* eeGeometry() const {
     return (hgc_ee_geometry_
                 ? hgc_ee_geometry_
@@ -52,6 +57,7 @@ public:
     }
     return hgc_hsc_geometry_;
   }
+  const HGCalTopology& noseTopology() const { return noseGeometry()->topology(); }
   const HGCalTopology& eeTopology() const { return eeGeometry()->topology(); }
   const HGCalTopology& fhTopology() const { return fhGeometry()->topology(); }
   const HcalTopology& bhTopology() const { return bhGeometry()->topology(); }
@@ -61,6 +67,7 @@ public:
   // non-const access to the geometry class
   virtual void initialize(const CaloGeometry*) = 0;
   virtual void initialize(const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*) = 0;
+  virtual void initialize(const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*) = 0;
   virtual void reset();
 
   // const access to the geometry class
@@ -90,14 +97,15 @@ public:
 
 protected:
   void setCaloGeometry(const CaloGeometry* geom) { calo_geometry_ = geom; }
+  void setNoseGeometry(const HGCalGeometry* geom) { hgc_nose_geometry_ = geom; }
   void setEEGeometry(const HGCalGeometry* geom) { hgc_ee_geometry_ = geom; }
   void setHSiGeometry(const HGCalGeometry* geom) { hgc_hsi_geometry_ = geom; }
   void setHScGeometry(const HGCalGeometry* geom) { hgc_hsc_geometry_ = geom; }
 
 private:
   const std::string name_;
-
   const CaloGeometry* calo_geometry_ = nullptr;
+  const HGCalGeometry* hgc_nose_geometry_ = nullptr;
   const HGCalGeometry* hgc_ee_geometry_ = nullptr;
   const HGCalGeometry* hgc_hsi_geometry_ = nullptr;
   const HGCalGeometry* hgc_hsc_geometry_ = nullptr;

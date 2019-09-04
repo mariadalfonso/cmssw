@@ -27,6 +27,7 @@ private:
   double fCperMIP_;
   double thickCorr_;
   std::vector<double> dEdX_weights_;
+  std::vector<double> dEdX_weights_Nose_;
 
   HGCalTriggerTools triggerTools_;
 };

@@ -31,7 +31,7 @@ namespace edm {
 
 class HGCalTriggerTools {
 public:
-  HGCalTriggerTools() : geom_(nullptr), eeLayers_(0), fhLayers_(0), bhLayers_(0), totalLayers_(0) {}
+ HGCalTriggerTools() : geom_(nullptr), eeLayers_(0), fhLayers_(0), bhLayers_(0), noseLayers_(0), totalLayers_(0) {}
   ~HGCalTriggerTools() {}
 
   void eventSetup(const edm::EventSetup&);
@@ -53,6 +53,7 @@ public:
   unsigned lastLayerEE() const { return eeLayers_; }
   unsigned lastLayerFH() const { return eeLayers_ + fhLayers_; }
   unsigned lastLayerBH() const { return totalLayers_; }
+  unsigned lastLayerNose() const { return noseLayers_; }
 
   // 4-vector helper functions using GlobalPoint
   float getEta(const GlobalPoint& position, const float& vertex_z = 0.) const;
@@ -87,6 +88,7 @@ private:
   unsigned eeLayers_;
   unsigned fhLayers_;
   unsigned bhLayers_;
+  unsigned noseLayers_;
   unsigned totalLayers_;
 
   int sensorCellThicknessV8(const DetId& id) const;

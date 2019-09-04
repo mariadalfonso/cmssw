@@ -4,6 +4,7 @@
 #include "Fireworks/Core/interface/FWEventItem.h"
 
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
+#include "DataFormats/ForwardDetId/interface/HGCSiliconDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCalTriggerDetId.h"
 #include "DataFormats/ForwardDetId/interface/HGCScintillatorDetId.h"
 
