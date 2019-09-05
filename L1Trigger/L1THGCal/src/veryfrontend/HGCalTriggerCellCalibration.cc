@@ -49,7 +49,7 @@ void HGCalTriggerCellCalibration::calibrateMipTinGeV(l1t::HGCalTriggerCell& trgC
 
   unsigned trgCellLayer = triggerTools_.layerWithOffset(trgCell.detId());
 
-  if(trgCell.subdetId() == HGCalTriggerSubdetector::HFNoseTrigger) {
+  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and DetId(trgCell.detId()).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger ) {
 
     if (dEdX_weights_Nose_.at(trgCellLayer) == 0.) {
       throw cms::Exception("BadConfiguration")
