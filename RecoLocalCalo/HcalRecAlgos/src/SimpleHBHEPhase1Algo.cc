@@ -112,13 +112,11 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     bool m4UseTriple=false;
 
     const MahiFit* mahi = mahiOOTpuCorr_.get();
-
     if (mahi) {
-      mahiOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(info.recoShape()),hcalTimeSlew_delay_);
+      mahiOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(info.recoShape()), info.hasTimeInfo(), hcalTimeSlew_delay_, info.nSamples());
       mahi->phase1Apply(info,m4E,m4T,m4UseTriple,m4chi2);
       m4E *= hbminusCorrectionFactor(channelId, m4E, isData);
     }
-
     // Finally, construct the rechit
     float rhE = m0E;
     float rht = m0t;
@@ -184,6 +182,7 @@ float SimpleHBHEPhase1Algo::m0Energy(const HBHEChannelInfo& info,
         ibeg = 0;
     double e = info.energyInWindow(ibeg, ibeg + nSamplesToAdd);
 
+    /*
     // Pulse containment correction
     {    
         double corrFactor = 1.0;
@@ -191,6 +190,7 @@ float SimpleHBHEPhase1Algo::m0Energy(const HBHEChannelInfo& info,
             corrFactor = pulseCorr_.get(info.id(), nSamplesToAdd, phaseNs)->getCorrection(fc_ampl);
         e *= corrFactor;
     }
+    */
 
     return e;
 }
@@ -229,8 +229,13 @@ float SimpleHBHEPhase1Algo::m0Time(const HBHEChannelInfo& info,
             time = 25.f * (float)position;                   
             if(emax0 > 0.f && emax1 > 0.f) time += 25.f * emax1/(emax0+emax1); // 1st order corr.
 
+	    /*
+
+	    // TO DO : not implemented
+
             // TimeSlew correction
             time -= hcalTimeSlew_delay_->delay(std::max(1.0, fc_ampl), HcalTimeSlew::Medium);
+	    */
 
         }
     }
