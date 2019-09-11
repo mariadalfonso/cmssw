@@ -225,7 +225,7 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleFromTriggerCell(const unsigned tri
     module_id = HGCScintillatorDetId(tc_type, layer, ieta, iphi).rawId();
   }
   // HFNose
-  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  else if (det == DetId::HGCalTrigger and HGCalTriggerDetId(trigger_cell_id).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     HFNoseTriggerDetId trigger_cell_trig_id(trigger_cell_id);
     tc_type = trigger_cell_trig_id.type();
     layer = trigger_cell_trig_id.layer();
@@ -279,7 +279,7 @@ HGCalTriggerGeometryBase::geom_set HGCalTriggerGeometryV9Imp2::getCellsFromTrigg
     }
   }
   // HFNose
-  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  else if (det == DetId::HGCalTrigger and HGCalTriggerDetId(trigger_cell_id).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     HFNoseTriggerDetId trigger_cell_nose_id(trigger_cell_id);
     int layer = trigger_cell_nose_id.layer();
     int zside = trigger_cell_nose_id.zside();
@@ -518,6 +518,7 @@ unsigned HGCalTriggerGeometryV9Imp2::getModuleSize(const unsigned module_id) con
 }
 
 GlobalPoint HGCalTriggerGeometryV9Imp2::getTriggerCellPosition(const unsigned trigger_cell_det_id) const {
+
   unsigned det = DetId(trigger_cell_det_id).det();
   // Position: barycenter of the trigger cell.
   Basic3DVector<float> triggerCellVector(0., 0., 0.);
@@ -529,9 +530,10 @@ GlobalPoint HGCalTriggerGeometryV9Imp2::getTriggerCellPosition(const unsigned tr
     }
   }
   // HFNose
-  else if (det == DetId::HGCalTrigger and DetId(trigger_cell_det_id).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  else if (det == DetId::HGCalTrigger and HGCalTriggerDetId(trigger_cell_det_id).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     for (const auto& cell : cell_ids) {
-      triggerCellVector += noseGeometry()->getPosition(cell).basicVector();
+      HFNoseDetId cellDetId(cell);
+      triggerCellVector += noseGeometry()->getPosition(cellDetId).basicVector();
     }
   }
   // Silicon
