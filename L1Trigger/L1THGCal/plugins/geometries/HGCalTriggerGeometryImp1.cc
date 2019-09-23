@@ -14,6 +14,7 @@ public:
 
   void initialize(const CaloGeometry*) final;
   void initialize(const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*) final;
+  void initialize(const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*, const HGCalGeometry*) final;
 
 private:
   edm::FileInPath l1tCellsMapping_;
@@ -48,6 +49,18 @@ void HGCalTriggerGeometryImp1::initialize(const HGCalGeometry* hgc_ee_geometry,
   throw cms::Exception("BadGeometry")
       << "HGCalTriggerGeometryImp1 geometry cannot be initialized with the V9 HGCAL geometry";
 }
+
+/*****************************************************************/
+void HGCalTriggerGeometryImp1::initialize(const HGCalGeometry* hgc_ee_geometry,
+                                          const HGCalGeometry* hgc_hsi_geometry,
+                                          const HGCalGeometry* hgc_hsc_geometry,
+                                          const HGCalGeometry* hgc_nose_geometry)
+/*****************************************************************/
+{
+  throw cms::Exception("BadGeometry")
+      << "HGCalTriggerGeometryImp1 geometry cannot be initialized with the V9 HGCAL+NOSE geometry";
+}
+
 
 /*****************************************************************/
 void HGCalTriggerGeometryImp1::buildMaps()
