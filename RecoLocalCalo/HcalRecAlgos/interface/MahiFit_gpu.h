@@ -33,13 +33,13 @@ struct MahiNnlsWorkspace {
   
   //holds full covariance matrix for a pulse shape 
   //varied in time
-  SampleMatrix pulseCovArray[MaxPVSize];
+  //  SampleMatrix pulseCovArray[MaxPVSize];
 
   //holds matrix of pulse shape templates for each BX
-  SamplePulseMatrix pulseMat;
+  //  SamplePulseMatrix pulseMat;
 
   //holds matrix of pulse shape derivatives for each BX
-  SamplePulseMatrix pulseDerivMat;
+  //  SamplePulseMatrix pulseDerivMat;
 
   //for FNNLS algorithm
   unsigned int nP;
@@ -102,7 +102,8 @@ class MahiFit
 		   float& reconstructedTime, 
 		   bool& useTriple,
 		   float& chi2,
-		   float*, float*, float*
+		   float*, float*, float*,
+		   double*, double*, double*
 		   ) const;
 
   __device__
@@ -110,7 +111,7 @@ class MahiFit
 		   MahiDebugInfo& mdi) const;
 
   __device__
-    void doFit(float correctedOutput[3], const int nbx, float*, float*, float*) const;
+    void doFit(float correctedOutput[3], const int nbx, float*, float*, float*,double*, double*, double*) const;
 
   __device__
   //void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps,const HcalTimeSlew * hcalTimeSlewDelay);
@@ -127,11 +128,11 @@ class MahiFit
  private:
 
   __device__
-  double minimize() const;
+  double minimize(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_, SampleMatrixMAP const * pulseCovArray) const;
   __device__
-  void onePulseMinimize() const;
+  void onePulseMinimize(SamplePulseMatrixMAP & pulseMat_) const;
   __device__
-  void updateCov() const;
+  void updateCov(SampleMatrixMAP const * pulseCovArray) const;
   __device__
   void updatePulseShape(double itQ, FullSampleVector &pulseShape, 
 			FullSampleVector &pulseDeriv,
@@ -140,18 +141,18 @@ class MahiFit
 			) const;
 
   __device__
-  float calculateArrivalTime() const;
+  float calculateArrivalTime(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
   __device__
-  double calculateChiSq() const;
+  double calculateChiSq(SamplePulseMatrixMAP & pulseMat_) const;
   __device__
-  void nnls() const;
+  void nnls(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
   __device__
   void resetWorkspace() const;
 
   __device__
-  void nnlsUnconstrainParameter(Index idxp) const;
+  void nnlsUnconstrainParameter(Index idxp, SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
   __device__
-  void nnlsConstrainParameter(Index minratioidx) const;
+  void nnlsConstrainParameter(Index minratioidx, SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
 
   __device__
   void solveSubmatrix(PulseMatrix& mat, PulseVector& invec, PulseVector& outvec, unsigned nP) const;
@@ -165,7 +166,7 @@ class MahiFit
   // on the nominal arrival time
   static constexpr float timeLimit_ = 12.5;
 
-  bool calculateArrivalTime_ {true};
+  bool calculateArrivalTime_{false};
 
   // Python-configurables
   bool dynamicPed_ {false};

@@ -150,6 +150,10 @@ struct DeviceData {
     float                   *pulseNn;
     float                   *pulseMn;
     float                   *pulsePn;
+    double                  *pulseShapeArray;
+    double                  *pulseDerivArray;
+    double                  *pulseCovArray;
+
 
     void allocate(int size) {
         cudaMalloc((void**)&vinfos, size * sizeof(HBHEChannelInfo));
@@ -159,6 +163,9 @@ struct DeviceData {
 	cudaMalloc((void**)&pulseNn, size * MaxSVSize * sizeof(float));
 	cudaMalloc((void**)&pulseMn, size * MaxSVSize * sizeof(float));
 	cudaMalloc((void**)&pulsePn, size * MaxSVSize * sizeof(float));
+	cudaMalloc((void**)&pulseShapeArray, size * MaxSVSize * MaxPVSize * sizeof(double));
+	cudaMalloc((void**)&pulseDerivArray, size * MaxSVSize * MaxPVSize * sizeof(double));
+	cudaMalloc((void**)&pulseCovArray, size * MaxSVSize * MaxSVSize * MaxPVSize * sizeof(double));
 
     }
     
@@ -167,6 +174,9 @@ struct DeviceData {
             cudaFree(vrechits);
             cudaFree(vparams);
 	    //            cudaFree(vcalibs);
+	    cudaFree(pulseShapeArray);
+	    cudaFree(pulseDerivArray);
+	    cudaFree(pulseCovArray);
 	    cudaFree(pulseNn);
 	    cudaFree(pulseMn);
 	    cudaFree(pulsePn);

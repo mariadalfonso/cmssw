@@ -30,4 +30,13 @@ typedef Eigen::LLT<SampleMatrix> SampleDecompLLT;
 typedef Eigen::LLT<PulseMatrix> PulseDecompLLT;
 typedef Eigen::LDLT<PulseMatrix> PulseDecompLDLT;
 
+/////
+
+using SampleMatrixFixed=Eigen::Matrix<double,MaxSVSize,MaxSVSize>;
+using SamplePulseMatrixFixed =Eigen::Matrix<double,MaxSVSize,MaxPVSize>;
+
+using DynStride = Eigen::Stride<Eigen::Dynamic,Eigen::Dynamic>;
+using SamplePulseMatrixMAP = Eigen::Map<SamplePulseMatrixFixed, 0, DynStride>;
+using SampleMatrixMAP = Eigen::Map<SampleMatrixFixed, 0, DynStride>;
+
 #endif

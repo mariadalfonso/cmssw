@@ -296,11 +296,13 @@ public:
     __device__
     //    HBHERecHit reconstruct(const HBHEChannelInfo& info,
     void reconstruct(const HBHEChannelInfo& info,
-                           const HcalRecoParam* params,
+		     const HcalRecoParam* params,
 //                           const HcalCalibrations& calibs,
-                           bool isRealData,
-                           float const* pshape /* this is added */
-		          , float* pulseNn, float* pulseMn, float* pulsePn);
+		     bool isRealData,
+		     float const* pshape /* this is added */
+		     , float* pulseNn, float* pulseMn, float* pulsePn
+		     , double* pulseShapeArray, double* pulseDerivArray, double* pulseCovVector
+		     );
 
     // Basic accessors
     __device__
@@ -383,7 +385,8 @@ void SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
 //                                             const HcalCalibrations& calibs,
                                              const bool isData,
                                              float const* pshape
-				           , float* pulseNn, float* pulseMn, float* pulsePn
+				             , float* pulseNn, float* pulseMn, float* pulsePn,
+				       double* pulseShapeArray, double* pulseDerivArray, double* pulseCovVector
 				       ) {
     const HcalDetId channelId(info.id());
 
@@ -435,7 +438,7 @@ void SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     bool m4UseTriple=false;
 
     MahiFit mfit{pshape};
-    mfit.phase1Apply(info, m4E, m4T, m4UseTriple, m4chi2,pulseNn, pulseMn, pulsePn);
+    mfit.phase1Apply(info, m4E, m4T, m4UseTriple, m4chi2,pulseNn, pulseMn, pulsePn, pulseShapeArray, pulseDerivArray, pulseCovVector);
     m4E *= hbminusCorrectionFactor(channelId, m4E, isData);
 
     /*
@@ -568,7 +571,8 @@ __global__
 void kernel_reconstruct(HBHEChannelInfo *vinfos, HBHERecHit *vrechits,
                             HcalRecoParam *vparams, /*HcalCalibrations *vcalibs,*/
 			int* hashes, float* psdata, int size,
-			float* pulseNn, float* pulseMn, float* pulsePn
+			float* pulseNn, float* pulseMn, float* pulsePn,
+			double *pulseShapeArray, double *pulseDerivArray, double *pulseCovVector
 			) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -583,7 +587,8 @@ void kernel_reconstruct(HBHEChannelInfo *vinfos, HBHERecHit *vrechits,
         algo.reconstruct(info, &params, /*calibs,*/
             /* TODO: drag this boolean from the host */ true,
 			 pshape,
-			 pulseNn, pulseMn, pulsePn
+			 pulseNn, pulseMn, pulsePn,
+			 pulseShapeArray, pulseDerivArray, pulseCovVector
 			 );
 
       //        vrechits[idx] = rh;
@@ -621,7 +626,8 @@ void reconstruct(DeviceData ddata,
     kernel_reconstruct<<<nblocks, nthreadsPerBlock, 0, custream>>>(
         ddata.vinfos, ddata.vrechits,
         ddata.vparams, /*ddata.vcalibs,*/ psdata.hashes, psdata.data, vinfos.size(),
-	ddata.pulseNn, ddata.pulseMn, ddata.pulsePn
+	ddata.pulseNn, ddata.pulseMn, ddata.pulsePn,
+	ddata.pulseShapeArray, ddata.pulseDerivArray, ddata.pulseCovArray
 								   );
 //    cudaDeviceSynchronize();
 //    hcal::cuda::assert_if_error();
