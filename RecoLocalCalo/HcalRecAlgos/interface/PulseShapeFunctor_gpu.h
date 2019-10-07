@@ -9,7 +9,7 @@ namespace HcalConst{
    constexpr int maxPSshapeBin = 256;
    constexpr int nsPerBX = 25;
    constexpr float iniTimeShift = 92.5f;
-   constexpr double invertnsPerBx = 0.04;
+   constexpr double invertnsPerBx = 0.04f;
    constexpr int shiftTS = 4;
 
 }
@@ -32,6 +32,7 @@ namespace FitterFuncs {
      __device__
      int getcntNANinfit(){ return cntNANinfit; }
      
+     /* // needed for M2
      __device__
      void setpsFitx(double *x )
      { for(int i=0; i<HcalConst::maxSamples; ++i) psFit_x[i] = x[i]; }
@@ -53,12 +54,13 @@ namespace FitterFuncs {
      void setinvertpedSig2(double x) { invertpedSig2_ = x; }
      __device__
      void setinverttimeSig2(double x) { inverttimeSig2_ = x; }
+     */
 
      __device__
      inline void singlePulseShapeFunc( const float *x )  { return EvalPulse(x); }
 
      __device__
-     void getPulseShape(double fillPulseShape[HcalConst::maxSamples]) { 
+     void getPulseShape(float fillPulseShape[HcalConst::maxSamples]) { 
        for (unsigned int i=0; i<HcalConst::maxSamples; i++)
          fillPulseShape[i] = pulse_shape_[i];
      }
@@ -81,10 +83,11 @@ namespace FitterFuncs {
            diffVarItvlIdxMinusOneVec[HcalConst::nsPerBX];
 
      __device__
-     void funcShape(double ntmpbin[HcalConst::maxSamples], 
-                    const double pulseTime, /*const double pulseHeight,*/
-                    const double slew);
-     double psFit_x[HcalConst::maxSamples], psFit_y[HcalConst::maxSamples], psFit_erry[HcalConst::maxSamples], psFit_erry2[HcalConst::maxSamples], psFit_slew[HcalConst::maxSamples];
+     void funcShape(float ntmpbin[HcalConst::maxSamples], 
+                    const float pulseTime, /*const double pulseHeight,*/
+                    const float slew);
+     //     double psFit_x[HcalConst::maxSamples], psFit_y[HcalConst::maxSamples], psFit_erry[HcalConst::maxSamples], psFit_erry2[HcalConst::maxSamples], psFit_slew[HcalConst::maxSamples];
+     float psFit_slew[HcalConst::maxSamples];
      
      unsigned nSamplesToFit_;
      bool pedestalConstraint_;
@@ -99,8 +102,8 @@ namespace FitterFuncs {
 
      double inverttimeSig2_;
      double invertpedSig2_;
-     double pulse_shape_[HcalConst::maxSamples] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-     double pulse_shape_sum_[HcalConst::maxSamples]
+     float pulse_shape_[HcalConst::maxSamples] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+     float pulse_shape_sum_[HcalConst::maxSamples]
          = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //     std::array<double,HcalConst::maxSamples> pulse_shape_;
 //     std::array<double,HcalConst::maxSamples> pulse_shape_sum_;

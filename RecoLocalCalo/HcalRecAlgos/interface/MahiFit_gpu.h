@@ -3,7 +3,7 @@
 
 #include "DataFormats/HcalDetId/interface/HcalSubdetector.h"
 #include "DataFormats/HcalDetId/interface/HcalDetId.h"
-#include "RecoLocalCalo/HcalRecAlgos/interface/EigenMatrixTypes.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/EigenMatrixTypes_gpu.h"
 #include "DataFormats/HcalRecHit/interface/HBHEChannelInfo.h"
 
 #include "RecoLocalCalo/HcalRecAlgos/interface/PulseShapeFunctor_gpu.h"
@@ -166,7 +166,8 @@ class MahiFit
   // Python-configurables
   bool dynamicPed_ {false};
   float ts4Thresh_ {0.0};
-  float chiSqSwitch_{15.0}; 
+  //  float chiSqSwitch_{15.0};
+  float chiSqSwitch_{-1.};
 
   bool applyTimeSlew_{false};
   /* HcalTimeSlew::BiasSetting */ int slewFlavor_{1};

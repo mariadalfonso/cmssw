@@ -294,7 +294,8 @@ public:
     inline bool isConfigurable() const {return false;}
 
     __device__
-    HBHERecHit reconstruct(const HBHEChannelInfo& info,
+    //    HBHERecHit reconstruct(const HBHEChannelInfo& info,
+    void reconstruct(const HBHEChannelInfo& info,
                            const HcalRecoParam* params,
 //                           const HcalCalibrations& calibs,
                            bool isRealData,
@@ -375,13 +376,12 @@ SimpleHBHEPhase1Algo::SimpleHBHEPhase1Algo()
 {}
 
 __device__
-HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
+//HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
+void SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
                                              const HcalRecoParam* params,
 //                                             const HcalCalibrations& calibs,
                                              const bool isData,
                                              float const* pshape) {
-    HBHERecHit rh;
-
     const HcalDetId channelId(info.id());
 
     // Calculate "Method 0" quantities
@@ -445,6 +445,7 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     }
     */
 
+    /*
     // Finally, construct the rechit
     float rhE = m0E;
     float rht = m0t;
@@ -455,6 +456,9 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     float tdcTime = info.soiRiseTime();
     if (!HcalSpecialTimes::isSpecial(tdcTime))
         tdcTime += timeShift_;
+
+    HBHERecHit rh;
+
     rh = HBHERecHit(channelId, rhE, rht, tdcTime);
     rh.setRawEnergy(m0E);
     rh.setAuxEnergy(m3E);
@@ -467,7 +471,10 @@ HBHERecHit SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     if (useTriple || m4UseTriple)
        rh.setFlagField(1, HcalPhase1FlagLabels::HBHEPulseFitBit);
 
-    return rh;
+    //    return rh;
+
+    */
+
 }
 
 __device__
@@ -567,11 +574,12 @@ void kernel_reconstruct(HBHEChannelInfo *vinfos, HBHERecHit *vrechits,
         auto *pshape = psdata + hashes[info.recoShape()] * 256;
 
         SimpleHBHEPhase1Algo algo{};
-        auto rh = algo.reconstruct(info, &params, /*calibs,*/
+	//        auto rh = algo.reconstruct(info, &params, /*calibs,*/
+        algo.reconstruct(info, &params, /*calibs,*/
             /* TODO: drag this boolean from the host */ true,
             pshape);
 
-        vrechits[idx] = rh;
+      //        vrechits[idx] = rh;
     }
 }
 
@@ -584,8 +592,8 @@ void reconstruct(DeviceData ddata,
     // resize the output vector
     vrechits.resize(vinfos.size());
 
-    std::cout << "size(info) = " << vinfos.size() << std::endl;
-    std::cout << " size(vparams) = " << vparams.size() << std::endl;
+    //    std::cout << "size(info) = " << vinfos.size() << std::endl;
+    //    std::cout << " size(vparams) = " << vparams.size() << std::endl;
 
     // transfer to the device
     cudaMemcpyAsync(ddata.vinfos, &(*vinfos.begin()), 
@@ -609,12 +617,14 @@ void reconstruct(DeviceData ddata,
 //    cudaDeviceSynchronize();
 //    hcal::cuda::assert_if_error();
 
+/*
     // transfer back
     cudaMemcpyAsync(&(*vrechits.begin()), ddata.vrechits, 
         vinfos.size() * sizeof(HBHERecHit),
         cudaMemcpyDeviceToHost, custream);
     cudaStreamSynchronize(custream);
     hcal::cuda::assert_if_error();
+*/
 }
 
 }}

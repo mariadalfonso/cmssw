@@ -8,11 +8,11 @@ namespace FitterFuncs{
   //Decalare the Pulse object take it in from Hcal and set some options
   __device__
   PulseShapeFunctor::PulseShapeFunctor(float const* pulse,
-				                       bool iPedestalConstraint, 
+				       bool iPedestalConstraint, 
                                        bool iTimeConstraint,bool iAddPulseJitter,
-				                       double iPulseJitter,double iTimeMean,
+				       double iPulseJitter,double iTimeMean,
                                        double iPedMean,
-				                       unsigned nSamplesToFit) {
+				       unsigned nSamplesToFit) {
     cntNANinfit = 0;
 
     for (unsigned int i=0; i<HcalConst::maxPSshapeBin; i++) {
@@ -30,7 +30,7 @@ namespace FitterFuncs{
     //The raw pulse
     for(int i=0;i<HcalConst::maxPSshapeBin;++i)  {
         // done according to HcalPulseShape.cc::at(double t)
-        pulse_hist[i] = pulse[(int)(static_cast<double>(i) + 0.5)];
+        pulse_hist[i] = pulse[(int)(static_cast<float>(i) + 0.5)];
     }
 
     // Accumulate 25ns for each starting point of 0, 1, 2, 3...
@@ -53,10 +53,11 @@ namespace FitterFuncs{
       diffVarItvlIdxMinusOneVec[i] = pulse_hist[i] - pulse_hist[0];
     }
     for(int i = 0; i < HcalConst::maxSamples; i++) { 
-      psFit_x[i]      = 0;
-      psFit_y[i]      = 0;
-      psFit_erry[i]   = 1.;
-      psFit_erry2[i]  = 1.;
+      // needed for M2
+      //      psFit_x[i]      = 0;
+      //      psFit_y[i]      = 0;
+      //      psFit_erry[i]   = 1.;
+      //      psFit_erry2[i]  = 1.;
       psFit_slew [i]  = 0.;
     }
     //Constraints
@@ -76,8 +77,8 @@ namespace FitterFuncs{
   }
 
   __device__
-  void PulseShapeFunctor::funcShape(double ntmpbin[HcalConst::maxSamples],
-    const double pulseTime, /*const double pulseHeight,*/const double slew) {
+  void PulseShapeFunctor::funcShape(float ntmpbin[HcalConst::maxSamples],
+    const float pulseTime, /*const double pulseHeight,*/const float slew) {
 
     // pulse shape components over a range of time 0 ns to 255 ns in 1 ns steps
     constexpr int ns_per_bx = HcalConst::nsPerBX;
@@ -100,7 +101,7 @@ namespace FitterFuncs{
       const int bin_0_start      = ( offset_start < bin_start + 0.5 ? bin_start -1 : bin_start ); //Round it
       const int iTS_start        = i_start/ns_per_bx;         //Time Slice for time shift
       const int distTo25ns_start = HcalConst::nsPerBX - 1 - i_start%ns_per_bx;    //Delta ns 
-      const double factor = offset_start - bin_0_start - 0.5; //Small correction?
+      const float factor = offset_start - bin_0_start - 0.5; //Small correction?
     
       //Build the new pulse
       ntmpbin[iTS_start] = (bin_0_start == -1 ? // Initial bin (I'm assuming this is ok)

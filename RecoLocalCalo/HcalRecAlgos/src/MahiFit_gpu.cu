@@ -131,7 +131,7 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
   if (dynamicPed_) nnlsWork_.bxs[nnlsWork_.nPulseTot-1] = pedestalBX_;
 
   nnlsWork_.pulseMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);  
-  nnlsWork_.pulseDerivMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
+  if(calculateArrivalTime_) nnlsWork_.pulseDerivMat.setZero(nnlsWork_.tsSize,nnlsWork_.nPulseTot);
 
   FullSampleVector pulseShapeArray;
   FullSampleVector pulseDerivArray;
@@ -143,13 +143,18 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
 
     if (offset==pedestalBX_) {
       nnlsWork_.pulseMat.col(iBX) = SampleVector::Ones(nnlsWork_.tsSize);
+      if(calculateArrivalTime_) nnlsWork_.pulseDerivMat.col(iBX) = SampleVector::Zero(nnlsWork_.tsSize);
     }
     else {
 
-      pulseShapeArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
-      pulseDerivArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
-      pulseCov.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset,
-      	     		nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
+      pulseShapeArray.setZero();
+      if(calculateArrivalTime_) pulseDerivArray.setZero();
+      pulseCov.setZero();
+
+      //      pulseShapeArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
+      //      pulseDerivArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
+      //      pulseCov.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset,
+      //      	     		nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
       nnlsWork_.pulseCovArray[iBX].setZero(nnlsWork_.tsSize, nnlsWork_.tsSize);
 
       updatePulseShape(nnlsWork_.amplitudes.coeff(nnlsWork_.tsOffset + offset), 
@@ -159,7 +164,7 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
       
 
       nnlsWork_.pulseMat.col(iBX) = pulseShapeArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
-      nnlsWork_.pulseDerivMat.col(iBX) = pulseDerivArray.segment(nnlsWork_.maxoffset-offset, nnlsWork_.tsSize);
+      if(calculateArrivalTime_) nnlsWork_.pulseDerivMat.col(iBX) = pulseDerivArray.segment(nnlsWork_.maxoffset-offset, nnlsWork_.tsSize);
       nnlsWork_.pulseCovArray[iBX] = pulseCov.block(
          			    nnlsWork_.maxoffset - offset, nnlsWork_.maxoffset - offset, nnlsWork_.tsSize, nnlsWork_.tsSize);
 
@@ -246,9 +251,9 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
   }
 
 
-  double pulseN[MaxSVSize];
-  double pulseM[MaxSVSize];
-  double pulseP[MaxSVSize];
+  float pulseN[MaxSVSize];
+  float pulseM[MaxSVSize];
+  float pulseP[MaxSVSize];
 
   for (unsigned int i=0; i<MaxSVSize; i++) {
       pulseN[i] = 0;
@@ -281,7 +286,7 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
   for (unsigned int iTS=0; iTS<nnlsWork_.tsSize; ++iTS) {
 
     pulseShape.coeffRef(iTS+nnlsWork_.maxoffset) = pulseN[iTS+delta];
-    pulseDeriv.coeffRef(iTS+nnlsWork_.maxoffset) = (pulseM[iTS+delta]-pulseP[iTS+delta])*invDt;
+    if(calculateArrivalTime_) pulseDeriv.coeffRef(iTS+nnlsWork_.maxoffset) = (pulseM[iTS+delta]-pulseP[iTS+delta])*invDt;
 
     pulseM[iTS+delta] -= pulseN[iTS+delta];
     pulseP[iTS+delta] -= pulseN[iTS+delta];
@@ -506,7 +511,7 @@ void MahiFit::nnlsUnconstrainParameter(Index idxp) const {
   nnlsWork_.aTaMat.col(nnlsWork_.nP).swap(nnlsWork_.aTaMat.col(idxp));
   nnlsWork_.aTaMat.row(nnlsWork_.nP).swap(nnlsWork_.aTaMat.row(idxp));
   nnlsWork_.pulseMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseMat.col(idxp));
-  nnlsWork_.pulseDerivMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseDerivMat.col(idxp));
+  if(calculateArrivalTime_) nnlsWork_.pulseDerivMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseDerivMat.col(idxp));
   Eigen::numext::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP),nnlsWork_.aTbVec.coeffRef(idxp));
   Eigen::numext::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP),nnlsWork_.ampVec.coeffRef(idxp));
   Eigen::numext::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP),nnlsWork_.bxs.coeffRef(idxp));
@@ -518,7 +523,7 @@ void MahiFit::nnlsConstrainParameter(Index minratioidx) const {
   nnlsWork_.aTaMat.col(nnlsWork_.nP-1).swap(nnlsWork_.aTaMat.col(minratioidx));
   nnlsWork_.aTaMat.row(nnlsWork_.nP-1).swap(nnlsWork_.aTaMat.row(minratioidx));
   nnlsWork_.pulseMat.col(nnlsWork_.nP-1).swap(nnlsWork_.pulseMat.col(minratioidx));
-  nnlsWork_.pulseDerivMat.col(nnlsWork_.nP-1).swap(nnlsWork_.pulseDerivMat.col(minratioidx));
+  if(calculateArrivalTime_) nnlsWork_.pulseDerivMat.col(nnlsWork_.nP-1).swap(nnlsWork_.pulseDerivMat.col(minratioidx));
   Eigen::numext::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP-1),nnlsWork_.aTbVec.coeffRef(minratioidx));
   Eigen::numext::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP-1),nnlsWork_.ampVec.coeffRef(minratioidx));
   Eigen::numext::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP-1),nnlsWork_.bxs.coeffRef(minratioidx));
@@ -604,6 +609,7 @@ __device__
 void MahiFit::solveSubmatrix(PulseMatrix& mat, PulseVector& invec, PulseVector& outvec, unsigned nP) const {
   using namespace Eigen;
   switch( nP ) { // pulse matrix is always square.
+    /*
   case 10:
     {
       Matrix<double,10,10> temp = mat;
@@ -616,6 +622,7 @@ void MahiFit::solveSubmatrix(PulseMatrix& mat, PulseVector& invec, PulseVector& 
       outvec.head<9>() = temp.ldlt().solve(invec.head<9>());
     }
     break;
+    */
   case 8:
     {
       Matrix<double,8,8> temp = mat.topLeftCorner<8,8>();
