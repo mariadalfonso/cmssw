@@ -60,9 +60,10 @@ namespace FitterFuncs {
      inline void singlePulseShapeFunc( const float *x )  { return EvalPulse(x); }
 
      __device__
-     void getPulseShape(float fillPulseShape[HcalConst::maxSamples]) { 
+       void getPulseShape(float fillPulseShape[HcalConst::maxSamples], int idx, int stride) { 
        for (unsigned int i=0; i<HcalConst::maxSamples; i++)
-         fillPulseShape[i] = pulse_shape_[i];
+	 //         fillPulseShape[i] = pulse_shape_[i];
+	 fillPulseShape[idx+stride*i] = pulse_shape_[i];
      }
      
    private:

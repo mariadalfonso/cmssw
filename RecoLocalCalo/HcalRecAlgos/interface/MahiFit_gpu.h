@@ -101,14 +101,16 @@ class MahiFit
 		   float& reconstructedEnergy, 
 		   float& reconstructedTime, 
 		   bool& useTriple,
-		   float& chi2) const;
+		   float& chi2,
+		   float*, float*, float*
+		   ) const;
 
   __device__
   void phase1Debug(const HBHEChannelInfo& channelData,
 		   MahiDebugInfo& mdi) const;
 
   __device__
-  void doFit(float correctedOutput[3], const int nbx) const;
+    void doFit(float correctedOutput[3], const int nbx, float*, float*, float*) const;
 
   __device__
   //void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps,const HcalTimeSlew * hcalTimeSlewDelay);
@@ -133,7 +135,9 @@ class MahiFit
   __device__
   void updatePulseShape(double itQ, FullSampleVector &pulseShape, 
 			FullSampleVector &pulseDeriv,
-			FullSampleMatrix &pulseCov) const;
+			FullSampleMatrix &pulseCov,
+			float*, float*, float*
+			) const;
 
   __device__
   float calculateArrivalTime() const;

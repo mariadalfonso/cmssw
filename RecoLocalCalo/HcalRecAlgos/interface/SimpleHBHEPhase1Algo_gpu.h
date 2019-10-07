@@ -10,6 +10,7 @@
 #include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
 //#include "CalibFormats/HcalObjects/interface/HcalCalibrations.h"
 #include "CondFormats/HcalObjects/interface/HcalRecoParam.h"
+#include "RecoLocalCalo/HcalRecAlgos/interface/EigenMatrixTypes_gpu.h"
 
 // Base class header
 
@@ -146,12 +147,19 @@ struct DeviceData {
     HBHERecHit              *vrechits;
     HcalRecoParam           *vparams;
   //    HcalCalibrations        *vcalibs;
+    float                   *pulseNn;
+    float                   *pulseMn;
+    float                   *pulsePn;
 
     void allocate(int size) {
         cudaMalloc((void**)&vinfos, size * sizeof(HBHEChannelInfo));
         cudaMalloc((void**)&vrechits, size * sizeof(HBHERecHit));
         cudaMalloc((void**)&vparams, size * sizeof(HcalRecoParam));
 	//        cudaMalloc((void**)&vcalibs, size* sizeof(HcalCalibrations));
+	cudaMalloc((void**)&pulseNn, size * MaxSVSize * sizeof(float));
+	cudaMalloc((void**)&pulseMn, size * MaxSVSize * sizeof(float));
+	cudaMalloc((void**)&pulsePn, size * MaxSVSize * sizeof(float));
+
     }
     
     void free() {
@@ -159,6 +167,10 @@ struct DeviceData {
             cudaFree(vrechits);
             cudaFree(vparams);
 	    //            cudaFree(vcalibs);
+	    cudaFree(pulseNn);
+	    cudaFree(pulseMn);
+	    cudaFree(pulsePn);
+
     }
 };
 

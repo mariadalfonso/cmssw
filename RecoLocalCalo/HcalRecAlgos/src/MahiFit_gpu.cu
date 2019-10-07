@@ -15,7 +15,9 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
 			  float& reconstructedEnergy,
 			  float& reconstructedTime,
 			  bool& useTriple, 
-			  float& chi2) const {
+			  float& chi2,
+			  float* pulseNn, float* pulseMn, float* pulsePn
+			  ) const {
 
 //  assert(channelData.nSamples()==8||channelData.nSamples()==10);
 
@@ -77,14 +79,14 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
 
     // only do pre-fit with 1 pulse if chiSq threshold is positive
     if (chiSqSwitch_>0) {
-      doFit(reconstructedVals,1);
+      doFit(reconstructedVals,1, pulseNn, pulseMn, pulsePn);
       if (reconstructedVals[2]>chiSqSwitch_) {
-	doFit(reconstructedVals,0); //nbx=0 means use configured BXs
+	doFit(reconstructedVals,0, pulseNn, pulseMn, pulsePn); //nbx=0 means use configured BXs
 	useTriple=true;
       }
     }
     else {
-      doFit(reconstructedVals,0);
+      doFit(reconstructedVals,0, pulseNn, pulseMn, pulsePn);
       useTriple=true;
     }
   }
@@ -101,7 +103,7 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
 }
 
 __device__
-void MahiFit::doFit(float correctedOutput[3], int nbx) const {
+void MahiFit::doFit(float correctedOutput[3], int nbx, float* pulseNn, float* pulseMn, float* pulsePn) const {
 
   unsigned int bxSize=1;
 
@@ -160,7 +162,9 @@ void MahiFit::doFit(float correctedOutput[3], int nbx) const {
       updatePulseShape(nnlsWork_.amplitudes.coeff(nnlsWork_.tsOffset + offset), 
 		       pulseShapeArray,
 		       pulseDerivArray,
-		       pulseCov);
+		       pulseCov,
+		       pulseNn, pulseMn, pulsePn
+		       );
       
 
       nnlsWork_.pulseMat.col(iBX) = pulseShapeArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
@@ -239,8 +243,13 @@ double MahiFit::minimize() const {
 
 __device__
 void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSampleVector &pulseDeriv,
-			       FullSampleMatrix &pulseCov) const {
+			       FullSampleMatrix &pulseCov,
+			       float* pulseNn, float* pulseMn, float* pulsePn
+			       ) const {
   
+  const int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  const int stride = blockDim.x*gridDim.x;
+
   float t0=meanTime_;
 
   if(applyTimeSlew_) {
@@ -256,9 +265,9 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
   float pulseP[MaxSVSize];
 
   for (unsigned int i=0; i<MaxSVSize; i++) {
-      pulseN[i] = 0;
-      pulseM[i] = 0;
-      pulseP[i] = 0;
+    pulseNn[idx+stride*i] = 0;                                                                                                                                                                               
+    pulseMn[idx+stride*i] = 0;                                                                                                                                                                               
+    pulsePn[idx+stride*i] = 0;           
   }
 
  const float xx = t0;
@@ -267,15 +276,18 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
 
 //  (*pfunctor_)(&xx[0]);
   functor_.singlePulseShapeFunc(&xx);
-  functor_.getPulseShape(pulseN);
+  functor_.getPulseShape(pulseNn, idx, stride);
+  //  functor_.getPulseShape(pulseN);
 
 //  (*pfunctor_)(&xxm[0]);
   functor_.singlePulseShapeFunc(&xxm);
-  functor_.getPulseShape(pulseM);
+  functor_.getPulseShape(pulseMn, idx, stride);
+  //  functor_.getPulseShape(pulseM);
   
 //  (*pfunctor_)(&xxp[0]);
   functor_.singlePulseShapeFunc(&xxp);
-  functor_.getPulseShape(pulseP);
+  functor_.getPulseShape(pulsePn, idx, stride);
+  //  functor_.getPulseShape(pulseP);
 
   //in the 2018+ case where the sample of interest (SOI) is in TS3, add an extra offset to align 
   //with previous SOI=TS4 case assumed by psfPtr_->getPulseShape()
@@ -285,21 +297,20 @@ void MahiFit::updatePulseShape(double itQ, FullSampleVector &pulseShape, FullSam
 
   for (unsigned int iTS=0; iTS<nnlsWork_.tsSize; ++iTS) {
 
-    pulseShape.coeffRef(iTS+nnlsWork_.maxoffset) = pulseN[iTS+delta];
-    if(calculateArrivalTime_) pulseDeriv.coeffRef(iTS+nnlsWork_.maxoffset) = (pulseM[iTS+delta]-pulseP[iTS+delta])*invDt;
+    pulseShape[iTS+nnlsWork_.maxoffset] = pulseNn[idx+stride*(iTS+delta)];
+    if(calculateArrivalTime_) pulseDeriv[iTS+nnlsWork_.maxoffset] = (pulseMn[idx+stride*(iTS+delta)]-pulsePn[idx+stride*(iTS+delta)])*invDt;
 
-    pulseM[iTS+delta] -= pulseN[iTS+delta];
-    pulseP[iTS+delta] -= pulseN[iTS+delta];
+    pulseMn[idx+stride*(iTS+delta)] -= pulseNn[idx+stride*(iTS+delta)];
+    pulsePn[idx+stride*(iTS+delta)] -= pulseNn[idx+stride*(iTS+delta)];
+
   }
 
   for (unsigned int iTS=0; iTS<nnlsWork_.tsSize; ++iTS) {
     for (unsigned int jTS=0; jTS<iTS+1; ++jTS) {
-      
-      double tmp = 0.5*( pulseP[iTS+delta]*pulseP[jTS+delta] +
-			 pulseM[iTS+delta]*pulseM[jTS+delta] );
 
-      pulseCov(iTS+nnlsWork_.maxoffset,jTS+nnlsWork_.maxoffset) += tmp;
-      if(jTS!=iTS) pulseCov(jTS+nnlsWork_.maxoffset,iTS+nnlsWork_.maxoffset) += tmp;
+      double tmp = 0.5 * ( pulsePn[idx+stride*(iTS+delta)]*pulsePn[idx+stride*(jTS+delta)] + pulseMn[idx+stride*(iTS+delta)]*pulseMn[idx+stride*(jTS+delta)] );
+      pulseCov(iTS+nnlsWork_.maxoffset,jTS+nnlsWork_.maxoffset) = tmp;
+
     }
   }
   
@@ -537,7 +548,7 @@ void MahiFit::phase1Debug(const HBHEChannelInfo& channelData,
 
   float recoEnergy, recoTime, chi2;
   bool use3;
-  phase1Apply(channelData, recoEnergy, recoTime, use3, chi2);
+  //  phase1Apply(channelData, recoEnergy, recoTime, use3, chi2);
 
 
   mdi.nSamples    = channelData.nSamples();
@@ -583,7 +594,7 @@ void MahiFit::phase1Debug(const HBHEChannelInfo& channelData,
       for(unsigned int iTS=0; iTS<nnlsWork_.tsSize; ++iTS){
 	mdi.count[iTS] = iTS;
 	mdi.inputTS[iTS] = nnlsWork_.amplitudes.coeff(iTS);
-	mdi.itPulse[iTS] = nnlsWork_.pulseMat.col(iBX).coeff(iTS);
+	//	mdi.itPulse[iTS] = nnlsWork_.pulseMat.col(iBX).coeff(iTS);
       }
     }
     else if (nnlsWork_.bxs.coeff(iBX)==pedestalBX_) {
@@ -592,13 +603,13 @@ void MahiFit::phase1Debug(const HBHEChannelInfo& channelData,
     else if (nnlsWork_.bxs.coeff(iBX)==-1) {
       mdi.pEnergy=nnlsWork_.ampVec.coeff(iBX);
       for(unsigned int iTS=0; iTS<nnlsWork_.tsSize; ++iTS){
-        mdi.pPulse[iTS] = nnlsWork_.pulseMat.col(iBX).coeff(iTS);
+	//        mdi.pPulse[iTS] = nnlsWork_.pulseMat.col(iBX).coeff(iTS);
       }
     }
     else if (nnlsWork_.bxs.coeff(iBX)==1) {
       mdi.nEnergy=nnlsWork_.ampVec.coeff(iBX);
       for(unsigned int iTS=0; iTS<nnlsWork_.tsSize; ++iTS){
-	mdi.nPulse[iTS] = nnlsWork_.pulseMat.col(iBX).coeff(iTS);
+	//	mdi.nPulse[iTS] = nnlsWork_.pulseMat.col(iBX).coeff(iTS);
       }
     }
   }  
