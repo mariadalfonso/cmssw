@@ -15,22 +15,21 @@ namespace FitterFuncs{
 				       unsigned nSamplesToFit) {
     cntNANinfit = 0;
 
-    for (unsigned int i=0; i<HcalConst::maxPSshapeBin; i++) {
-        acc25nsVec[i] = 0;
-        diff25nsItvlVec[i] = 0;
+    for (int i=0; i<HcalConst::maxPSshapeBin; i++) {
+        acc25nsVec[i] = 0.f;
+        diff25nsItvlVec[i] = 0.f;
     }
 
-    for (unsigned int i=0; i<HcalConst::nsPerBX; i++) {
-        accVarLenIdxZEROVec[i] = 0;
-        diffVarItvlIdxZEROVec[i] = 0;
-        accVarLenIdxMinusOneVec[i] = 0;
-        diffVarItvlIdxMinusOneVec[i] = 0;
+    for (int i=0; i<HcalConst::nsPerBX; i++) {
+        accVarLenIdxZEROVec[i] = 0.f;
+        diffVarItvlIdxZEROVec[i] = 0.f;
+        accVarLenIdxMinusOneVec[i] = 0.f;
+        diffVarItvlIdxMinusOneVec[i] = 0.f;
     }
 
     //The raw pulse
     for(int i=0;i<HcalConst::maxPSshapeBin;++i)  {
-        // done according to HcalPulseShape.cc::at(double t)
-        pulse_hist[i] = pulse[(int)(static_cast<float>(i) + 0.5)];
+      pulse_hist[i] = pulse[i];
     }
 
     // Accumulate 25ns for each starting point of 0, 1, 2, 3...
@@ -40,6 +39,7 @@ namespace FitterFuncs{
       }
       diff25nsItvlVec[i] = ( i+HcalConst::nsPerBX < HcalConst::maxPSshapeBin? pulse_hist[i+HcalConst::nsPerBX] - pulse_hist[i] : pulse_hist[HcalConst::maxPSshapeBin-1] - pulse_hist[i]);
     }
+
     // Accumulate different ns for starting point of index either 0 or -1
     for(int i=0; i<HcalConst::nsPerBX; ++i){
       if( i==0 ){
@@ -58,7 +58,7 @@ namespace FitterFuncs{
       //      psFit_y[i]      = 0;
       //      psFit_erry[i]   = 1.;
       //      psFit_erry2[i]  = 1.;
-      psFit_slew [i]  = 0.;
+      psFit_slew [i]  = 0.f;
     }
     //Constraints
     pedestalConstraint_ = iPedestalConstraint;
@@ -81,35 +81,32 @@ namespace FitterFuncs{
     const float pulseTime, /*const double pulseHeight,*/const float slew) {
 
     // pulse shape components over a range of time 0 ns to 255 ns in 1 ns steps
-    constexpr int ns_per_bx = HcalConst::nsPerBX;
-    constexpr int num_ns = HcalConst::nsPerBX*HcalConst::maxSamples;
-    constexpr int num_bx = num_ns/ns_per_bx;
     //Get the starting time
     int i_start         = ( -HcalConst::iniTimeShift - pulseTime - slew >0 ? 0 : (int)std::abs(-HcalConst::iniTimeShift-pulseTime-slew) + 1);
-    double offset_start = i_start - HcalConst::iniTimeShift - pulseTime - slew; //-199-2*pars[0]-2.*slew (for pars[0] > 98.5) or just -98.5-pars[0]-slew;
+    float offset_start = i_start - HcalConst::iniTimeShift - pulseTime - slew; //-199-2*pars[0]-2.*slew (for pars[0] > 98.5) or just -98.5-pars[0]-slew;
     // zeroing output binned pulse shape
     // TODO: do we need double here or float will be sufficient???
     for (unsigned int i=0; i<HcalConst::maxSamples; i++)
-        ntmpbin[i] = 0.0;
+        ntmpbin[i] = 0.0f;
 
     if( edm::isNotFinite(offset_start) ){ //Check for nan
       ++ cntNANinfit;
     }else{
-      if( offset_start == 1.0 ){ offset_start = 0.; i_start-=1; } //Deal with boundary
+      if( offset_start == 1.0f ){ offset_start = 0.f; i_start-=1; } //Deal with boundary
 
       const int bin_start        = (int) offset_start; //bin off to integer
-      const int bin_0_start      = ( offset_start < bin_start + 0.5 ? bin_start -1 : bin_start ); //Round it
-      const int iTS_start        = i_start/ns_per_bx;         //Time Slice for time shift
-      const int distTo25ns_start = HcalConst::nsPerBX - 1 - i_start%ns_per_bx;    //Delta ns 
-      const float factor = offset_start - bin_0_start - 0.5; //Small correction?
+      const int bin_0_start      = ( offset_start < bin_start + 0.5f ? bin_start -1 : bin_start ); //Round it
+      const int iTS_start        = i_start/HcalConst::ns_per_bx;         //Time Slice for time shift
+      const int distTo25ns_start = HcalConst::nsPerBX - 1 - i_start%HcalConst::ns_per_bx;    //Delta ns
+      const float factor = offset_start - bin_0_start - 0.5f; //Small correction?
     
       //Build the new pulse
       ntmpbin[iTS_start] = (bin_0_start == -1 ? // Initial bin (I'm assuming this is ok)
 			      accVarLenIdxMinusOneVec[distTo25ns_start] + factor * diffVarItvlIdxMinusOneVec[distTo25ns_start]
 			    : accVarLenIdxZEROVec    [distTo25ns_start] + factor * diffVarItvlIdxZEROVec    [distTo25ns_start]);
       //Fill the rest of the bins
-      for(int iTS = iTS_start+1; iTS < num_bx; ++iTS){
-	int bin_idx = distTo25ns_start + 1 + (iTS-iTS_start-1)*ns_per_bx + bin_0_start;
+      for(int iTS = iTS_start+1; iTS < HcalConst::maxSamples; ++iTS){
+	int bin_idx = distTo25ns_start + 1 + (iTS-iTS_start-1)*HcalConst::ns_per_bx + bin_0_start;
 	ntmpbin[iTS] = acc25nsVec[bin_idx] + factor * diff25nsItvlVec[bin_idx];
       }
 /*

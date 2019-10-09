@@ -384,7 +384,7 @@ void SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
                                              const HcalRecoParam* params,
 //                                             const HcalCalibrations& calibs,
                                              const bool isData,
-                                             float const* pshape
+                                             float const* __restrict__ pshape
 				             , float* pulseNn, float* pulseMn, float* pulsePn,
 				       double* pulseShapeArray, double* pulseDerivArray, double* pulseCovVector
 				       ) {
@@ -392,6 +392,7 @@ void SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
 
     // Calculate "Method 0" quantities
     float m0t = 0.f, m0E = 0.f;
+
     {
         int ibeg = static_cast<int>(info.soi()) + firstSampleShift_;
         if (ibeg < 0)
@@ -437,6 +438,10 @@ void SimpleHBHEPhase1Algo::reconstruct(const HBHEChannelInfo& info,
     float m4T = 0.f;
     bool m4UseTriple=false;
 
+    // NOTE: PulseShapeFunctor rebuilt for every-rechit (in CPU only once per run)
+    // should be passes as in https://github.com/cms-patatrack/cmssw/blob/f7e93839338994e34b4bb2ac1481cc1d3cc188ea/RecoLocalCalo/HcalRecAlgos/src/HcalRecoParamsWithPulseShapesGPU.cc
+    // or should be created once for HPD and once for siPM on CPU and then passed here
+    // cost 36 ev/sec
     MahiFit mfit{pshape};
     mfit.phase1Apply(info, m4E, m4T, m4UseTriple, m4chi2,pulseNn, pulseMn, pulsePn, pulseShapeArray, pulseDerivArray, pulseCovVector);
     m4E *= hbminusCorrectionFactor(channelId, m4E, isData);
@@ -580,6 +585,9 @@ void kernel_reconstruct(HBHEChannelInfo *vinfos, HBHERecHit *vrechits,
         auto info = vinfos[idx];
         auto params = vparams[idx];
 //        auto calibs = vcalibs[idx];
+
+	// THIS SEEMS done for each recHits and every event, should be done for once (or twice) per event
+
         auto *pshape = psdata + hashes[info.recoShape()] * 256;
 
         SimpleHBHEPhase1Algo algo{};

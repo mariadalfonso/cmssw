@@ -11,6 +11,8 @@ namespace HcalConst{
    constexpr float iniTimeShift = 92.5f;
    constexpr double invertnsPerBx = 0.04f;
    constexpr int shiftTS = 4;
+   constexpr int ns_per_bx = nsPerBX;
+   constexpr int num_ns = nsPerBX * maxSamples;
 
 }
 

@@ -454,6 +454,8 @@ HBHEPhase1ReconstructorGPU::HBHEPhase1ReconstructorGPU(const edm::ParameterSet& 
     ddata_.allocate(MAX_SIZE_RECHITS);
 
     // adapt pulse shapes
+    // COMMENT: This can be done once/twice only: one identical for all the siPM channels and one for all the HPD
+
     HcalPulseShapes pshapes;
     auto t = pshapes.enumerate();
     psdata_.npulses = std::get<2>(t);
