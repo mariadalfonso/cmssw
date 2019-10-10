@@ -110,6 +110,7 @@ unsigned HGCalTriggerTools::layers(DetId::Detector type) const {
 }
 
 unsigned HGCalTriggerTools::layer(const DetId& id) const {
+
   unsigned int layer = std::numeric_limits<unsigned int>::max();
   if (id.det() == DetId::Forward && id.subdetId()!=ForwardSubdetector::HFNose) {
     layer = HGCalDetId(id).layer();
@@ -121,7 +122,7 @@ unsigned HGCalTriggerTools::layer(const DetId& id) const {
     layer = HGCSiliconDetId(id).layer();
   } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     layer = HGCalTriggerDetId(id).layer();
-  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && HGCalTriggerDetId(id.rawId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     layer = HFNoseTriggerDetId(id).layer();
   } else if (id.det() == DetId::HGCalHSc) {
     layer = HGCScintillatorDetId(id).layer();
@@ -134,7 +135,7 @@ unsigned HGCalTriggerTools::layerWithOffset(const DetId& id) const {
   unsigned int l = layer(id);
 
   // for HFNose no offset
-  if(id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) return l;
+  if(id.det() == DetId::HGCalTrigger && HGCalTriggerDetId(id.rawId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) return l;
 
   if (isHad(id) && isSilicon(id)) {
     l += eeLayers_;
@@ -159,7 +160,7 @@ bool HGCalTriggerTools::isEm(const DetId& id) const {
     em = true;
   } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger) {
     em = ((HGCalTriggerDetId(id).subdet() == HGCalTriggerSubdetector::HGCalEETrigger));
-  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && HGCalTriggerDetId(id.rawId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     em = HFNoseTriggerDetId(id).isEE();
   }
   return em;
@@ -171,7 +172,7 @@ bool HGCalTriggerTools::isSilicon(const DetId& id) const {
     silicon = (id.subdetId() != HGCHEB);
   } else if (id.det() == DetId::HGCalEE || id.det() == DetId::HGCalHSi) {
     silicon = true;
-  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && HGCalTriggerDetId(id.rawId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     silicon = true;
   } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     silicon = true;
@@ -193,7 +194,7 @@ int HGCalTriggerTools::zside(const DetId& id) const {
     zside = HFNoseTriggerDetId(id).zside();
   } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     zside = HGCalTriggerDetId(id).zside();
-  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && HGCalTriggerDetId(id.rawId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     zside = HFNoseTriggerDetId(id).zside();
   } else if (id.det() == DetId::HGCalHSc) {
     zside = HGCScintillatorDetId(id).zside();
@@ -240,7 +241,7 @@ int HGCalTriggerTools::thicknessIndex(const DetId& id, bool tc) const {
     thickness = HFNoseDetId(id).type();
   } else if (id.det() == DetId::HGCalTrigger && (id.subdetId()==HGCalTriggerSubdetector::HGCalEETrigger || id.subdetId()==HGCalTriggerSubdetector::HGCalHSiTrigger)) {
     thickness = HGCalTriggerDetId(id).type();
-  } else if (id.det() == DetId::HGCalTrigger && id.subdetId()==HGCalTriggerSubdetector::HFNoseTrigger) {
+  } else if (id.det() == DetId::HGCalTrigger && HGCalTriggerDetId(id.rawId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger) {
     thickness = HFNoseTriggerDetId(id).type();
   }
   return thickness;

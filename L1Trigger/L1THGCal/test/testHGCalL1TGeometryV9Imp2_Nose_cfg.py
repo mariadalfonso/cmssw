@@ -25,14 +25,16 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1)
+    input = cms.untracked.int32(1000)
 )
 
 # Input source
 process.source = cms.Source("EmptySource")
 
 process.options = cms.untracked.PSet(
-
+     wantSummary = cms.untracked.bool(False),
+     numberOfThreads = cms.untracked.uint32(8),
+     numberOfStreams = cms.untracked.uint32(8)
 )
 
 # Production Info
@@ -65,6 +67,7 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
     outputCommands = cms.untracked.vstring(
+        'keep *_genParticles_*_*',        
         'keep *_hgcalBackEndLayer1Producer_*_*',
         'keep *_hgcalBackEndLayer2Producer_*_*',
         'keep *_hgcalTowerProducer_*_*',
@@ -77,7 +80,7 @@ process.FEVTDEBUGoutput = cms.OutputModule("PoolOutputModule",
 # Additional output definition
 process.TFileService = cms.Service(
     "TFileService",
-    fileName = cms.string("/tmp/dalfonso/test_triggergeom.root")
+    fileName = cms.string("/tmp/dalfonso/test_triggergeom_ele20.root")
     )
 
 
@@ -101,7 +104,8 @@ process.generator = cms.EDFilter("Pythia8PtGun",
         MinPt = cms.double(19.999),
         MaxPt = cms.double(20.001),
 # 13 muon and 11 ele works, pions 211 no
-        ParticleID = cms.vint32(211)
+#        ParticleID = cms.vint32(211)
+        ParticleID = cms.vint32(22)
     ),
     PythiaParameters = cms.PSet(
         parameterSets = cms.vstring()

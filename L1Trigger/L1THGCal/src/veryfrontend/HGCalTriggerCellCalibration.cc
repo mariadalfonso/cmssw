@@ -1,4 +1,6 @@
 #include "L1Trigger/L1THGCal/interface/veryfrontend/HGCalTriggerCellCalibration.h"
+#include "DataFormats/ForwardDetId/interface/HGCalTriggerDetId.h"
+#include "DataFormats/ForwardDetId/interface/HFNoseTriggerDetId.h"
 
 //class constructor
 HGCalTriggerCellCalibration::HGCalTriggerCellCalibration(const edm::ParameterSet& conf)
@@ -49,10 +51,18 @@ void HGCalTriggerCellCalibration::calibrateMipTinGeV(l1t::HGCalTriggerCell& trgC
 
   unsigned trgCellLayer = triggerTools_.layerWithOffset(trgCell.detId());
 
-  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and DetId(trgCell.detId()).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger ) {
+  /*
+  cout << " ---------- " << endl;
+  cout << " DetId(trgCell.detId()).det() = " << DetId(trgCell.detId()).det() << endl;
+  cout << " DetId(trgCell.detId()).subdetId() = " << DetId(trgCell.detId()).subdetId() << endl;
+  cout << " trgCellLayer " << trgCellLayer << endl;
+  */
+
+  //  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and DetId(trgCell.detId()).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger ) {
+  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and HGCalTriggerDetId(trgCell.detId()).subdet()==HGCalTriggerSubdetector::HFNoseTrigger ) {
 
     if (dEdX_weights_Nose_.at(trgCellLayer) == 0.) {
-      throw cms::Exception("BadConfiguration")
+      throw cms::Exception("BadConfiguration - HFNose")
         << "Trigger cell energy forced to 0 by calibration coefficients.\n"
         << "The configuration should be changed. "
         << "Discarded layers should be defined in hgcalTriggerGeometryESProducer.TriggerGeometry.DisconnectedLayers "
@@ -64,9 +74,8 @@ void HGCalTriggerCellCalibration::calibrateMipTinGeV(l1t::HGCalTriggerCell& trgC
 
   } else {
 
-
     if (dEdX_weights_.at(trgCellLayer) == 0.) {
-      throw cms::Exception("BadConfiguration")
+      throw cms::Exception("BadConfiguration - HGCAL ")
         << "Trigger cell energy forced to 0 by calibration coefficients.\n"
         << "The configuration should be changed. "
         << "Discarded layers should be defined in hgcalTriggerGeometryESProducer.TriggerGeometry.DisconnectedLayers "
