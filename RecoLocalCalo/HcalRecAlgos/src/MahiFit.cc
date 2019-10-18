@@ -192,7 +192,7 @@ void MahiFit::doFit(std::array<float, 3>& correctedOutput, int nbx) const {
       // fixME store the timeslew
       float arrivalTime = 0.f;
       if (calculateArrivalTime_)
-        arrivalTime = calculateArrivalTime();
+        arrivalTime = calculateArrivalTime(ipulseintime);
       correctedOutput.at(1) = arrivalTime;  //time
     } else
       correctedOutput.at(1) = -9999.f;  //time
@@ -273,7 +273,7 @@ void MahiFit::updatePulseShape(double itQ,
 
   for (unsigned int iTS = 0; iTS < nnlsWork_.tsSize; ++iTS) {
     pulseShape.coeffRef(iTS + nnlsWork_.maxoffset) = pulseN[iTS + delta];
-    pulseDeriv.coeffRef(iTS + nnlsWork_.maxoffset) = (pulseM[iTS + delta] - pulseP[iTS + delta]) * invDt;
+    if(calculateArrivalTime_) pulseDeriv.coeffRef(iTS + nnlsWork_.maxoffset) = (pulseM[iTS + delta] - pulseP[iTS + delta]) * invDt;
 
     pulseM[iTS + delta] -= pulseN[iTS + delta];
     pulseP[iTS + delta] -= pulseN[iTS + delta];
@@ -314,12 +314,16 @@ void MahiFit::updateCov() const {
   nnlsWork_.covDecomp.compute(invCovMat);
 }
 
-float MahiFit::calculateArrivalTime() const {
-  int itIndex = 0;
+float MahiFit::calculateArrivalTime(unsigned int itIndex) const {
+
+  if (nnlsWork_.nPulseTot > 1) {
+    SamplePulseMatrix pulseDerivMatTMP = nnlsWork_.pulseDerivMat;
+    for (unsigned int iBX = 0; iBX < nnlsWork_.nPulseTot; ++iBX) {
+      nnlsWork_.pulseDerivMat.col(iBX) = pulseDerivMatTMP.col(nnlsWork_.bxs.coeff(iBX) + nnlsWork_.bxOffset);
+    }
+  }
 
   for (unsigned int iBX = 0; iBX < nnlsWork_.nPulseTot; ++iBX) {
-    if (nnlsWork_.bxs.coeff(iBX) == 0)
-      itIndex = iBX;
     nnlsWork_.pulseDerivMat.col(iBX) *= nnlsWork_.ampVec.coeff(iBX);
   }
 
@@ -477,7 +481,6 @@ void MahiFit::nnlsUnconstrainParameter(Index idxp) const {
   nnlsWork_.aTaMat.col(nnlsWork_.nP).swap(nnlsWork_.aTaMat.col(idxp));
   nnlsWork_.aTaMat.row(nnlsWork_.nP).swap(nnlsWork_.aTaMat.row(idxp));
   nnlsWork_.pulseMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseMat.col(idxp));
-  nnlsWork_.pulseDerivMat.col(nnlsWork_.nP).swap(nnlsWork_.pulseDerivMat.col(idxp));
   Eigen::numext::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP), nnlsWork_.aTbVec.coeffRef(idxp));
   Eigen::numext::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP), nnlsWork_.ampVec.coeffRef(idxp));
   Eigen::numext::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP), nnlsWork_.bxs.coeffRef(idxp));
@@ -488,7 +491,6 @@ void MahiFit::nnlsConstrainParameter(Index minratioidx) const {
   nnlsWork_.aTaMat.col(nnlsWork_.nP - 1).swap(nnlsWork_.aTaMat.col(minratioidx));
   nnlsWork_.aTaMat.row(nnlsWork_.nP - 1).swap(nnlsWork_.aTaMat.row(minratioidx));
   nnlsWork_.pulseMat.col(nnlsWork_.nP - 1).swap(nnlsWork_.pulseMat.col(minratioidx));
-  nnlsWork_.pulseDerivMat.col(nnlsWork_.nP - 1).swap(nnlsWork_.pulseDerivMat.col(minratioidx));
   Eigen::numext::swap(nnlsWork_.aTbVec.coeffRef(nnlsWork_.nP - 1), nnlsWork_.aTbVec.coeffRef(minratioidx));
   Eigen::numext::swap(nnlsWork_.ampVec.coeffRef(nnlsWork_.nP - 1), nnlsWork_.ampVec.coeffRef(minratioidx));
   Eigen::numext::swap(nnlsWork_.bxs.coeffRef(nnlsWork_.nP - 1), nnlsWork_.bxs.coeffRef(minratioidx));

@@ -139,7 +139,7 @@ private:
                         FullSampleVector& pulseDeriv,
                         FullSampleMatrix& pulseCov) const;
 
-  float calculateArrivalTime() const;
+  float calculateArrivalTime(unsigned int iBX) const;
   double calculateChiSq() const;
   void nnls() const;
   void resetWorkspace() const;
