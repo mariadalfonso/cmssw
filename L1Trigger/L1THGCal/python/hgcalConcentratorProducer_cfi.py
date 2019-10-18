@@ -12,47 +12,98 @@ threshold_conc_proc = cms.PSet(ProcessorName  = cms.string('HGCalConcentratorPro
                                threshold_scintillator = cms.double(2.), # MipT
                                coarsenTriggerCells = cms.bool(False),
                                fixedDataSizePerHGCROC = cms.bool(False),
+                               ctcSize = cms.vuint32(2,2,2,2),
                                )
 
+# Column is Nlinks, Row is NWafers
+# Requested size = 8(links)x8(wafers)
+# Values taken from https://indico.cern.ch/event/747610/contributions/3155360/, slide 13
+# For motherboards larger than 3, it is split in two
+bestchoice_ndata_centralized = [
+        13, 42, 75,  0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        13, 40, 74, 80, 114, 148, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        12, 39, 72, 82, 116, 146, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        12, 26, 53, 80, 114, 148, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        12, 25, 52, 79, 112, 146, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 24, 51, 78, 111, 144, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0,  0,  0,  0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0,  0,  0,  0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ]
 
+
+bestchoice_ndata_decentralized = [
+        1, 3, 6, 9, 14, 18, 23, 27, 32, 37, 41, 46, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,
+        ]
+
+
+superTCCompression_proc = cms.PSet(exponentBits = cms.uint32(4),
+                                   mantissaBits = cms.uint32(5),
+                                   rounding = cms.bool(True),
+)
+
+coarseTCCompression_proc = cms.PSet(exponentBits = cms.uint32(4),
+                                    mantissaBits = cms.uint32(3),
+                                   rounding = cms.bool(True),
+)
+
+from L1Trigger.L1THGCal.hgcalVFEProducer_cfi import vfe_proc
 best_conc_proc = cms.PSet(ProcessorName  = cms.string('HGCalConcentratorProcessorSelection'),
                           Method = cms.string('bestChoiceSelect'),
-                          # Column is Nlinks, Row is NWafers
-                          # Requested size = 8(links)x8(wafers)
-                          # Values taken from https://indico.cern.ch/event/747610/contributions/3155360/, slide 13
-                          # For motherboards larger than 3, it is split in two
-                          NData = cms.vuint32(
-                              13, 42, 75,  0,   0,   0, 0, 0,
-                              13, 40, 74, 80, 114, 148, 0, 0,
-                              12, 39, 72, 82, 116, 146, 0, 0,
-                              12, 26, 53, 80, 114, 148, 0, 0,
-                              12, 25, 52, 79, 112, 146, 0, 0,
-                               0, 24, 51, 78, 111, 144, 0, 0,
-                               0,  0,  0,  0,   0,   0, 0, 0,
-                               0,  0,  0,  0,   0,   0, 0, 0,
-                              ),
+                          NData = cms.vuint32(bestchoice_ndata_centralized),
                           coarsenTriggerCells = cms.bool(False),
                           fixedDataSizePerHGCROC = cms.bool(False),
+                          coarseTCCompression = coarseTCCompression_proc.clone(),
+                          superTCCalibration = vfe_proc.clone(),
+                          ctcSize = cms.vuint32(2,2,2,2),
                           )
-
 
 supertc_conc_proc = cms.PSet(ProcessorName  = cms.string('HGCalConcentratorProcessorSelection'),
                              Method = cms.string('superTriggerCellSelect'),
                              type_energy_division = cms.string('superTriggerCell'),# superTriggerCell,oneBitFraction,equalShare
                              stcSize = cms.vuint32(4,16,16,16),
+                             ctcSize = cms.vuint32(2,2,2,2),
                              fixedDataSizePerHGCROC = cms.bool(False),
                              coarsenTriggerCells = cms.bool(False),
+                             superTCCompression = superTCCompression_proc.clone(),
+                             coarseTCCompression = coarseTCCompression_proc.clone(),
+                             superTCCalibration = vfe_proc.clone(),
                              )
+
+
+mixedbcstc_conc_proc = cms.PSet(ProcessorName  = cms.string('HGCalConcentratorProcessorSelection'),
+                          Method = cms.string('mixedBestChoiceSuperTriggerCell'),
+                          NData = cms.vuint32(bestchoice_ndata_centralized),
+                          coarsenTriggerCells = cms.bool(False),
+                          fixedDataSizePerHGCROC = cms.bool(False),
+                          type_energy_division = cms.string('superTriggerCell'),# superTriggerCell,oneBitFraction,equalShare
+                          stcSize = cms.vuint32(4,16,16,16),
+                          ctcSize = cms.vuint32(2,2,2,2),
+                          superTCCompression = superTCCompression_proc.clone(),
+                          coarseTCCompression = coarseTCCompression_proc.clone(),
+                          superTCCalibration = vfe_proc.clone(),
+                          )
+
 
 coarsetc_onebitfraction_proc = cms.PSet(ProcessorName  = cms.string('HGCalConcentratorProcessorSelection'),
                              Method = cms.string('superTriggerCellSelect'),
                              type_energy_division = cms.string('oneBitFraction'),
                              stcSize = cms.vuint32(4,8,8,8),
+                             ctcSize = cms.vuint32(2,2,2,2),
                              fixedDataSizePerHGCROC = cms.bool(True),
                              coarsenTriggerCells = cms.bool(False),
                              oneBitFractionThreshold = cms.double(0.125),
                              oneBitFractionLowValue = cms.double(0.0625),
-                             oneBitFractionHighValue = cms.double(0.25)
+                             oneBitFractionHighValue = cms.double(0.25),
+                             superTCCompression = superTCCompression_proc.clone(),
+                             coarseTCCompression = coarseTCCompression_proc.clone(),
+                             superTCCalibration = vfe_proc.clone(),
                              )
 
 
@@ -60,8 +111,12 @@ coarsetc_equalshare_proc = cms.PSet(ProcessorName  = cms.string('HGCalConcentrat
                              Method = cms.string('superTriggerCellSelect'),
                              type_energy_division = cms.string('equalShare'),
                              stcSize = cms.vuint32(4,8,8,8),
+                             ctcSize = cms.vuint32(2,2,2,2),
                              fixedDataSizePerHGCROC = cms.bool(True),
                              coarsenTriggerCells = cms.bool(False),
+                             superTCCompression = superTCCompression_proc.clone(),
+                             coarseTCCompression = coarseTCCompression_proc.clone(),
+                             superTCCalibration = vfe_proc.clone(),
 )
 
 
