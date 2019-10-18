@@ -1,18 +1,18 @@
 #ifndef __L1Trigger_L1THGCal_HGCalHistoSeedingImpl_h__
 #define __L1Trigger_L1THGCal_HGCalHistoSeedingImpl_h__
 
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/L1THGCal/interface/HGCalCluster.h"
 #include "DataFormats/L1THGCal/interface/HGCalMulticluster.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "L1Trigger/L1THGCal/interface/HGCalTriggerGeometryBase.h"
-#include "L1Trigger/L1THGCal/interface/backend/HGCalShowerShape.h"
 #include "L1Trigger/L1THGCal/interface/HGCalTriggerTools.h"
+#include "L1Trigger/L1THGCal/interface/backend/HGCalShowerShape.h"
 #include "L1Trigger/L1THGCal/interface/backend/HGCalTriggerClusterIdentificationBase.h"
 
 class HGCalHistoSeedingImpl {
-private:
+ private:
   struct Bin {
     enum Content { Sum, Ecal, Hcal };
     std::array<float, 3> values = {{0., 0., 0.}};
@@ -21,7 +21,7 @@ private:
   };
   template <typename T>
   class HistogramT {
-  public:
+   public:
     using Data = std::vector<T>;
     using iterator = typename Data::iterator;
     using const_iterator = typename Data::const_iterator;
@@ -40,7 +40,7 @@ private:
     iterator end() { return histogram_.end(); }
     const_iterator end() const { return histogram_.end(); }
 
-  private:
+   private:
     static constexpr unsigned kSides_ = 2;
     unsigned bins1_ = 0;
     unsigned bins2_ = 0;
@@ -49,8 +49,10 @@ private:
 
     unsigned index(int zside, unsigned x1, unsigned x2) const {
       if (x1 >= bins1_ || x2 >= bins2_) {
-        throw cms::Exception("OutOfBound") << "Trying to access bin (" << x1 << "," << x2
-                                           << ") in seeding histogram of size (" << bins1_ << "," << bins2_ << ")";
+        throw cms::Exception("OutOfBound")
+            << "Trying to access bin (" << x1 << "," << x2
+            << ") in seeding histogram of size (" << bins1_ << "," << bins2_
+            << ")";
       }
       return x2 + bins2_ * x1 + bins_ * (zside > 0 ? 1 : 0);
     }
@@ -113,7 +115,7 @@ public:
   float dR(const l1t::HGCalCluster& clu, const GlobalPoint& seed) const;
 
   void findHistoSeeds(const std::vector<edm::Ptr<l1t::HGCalCluster>>& clustersPtr,
-                      std::vector<std::pair<GlobalPoint, double>>& seedPositionsEnergy);
+      std::vector<std::pair<GlobalPoint, double>>& seedPositionsEnergy);
 
 private:
   enum SeedingType { HistoMaxC3d, HistoSecondaryMaxC3d, HistoThresholdC3d, HistoInterpolatedMaxC3d };
@@ -126,11 +128,9 @@ private:
   Histogram fillSmoothPhiHistoClusters(const Histogram& histoClusters, const vector<unsigned>& binSums);
   Histogram fillSmoothRPhiHistoClusters(const Histogram& histoClusters);
 
-  void setSeedEnergyAndPosition(std::vector<std::pair<GlobalPoint, double>>& seedPositionsEnergy,
-                                int z_side,
-                                unsigned bin_R,
-                                unsigned bin_phi,
-                                const Bin& histBin);
+  void setSeedEnergyAndPosition(
+      std::vector<std::pair<GlobalPoint, double>>& seedPositionsEnergy,
+      int z_side, unsigned bin_R, unsigned bin_phi, const Bin& histBin);
 
   std::vector<std::pair<GlobalPoint, double>> computeMaxSeeds(const Histogram& histoClusters);
 
@@ -159,7 +159,10 @@ private:
   Navigator navigator_;
 
   static constexpr unsigned neighbour_weights_size_ = 9;
-  static constexpr double kROverZMin_ = 0.076;
+  // HGCAL value
+  //  static constexpr double kROverZMin_ = 0.076;
+  // HGCAL nose
+  static constexpr double kROverZMin_ = 0.02;  // r=30 cm at z=1000 cm
   static constexpr double kROverZMax_ = 0.58;
   static constexpr double kXYMax_ = 0.6;
 };

@@ -1,19 +1,29 @@
 #include "L1Trigger/L1THGCal/interface/HGCalTriggerCellCalibration.h"
+#include "DataFormats/ForwardDetId/interface/HFNoseTriggerDetId.h"
+#include "DataFormats/ForwardDetId/interface/HGCalTriggerDetId.h"
 
-//class constructor
-HGCalTriggerCellCalibration::HGCalTriggerCellCalibration(const edm::ParameterSet& conf)
+// class constructor
+HGCalTriggerCellCalibration::HGCalTriggerCellCalibration(
+    const edm::ParameterSet& conf)
     : LSB_silicon_fC_(conf.getParameter<double>("siliconCellLSB_fC")),
-      LSB_scintillator_MIP_(conf.getParameter<double>("scintillatorCellLSB_MIP")),
+      LSB_scintillator_MIP_(
+          conf.getParameter<double>("scintillatorCellLSB_MIP")),
       fCperMIP_(conf.getParameter<double>("fCperMIP")),
       thickCorr_(conf.getParameter<double>("thickCorr")),
-      dEdX_weights_(conf.getParameter<std::vector<double>>("dEdXweights")) {
+      dEdX_weights_(conf.getParameter<std::vector<double>>("dEdXweights")),
+      dEdX_weights_Nose_(
+          conf.getParameter<std::vector<double>>("dEdXweightsNose")) {
   if (fCperMIP_ <= 0) {
-    edm::LogWarning("DivisionByZero") << "WARNING: the MIP->fC correction factor is zero or negative. It won't be "
-                                         "applied to correct trigger cell energies.";
+    edm::LogWarning("DivisionByZero")
+        << "WARNING: the MIP->fC correction factor is zero or negative. It "
+           "won't be "
+           "applied to correct trigger cell energies.";
   }
   if (thickCorr_ <= 0) {
-    edm::LogWarning("DivisionByZero") << "WARNING: the cell-thickness correction factor is zero or negative. It won't "
-                                         "be applied to correct trigger cell energies.";
+    edm::LogWarning("DivisionByZero")
+        << "WARNING: the cell-thickness correction factor is zero or negative. "
+           "It won't "
+           "be applied to correct trigger cell energies.";
   }
 }
 
@@ -24,7 +34,8 @@ void HGCalTriggerCellCalibration::calibrateInMipT(l1t::HGCalTriggerCell& trgCell
   int hwPt = trgCell.hwPt();
 
   // Convert ADC to charge in fC (in EE+FH) or in MIPs (in BH)
-  double amplitude = hwPt * (!isSilicon ? LSB_scintillator_MIP_ : LSB_silicon_fC_);
+  double amplitude =
+      hwPt * (!isSilicon ? LSB_scintillator_MIP_ : LSB_silicon_fC_);
 
   // The responses of the different cell thicknesses have been equalized
   // to the 200um response in the front-end. So there is only one global
@@ -44,25 +55,60 @@ void HGCalTriggerCellCalibration::calibrateInMipT(l1t::HGCalTriggerCell& trgCell
 
 void HGCalTriggerCellCalibration::calibrateMipTinGeV(l1t::HGCalTriggerCell& trgCell) const {
   const double MevToGeV(0.001);
+  double trgCellEt(0.);
 
-  DetId trgdetid(trgCell.detId());
-  unsigned trgCellLayer = triggerTools_.layerWithOffset(trgdetid);
+  unsigned trgCellLayer = triggerTools_.layerWithOffset(trgCell.detId());
 
-  if (dEdX_weights_.at(trgCellLayer) == 0.) {
-    throw cms::Exception("BadConfiguration")
-        << "Trigger cell energy forced to 0 by calibration coefficients.\n"
-        << "The configuration should be changed. "
-        << "Discarded layers should be defined in hgcalTriggerGeometryESProducer.TriggerGeometry.DisconnectedLayers "
-           "and not with calibration coefficients = 0\n";
+  /*
+  cout << " ---------- " << endl;
+  cout << " DetId(trgCell.detId()).det() = " << DetId(trgCell.detId()).det() <<
+  endl; cout << " DetId(trgCell.detId()).subdetId() = " <<
+  DetId(trgCell.detId()).subdetId() << endl; cout << " trgCellLayer " <<
+  trgCellLayer << endl;
+  */
+
+  //  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and
+  //  DetId(trgCell.detId()).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger
+  //  ) {
+  if (DetId(trgCell.detId()).det() == DetId::HGCalTrigger and
+      HGCalTriggerDetId(trgCell.detId()).subdet() ==
+          HGCalTriggerSubdetector::HFNoseTrigger) {
+    if (dEdX_weights_Nose_.at(trgCellLayer) == 0.) {
+      throw cms::Exception("BadConfiguration - HFNose")
+          << "Trigger cell energy forced to 0 by calibration coefficients.\n"
+          << "The configuration should be changed. "
+          << "Discarded layers should be defined in "
+             "hgcalTriggerGeometryESProducer.TriggerGeometry."
+             "DisconnectedLayers "
+             "and not with calibration coefficients = 0\n";
+    }
+
+    /* weight the amplitude by the absorber coefficient in MeV/mip + bring it in
+     * GeV */
+    trgCellEt =
+        trgCell.mipPt() * dEdX_weights_Nose_.at(trgCellLayer) * MevToGeV;
+
+  } else {
+    if (dEdX_weights_.at(trgCellLayer) == 0.) {
+      throw cms::Exception("BadConfiguration - HGCAL ")
+          << "Trigger cell energy forced to 0 by calibration coefficients.\n"
+          << "The configuration should be changed. "
+          << "Discarded layers should be defined in "
+             "hgcalTriggerGeometryESProducer.TriggerGeometry."
+             "DisconnectedLayers "
+             "and not with calibration coefficients = 0\n";
+    }
+
+    /* weight the amplitude by the absorber coefficient in MeV/mip + bring it in
+     * GeV */
+    trgCellEt = trgCell.mipPt() * dEdX_weights_.at(trgCellLayer) * MevToGeV;
   }
-
-  /* weight the amplitude by the absorber coefficient in MeV/mip + bring it in GeV */
-  double trgCellEt = trgCell.mipPt() * dEdX_weights_.at(trgCellLayer) * MevToGeV;
 
   /* correct for the cell-thickness */
-  if (triggerTools_.isSilicon(trgdetid) && thickCorr_ > 0) {
+  if (triggerTools_.isSilicon(trgCell.detId()) && thickCorr_ > 0) {
     trgCellEt /= thickCorr_;
   }
+
   /* assign the new energy to the four-vector of the trigger cell */
   math::PtEtaPhiMLorentzVector calibP4(trgCellEt, trgCell.eta(), trgCell.phi(), 0.);
 
