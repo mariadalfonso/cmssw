@@ -115,17 +115,14 @@ namespace l1t {
         auto id_fraction = constituentsFraction_.find(id_constituent.first);
         double fraction = (id_fraction != constituentsFraction_.end() ? id_fraction->second : 1.);
         if ((id.det() == DetId::Forward && id.subdetId() == HGCEE) || (id.det() == DetId::HGCalEE) ||
-            (id.det() == DetId::HGCalTrigger &&
-             HGCalTriggerDetId(id).subdet() == HGCalTriggerSubdetector::HGCalEETrigger) ||
-	    (id.det() == DetId::HGCalTrigger && id.subdetId() == HGCalTriggerSubdetector::HFNoseTrigger)
+	    (id.det() == DetId::Forward && id.subdetId() == ForwardSubdetector::HFNose && HFNoseDetId(id_constituent.first).isEE())
 	    ) {
           pt_em += id_constituent.second->pt() * fraction;
         } else if ((id.det() == DetId::Forward && id.subdetId() == HGCHEF) ||
                    (id.det() == DetId::Hcal && id.subdetId() == HcalEndcap) || (id.det() == DetId::HGCalHSi) ||
                    (id.det() == DetId::HGCalHSc) ||
-                   (id.det() == DetId::HGCalTrigger &&
-                    HGCalTriggerDetId(id).subdet() == HGCalTriggerSubdetector::HGCalHSiTrigger) ||
-		   (id.det() == DetId::HGCalTrigger && id.subdetId() == HGCalTriggerSubdetector::HFNoseTrigger)) {
+		   (id.det() == DetId::Forward && id.subdetId() == ForwardSubdetector::HFNose && HFNoseDetId(id_constituent.first).isHE())
+		   ) {
           pt_had += id_constituent.second->pt() * fraction;
         }
       }

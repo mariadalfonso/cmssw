@@ -59,17 +59,6 @@ void HGCalTriggerCellCalibration::calibrateMipTinGeV(l1t::HGCalTriggerCell& trgC
 
   unsigned trgCellLayer = triggerTools_.layerWithOffset(trgCell.detId());
 
-  /*
-  cout << " ---------- " << endl;
-  cout << " DetId(trgCell.detId()).det() = " << DetId(trgCell.detId()).det() <<
-  endl; cout << " DetId(trgCell.detId()).subdetId() = " <<
-  DetId(trgCell.detId()).subdetId() << endl; cout << " trgCellLayer " <<
-  trgCellLayer << endl;
-  */
-
-  //  if( DetId(trgCell.detId()).det() == DetId::HGCalTrigger and
-  //  DetId(trgCell.detId()).subdetId()==HGCalTriggerSubdetector::HFNoseTrigger
-  //  ) {
   if (DetId(trgCell.detId()).det() == DetId::HGCalTrigger and
       HGCalTriggerDetId(trgCell.detId()).subdet() ==
           HGCalTriggerSubdetector::HFNoseTrigger) {
