@@ -312,6 +312,8 @@ void MahiFit::updateCov() const {
   }
 
   nnlsWork_.covDecomp.compute(invCovMat);
+  nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
+
 }
 
 float MahiFit::calculateArrivalTime(unsigned int itIndex) const {
@@ -339,13 +341,6 @@ void MahiFit::nnls() const {
   const unsigned int npulse = nnlsWork_.nPulseTot;
   const unsigned int nsamples = nnlsWork_.tsSize;
 
-  PulseVector updateWork;
-  updateWork.setZero(npulse);
-
-  PulseVector ampvecpermtest;
-  ampvecpermtest.setZero(npulse);
-
-  nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
   nnlsWork_.aTaMat = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
   nnlsWork_.aTbVec =
       nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes));
@@ -363,11 +358,14 @@ void MahiFit::nnls() const {
         break;
 
       const unsigned int nActive = npulse - nnlsWork_.nP;
-      updateWork = nnlsWork_.aTbVec - nnlsWork_.aTaMat * nnlsWork_.ampVec;
+      // exit if there are no more pulses to constrain
+      if (nActive == 0) break;
+
+      PulseVector updateWork = nnlsWork_.aTbVec.tail(nActive) - nnlsWork_.aTaMat.bottomRows(nActive) * nnlsWork_.ampVec;
 
       Index idxwmaxprev = idxwmax;
       double wmaxprev = wmax;
-      wmax = updateWork.tail(nActive).maxCoeff(&idxwmax);
+      wmax = updateWork.maxCoeff(&idxwmax);
 
       if (wmax < threshold || (idxwmax == idxwmaxprev && wmax == wmaxprev)) {
         break;
@@ -386,17 +384,14 @@ void MahiFit::nnls() const {
       if (nnlsWork_.nP == 0)
         break;
 
-      ampvecpermtest = nnlsWork_.ampVec;
+      PulseVector ampvecpermtest = nnlsWork_.ampVec.head(nnlsWork_.nP);
 
       solveSubmatrix(nnlsWork_.aTaMat, nnlsWork_.aTbVec, ampvecpermtest, nnlsWork_.nP);
 
       //check solution
-      bool positive = true;
-      for (unsigned int i = 0; i < nnlsWork_.nP; ++i)
-        positive &= (ampvecpermtest(i) > 0);
-      if (positive) {
-        nnlsWork_.ampVec.head(nnlsWork_.nP) = ampvecpermtest.head(nnlsWork_.nP);
-        break;
+      if (ampvecpermtest.head(nnlsWork_.nP).minCoeff() > 0.) {
+	nnlsWork_.ampVec.head(nnlsWork_.nP) = ampvecpermtest.head(nnlsWork_.nP);
+	break;
       }
 
       //update parameter vector
@@ -434,7 +429,6 @@ void MahiFit::nnls() const {
 }
 
 void MahiFit::onePulseMinimize() const {
-  nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
 
   PulseSampleMatrix invcovpT = nnlsWork_.invcovp.transpose();
 
