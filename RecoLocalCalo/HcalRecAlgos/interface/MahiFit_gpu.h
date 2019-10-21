@@ -128,7 +128,7 @@ class MahiFit
  private:
 
   __device__
-  double minimize(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_, SampleMatrixMAP const * pulseCovArray) const;
+  double minimize(SamplePulseMatrixMAP & pulseMat_, SampleMatrixMAP const * pulseCovArray) const;
   __device__
   void onePulseMinimize(SamplePulseMatrixMAP & pulseMat_) const;
   __device__
@@ -141,18 +141,18 @@ class MahiFit
 			) const;
 
   __device__
-  float calculateArrivalTime(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
+  float calculateArrivalTime(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_, unsigned int itIndex) const;
   __device__
   double calculateChiSq(SamplePulseMatrixMAP & pulseMat_) const;
   __device__
-  void nnls(SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
+  void nnls(SamplePulseMatrixMAP & pulseMat_) const;
   __device__
   void resetWorkspace() const;
 
   __device__
-  void nnlsUnconstrainParameter(Index idxp, SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
+  void nnlsUnconstrainParameter(Index idxp, SamplePulseMatrixMAP & pulseMat_) const;
   __device__
-  void nnlsConstrainParameter(Index minratioidx, SamplePulseMatrixMAP & pulseMat_, SamplePulseMatrixMAP & pulseDerivMat_) const;
+  void nnlsConstrainParameter(Index minratioidx, SamplePulseMatrixMAP & pulseMat_) const;
 
   __device__
   void solveSubmatrix(PulseMatrix& mat, PulseVector& invec, PulseVector& outvec, unsigned nP) const;
