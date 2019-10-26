@@ -169,7 +169,7 @@ void MahiFit::doFit(std::array<float, 3>& correctedOutput, int nbx) const {
 
       nnlsWork_.pulseMat.col(iBX) = pulseShapeArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
       nnlsWork_.pulseDerivMat.col(iBX) = pulseDerivArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
-      nnlsWork_.pulseCovArray[iBX] = pulseCov.block(
+      nnlsWork_.pulseCovArray[iBX].triangularView<Eigen::Lower>() = pulseCov.block(
           nnlsWork_.maxoffset - offset, nnlsWork_.maxoffset - offset, nnlsWork_.tsSize, nnlsWork_.tsSize);
     }
   }
@@ -307,11 +307,11 @@ void MahiFit::updateCov() const {
     if (offset == pedestalBX_)
       continue;
     else {
-      invCovMat += ampsq * nnlsWork_.pulseCovArray.at(offset + nnlsWork_.bxOffset);
+      invCovMat.triangularView<Eigen::Lower>() += ampsq * nnlsWork_.pulseCovArray.at(offset + nnlsWork_.bxOffset);
     }
   }
 
-  nnlsWork_.covDecomp.compute(invCovMat);
+  nnlsWork_.covDecomp.compute(invCovMat.triangularView<Eigen::Lower>());
   nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
 
 }
