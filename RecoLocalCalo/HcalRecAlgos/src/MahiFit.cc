@@ -159,7 +159,7 @@ void MahiFit::doFit(std::array<float, 3>& correctedOutput, int nbx) const {
       nnlsWork_.pulseDerivMat.col(iBX) = SampleVector::Zero(nnlsWork_.tsSize);
     } else {
       pulseShapeArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
-      pulseDerivArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
+      if (calculateArrivalTime_) pulseDerivArray.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
       pulseCov.setZero(nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset,
                        nnlsWork_.tsSize + nnlsWork_.maxoffset + nnlsWork_.bxOffset);
       nnlsWork_.pulseCovArray[iBX].setZero(nnlsWork_.tsSize, nnlsWork_.tsSize);
@@ -168,7 +168,7 @@ void MahiFit::doFit(std::array<float, 3>& correctedOutput, int nbx) const {
           nnlsWork_.amplitudes.coeff(nnlsWork_.tsOffset + offset), pulseShapeArray, pulseDerivArray, pulseCov);
 
       nnlsWork_.pulseMat.col(iBX) = pulseShapeArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
-      nnlsWork_.pulseDerivMat.col(iBX) = pulseDerivArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
+      if (calculateArrivalTime_) nnlsWork_.pulseDerivMat.col(iBX) = pulseDerivArray.segment(nnlsWork_.maxoffset - offset, nnlsWork_.tsSize);
       nnlsWork_.pulseCovArray[iBX].triangularView<Eigen::Lower>() = pulseCov.block(
           nnlsWork_.maxoffset - offset, nnlsWork_.maxoffset - offset, nnlsWork_.tsSize, nnlsWork_.tsSize);
     }
@@ -183,6 +183,7 @@ void MahiFit::doFit(std::array<float, 3>& correctedOutput, int nbx) const {
     if (nnlsWork_.bxs.coeff(iBX) == 0) {
       ipulseintime = iBX;
       foundintime = true;
+      break;
     }
   }
 
@@ -248,9 +249,11 @@ void MahiFit::updatePulseShape(double itQ,
       t0 += hcalTimeSlewDelay_->delay(float(itQ), slewFlavor_);
   }
 
-  std::array<double, MaxSVSize> pulseN;
-  std::array<double, MaxSVSize> pulseM;
-  std::array<double, MaxSVSize> pulseP;
+  const int nSamples=10;
+
+  std::array<double, nSamples> pulseN;
+  std::array<double, nSamples> pulseM;
+  std::array<double, nSamples> pulseP;
 
   const float xx = t0;
   const float xxm = -nnlsWork_.dt + t0;

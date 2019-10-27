@@ -53,7 +53,6 @@ struct MahiNnlsWorkspace {
   PulseVector aTbVec;  // A-transpose b (vector)
 
   SampleDecompLLT covDecomp;
-  PulseDecompLDLT pulseDecomp;
 };
 
 struct MahiDebugInfo {
