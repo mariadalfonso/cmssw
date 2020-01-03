@@ -458,6 +458,7 @@ HFRecHit HcalSimpleRecAlgo::reconstructQIE10(const QIE10DataFrame& digi,
 }
 
 /// Ugly hack to apply energy corrections to some HB- cells
+/*
 float hbminus_special_ecorr(int ieta, int iphi, double energy, int runnum) {
   // return energy correction factor for HBM channels
   // iphi=6 ieta=(-1,-15) and iphi=32 ieta=(-1,-7)
@@ -503,6 +504,7 @@ float hbminus_special_ecorr(int ieta, int iphi, double energy, int runnum) {
 
   return corr;
 }
+*/
 
 // Actual leakage (to pre-sample) correction
 float leakCorr(double energy) {
@@ -512,9 +514,10 @@ float leakCorr(double energy) {
 
 // timeshift implementation
 
-static const float wpksamp0_hbheho = 0.5;
-static const int num_bins_hbheho = 61;
+//static const float wpksamp0_hbheho = 0.5;
+//static const int num_bins_hbheho = 61;
 
+/*
 static const float actual_ns_hbheho[num_bins_hbheho] = {
     -5.44000,  // 0.500, 0.000-0.017
     -4.84250,  // 0.517, 0.017-0.033
@@ -578,7 +581,9 @@ static const float actual_ns_hbheho[num_bins_hbheho] = {
     24.53250,  // 1.483, 0.983-1.000
     25.00000   // 1.500, 1.000-1.017 - keep for interpolation
 };
+*/
 
+/*
 float timeshift_ns_hbheho(float wpksamp) {
   float flx = (num_bins_hbheho - 1) * (wpksamp - wpksamp0_hbheho);
   int index = (int)flx;
@@ -597,6 +602,7 @@ float timeshift_ns_hbheho(float wpksamp) {
 
   return yval;
 }
+*/
 
 static const int num_bins_hf = 101;
 static const float wpksamp0_hf = 0.5;
