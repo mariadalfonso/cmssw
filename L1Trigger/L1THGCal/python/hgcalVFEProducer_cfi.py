@@ -87,12 +87,26 @@ phase2_hgcal.toModify(vfe_proc,
     noiseScintillator = cms.PSet(refToPSet_ = cms.string("HGCAL_noise_heback")),
 )
 
+
+### this need to be splitted 
+
 hgcalVFEProducer = cms.EDProducer(
         "HGCalVFEProducer",
         eeDigis = cms.InputTag('simHGCalUnsuppressedDigis:EE'),
         fhDigis = cms.InputTag('simHGCalUnsuppressedDigis:HEfront'),
         bhDigis = cms.InputTag('simHGCalUnsuppressedDigis:HEback'),
+        noseDigis = cms.InputTag(''),
+        ProcessorParameters = vfe_proc.clone()
+       )
+
+hgcalVFEProducerHFNose = cms.EDProducer(
+        "HGCalVFEProducer",
+        eeDigis = cms.InputTag(''),
+        fhDigis = cms.InputTag(''),
+        bhDigis = cms.InputTag(''),
         noseDigis = cms.InputTag('simHFNoseUnsuppressedDigis:HFNose'),
         ProcessorParameters = vfe_proc.clone()
        )
+
+
 

@@ -184,3 +184,7 @@ hgcalBackEndLayer2Producer = cms.EDProducer(
     InputCluster = cms.InputTag('hgcalBackEndLayer1Producer:HGCalBackendLayer1Processor2DClustering'),
     ProcessorParameters = be_proc.clone()
     )
+
+
+hgcalBackEndLayer2ProducerHFNose = hgcalBackEndLayer2Producer.clone()
+hgcalBackEndLayer2ProducerHFNose.InputCluster = cms.InputTag('hgcalBackEndLayer1ProducerHFNose:HGCalBackendLayer1Processor2DClustering')

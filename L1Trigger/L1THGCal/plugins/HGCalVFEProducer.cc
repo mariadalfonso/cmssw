@@ -68,15 +68,22 @@ void HGCalVFEProducer::produce(edm::Event& e, const edm::EventSetup& es) {
   e.getByToken(inputfh_, fh_digis_h);
   e.getByToken(inputbh_, bh_digis_h);
 
-  const HGCalDigiCollection& ee_digis = *ee_digis_h;
-  const HGCalDigiCollection& fh_digis = *fh_digis_h;
-  const HGCalDigiCollection& bh_digis = *bh_digis_h;
+  // Processing DigiCollections and putting the results into the HGCalTriggerCellBxCollectio
+  if (ee_digis_h.isValid()) {
+    const HGCalDigiCollection& ee_digis = *ee_digis_h;
+    vfeProcess_->run(ee_digis, *vfe_trigcell_output, es);
+  }
 
-  // Processing DigiCollections and putting the results into the HGCalTriggerCellBxCollection
-  vfeProcess_->run(ee_digis, *vfe_trigcell_output, es);
-  vfeProcess_->run(fh_digis, *vfe_trigcell_output, es);
-  vfeProcess_->run(bh_digis, *vfe_trigcell_output, es);
+  if (fh_digis_h.isValid()) {
+    const HGCalDigiCollection& fh_digis = *fh_digis_h;
+    vfeProcess_->run(fh_digis, *vfe_trigcell_output, es);
+  }
 
+  if (bh_digis_h.isValid()) {
+    const HGCalDigiCollection& bh_digis = *bh_digis_h;
+    vfeProcess_->run(bh_digis, *vfe_trigcell_output, es);
+  }
+    
   edm::Handle<HGCalDigiCollection> nose_digis_h;
   e.getByToken(inputnose_, nose_digis_h);
 
