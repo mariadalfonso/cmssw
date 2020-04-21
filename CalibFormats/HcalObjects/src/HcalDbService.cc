@@ -72,6 +72,18 @@ const HcalCalibrationWidths& HcalDbService::getHcalCalibrationWidths(const HcalG
   return (*mCalibWidthSet.load(std::memory_order_acquire)).getCalibrationWidths(fId);
 }
 
+const HcalCalibrations& HcalDbService::getHcalCalibrationsHcalDetId(const HcalDetId& fId) const
+{
+  buildCalibrations();
+  return (*mCalibSet.load(std::memory_order_acquire)).getCalibrationsHcalDetId(fId);
+}
+
+const HcalCalibrationWidths& HcalDbService::getHcalCalibrationWidthsHcalDetId(const HcalDetId& fId) const
+{
+  buildCalibWidths();
+  return (*mCalibWidthSet.load(std::memory_order_acquire)).getCalibrationWidthsHcalDetId(fId);
+}
+
 const HcalCalibrationsSet* HcalDbService::getHcalCalibrationsSet() const {
   buildCalibrations();
   return mCalibSet.load(std::memory_order_acquire);

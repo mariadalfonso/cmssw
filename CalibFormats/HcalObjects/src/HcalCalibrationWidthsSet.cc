@@ -16,6 +16,13 @@ const HcalCalibrationWidths& HcalCalibrationWidthsSet::getCalibrationWidths(cons
   return cell->second.calib;
 }
 
+const HcalCalibrationWidths& HcalCalibrationWidthsSet::getCalibrationWidthsHcalDetId(const HcalDetId fId2) const {
+  auto cell = mItems.find(fId2);
+  if ((cell == mItems.end()))
+    throw cms::Exception ("Conditions not found") << "Unavailable HcalCalibrationWidths for cell " << HcalGenericDetId(fId2);
+  return cell->second.calib;
+}
+
 void HcalCalibrationWidthsSet::setCalibrationWidths(DetId fId, const HcalCalibrationWidths& ca) {
   DetId fId2(hcalTransformedId(fId));
   auto cell = mItems.find(fId2);

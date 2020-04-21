@@ -101,7 +101,7 @@ namespace {
       if (fcByPE_ <= 0.0)
         throw cms::Exception("HBHEPhase1BadDB") << "Invalid fC/PE conversion factor for SiPM " << id << std::endl;
 
-      const HcalCalibrations& calib = cond.getHcalCalibrations(id);
+      const HcalCalibrations& calib = cond.getHcalCalibrationsHcalDetId(id);
       const int firstTS = std::max(soi + sipmQTSShift, 0);
       const int lastTS = std::min(firstTS + sipmQNTStoSum, maxTS);
       double sipmQ = 0.0;
@@ -437,8 +437,8 @@ void HBHEPhase1Reconstructor::processData(const Collection& coll,
 
     // Basic ADC decoding tools
     const HcalRecoParam* param_ts = paramTS_->getValues(cell.rawId());
-    const HcalCalibrations& calib = cond.getHcalCalibrations(cell);
-    const HcalCalibrationWidths& calibWidth = cond.getHcalCalibrationWidths(cell);
+    const HcalCalibrations& calib = cond.getHcalCalibrationsHcalDetId(cell);
+    const HcalCalibrationWidths& calibWidth = cond.getHcalCalibrationWidthsHcalDetId(cell);
     const HcalQIECoder* channelCoder = cond.getHcalCoder(cell);
     const HcalQIEShape* shape = cond.getHcalShape(channelCoder);
     const HcalCoderDb coder(*channelCoder, *shape);
@@ -549,7 +549,7 @@ void HBHEPhase1Reconstructor::processData(const Collection& coll,
       HBHERecHit rh = reco_->reconstruct(*channelInfo, pptr, calib, isRealData);
       if (rh.id().rawId()) {
         setAsicSpecificBits(frame, coder, *channelInfo, calib, &rh);
-        setCommonStatusBits(*channelInfo, calib, &rh);
+	//	setCommonStatusBits(*channelInfo, calib, &rh);
         rechits->push_back(rh);
       }
     }
