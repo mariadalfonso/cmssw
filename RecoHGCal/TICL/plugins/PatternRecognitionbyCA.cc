@@ -383,3 +383,6 @@ void PatternRecognitionbyCA<TILE>::energyRegressionAndID(const std::vector<reco:
     }
   }
 }
+
+template class PatternRecognitionbyCA<TICLLayerTiles>;
+template class PatternRecognitionbyCA<TICLLayerTilesHFNose>;
