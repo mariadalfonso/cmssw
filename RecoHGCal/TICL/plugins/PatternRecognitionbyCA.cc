@@ -342,7 +342,7 @@ void PatternRecognitionbyCA<TILES>::energyRegressionAndID(const std::vector<reco
         float *features = &input.tensor<float, 4>()(i, j, seenClusters[j], 0);
 
         // fill features
-        *(features++) = float(cluster.energy());
+        *(features++) = float(cluster.energy()/float(trackster.vertex_multiplicity(k)));
         *(features++) = float(std::abs(cluster.eta()));
         *(features) = float(cluster.phi());
 
