@@ -34,10 +34,6 @@ struct MahiNnlsWorkspace {
   //holds flat pedestal uncertainty
   float pedVal;
 
-  //holds full covariance matrix for a pulse shape
-  //varied in time
-  std::array<SampleMatrix, MaxPVSize> pulseCovArray;
-
   //holds matrix of pulse shape templates for each BX
   SamplePulseMatrix pulseMat;
 
@@ -127,13 +123,13 @@ public:
   const HcalTimeSlew* hcalTimeSlewDelay_ = nullptr;
 
 private:
-  const float minimize() const;
+  const float minimize(const std::array<SampleMatrix, MaxPVSize> & pulseCovArray) const;
   void onePulseMinimize() const;
-  void updateCov(const SampleMatrix& invCovMat) const;
+  void updateCov(const SampleMatrix& invCovMat, const std::array<SampleMatrix, MaxPVSize> & pulseCovArray) const;
   void updatePulseShape(const float itQ,
-                        FullSampleVector& pulseShape,
-                        FullSampleVector& pulseDeriv,
-                        FullSampleMatrix& pulseCov) const;
+			SampleMatrix& pulseCovMatrix,
+			const unsigned int offset,
+			const unsigned int iBX) const;
 
   float calculateArrivalTime(unsigned int iBX) const;
   float calculateChiSq() const;
