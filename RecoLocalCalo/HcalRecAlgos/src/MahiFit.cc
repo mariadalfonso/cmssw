@@ -355,6 +355,7 @@ void MahiFit::nnls() const {
   const unsigned int nsamples = nnlsWork_.tsSize;
 
   PulseVector updateWork;
+  PulseVector ampvecpermtest;
 
   nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
   nnlsWork_.aTaMat.noalias()  = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
@@ -398,7 +399,7 @@ void MahiFit::nnls() const {
       if (nnlsWork_.nP == 0)
         break;
 
-      PulseVector ampvecpermtest = nnlsWork_.ampVec.head(nnlsWork_.nP);
+      ampvecpermtest.noalias() = nnlsWork_.ampVec.head(nnlsWork_.nP);
 
       solveSubmatrix(nnlsWork_.aTaMat, nnlsWork_.aTbVec, ampvecpermtest, nnlsWork_.nP);
 
