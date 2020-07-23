@@ -1,6 +1,7 @@
 #include <Eigen/Dense>
 
 #include "DataFormats/HcalRecHit/interface/HcalSpecialTimes.h"
+#include "DataFormats/Math/interface/EigenComputations.h"
 
 // nvcc not able to parse this guy (whatever is inlcuded from it)....
 //#include "RecoLocalCalo/HcalRecAlgos/interface/PulseShapeFunctor.h"
@@ -13,18 +14,6 @@
 
 namespace hcal {
   namespace mahi {
-
-    template <int NROWS, int NCOLS>
-    using ColMajorMatrix = Eigen::Matrix<float, NROWS, NCOLS, Eigen::ColMajor>;
-
-    template <int NROWS, int NCOLS>
-    using RowMajorMatrix = Eigen::Matrix<float, NROWS, NCOLS, Eigen::RowMajor>;
-
-    template <int SIZE, typename T = float>
-    using ColumnVector = Eigen::Matrix<T, SIZE, 1>;
-
-    template <int SIZE, typename T = float>
-    using RowVector = Eigen::Matrix<T, 1, SIZE>;
 
     // FIXME remove duplication...
     // this is from PulesFunctor. nvcc was complaining... if included that header...
@@ -831,242 +820,6 @@ namespace hcal {
       pulseMatrixP[ipulse * nsamples + sample] = value_t0p;
     }
 
-    // FIXME: provide specialization for Row Major layout
-    template <typename T, int Stride, int Order = Eigen::ColMajor>
-    struct MapSymM {
-      using type = T;
-      using base_type = typename std::remove_const<type>::type;
-
-      static constexpr int total = Stride * (Stride + 1) / 2;
-      static constexpr int stride = Stride;
-      T* data;
-
-      __forceinline__ __device__ MapSymM(T* data) : data{data} {}
-
-      __forceinline__ __device__ T const& operator()(int const row, int const col) const {
-        auto const tmp = (Stride - col) * (Stride - col + 1) / 2;
-        auto const index = total - tmp + row - col;
-        return data[index];
-      }
-
-      template <typename U = T>
-      __forceinline__ __device__ typename std::enable_if<std::is_same<base_type, U>::value, base_type>::type&
-      operator()(int const row, int const col) {
-        auto const tmp = (Stride - col) * (Stride - col + 1) / 2;
-        auto const index = total - tmp + row - col;
-        return data[index];
-      }
-    };
-
-    // simple/trivial cholesky decomposition impl
-    template <typename MatrixType1, typename MatrixType2>
-    __forceinline__ __device__ void compute_decomposition_unrolled(MatrixType1& L, MatrixType2 const& M) {
-      auto const sqrtm_0_0 = std::sqrt(M(0, 0));
-      L(0, 0) = sqrtm_0_0;
-      using T = typename MatrixType1::base_type;
-
-#pragma unroll
-      for (int i = 1; i < MatrixType1::stride; i++) {
-        T sumsq{0};
-        for (int j = 0; j < i; j++) {
-          T sumsq2{0};
-          auto const m_i_j = M(i, j);
-          for (int k = 0; k < j; ++k)
-            sumsq2 += L(i, k) * L(j, k);
-
-          auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
-          L(i, j) = value_i_j;
-
-          sumsq += value_i_j * value_i_j;
-        }
-
-        auto const l_i_i = std::sqrt(M(i, i) - sumsq);
-        L(i, i) = l_i_i;
-      }
-    }
-
-    template <typename MatrixType1, typename MatrixType2>
-    __forceinline__ __device__ void compute_decomposition(MatrixType1& L, MatrixType2 const& M, int const N) {
-      auto const sqrtm_0_0 = std::sqrt(M(0, 0));
-      L(0, 0) = sqrtm_0_0;
-      using T = typename MatrixType1::base_type;
-
-      for (int i = 1; i < N; i++) {
-        T sumsq{0};
-        for (int j = 0; j < i; j++) {
-          T sumsq2{0};
-          auto const m_i_j = M(i, j);
-          for (int k = 0; k < j; ++k)
-            sumsq2 += L(i, k) * L(j, k);
-
-          auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
-          L(i, j) = value_i_j;
-
-          sumsq += value_i_j * value_i_j;
-        }
-
-        auto const l_i_i = std::sqrt(M(i, i) - sumsq);
-        L(i, i) = l_i_i;
-      }
-    }
-
-    template <typename MatrixType1, typename MatrixType2, typename VectorType>
-    __forceinline__ __device__ void compute_decomposition_forwardsubst_with_offsets(
-        MatrixType1& L,
-        MatrixType2 const& M,
-        float b[MatrixType1::stride],
-        VectorType const& Atb,
-        int const N,
-        ColumnVector<MatrixType1::stride, int> const& pulseOffsets) {
-      auto const real_0 = pulseOffsets(0);
-      auto const sqrtm_0_0 = std::sqrt(M(real_0, real_0));
-      L(0, 0) = sqrtm_0_0;
-      using T = typename MatrixType1::base_type;
-      b[0] = Atb(real_0) / sqrtm_0_0;
-
-      for (int i = 1; i < N; i++) {
-        auto const i_real = pulseOffsets(i);
-        T sumsq{0};
-        T total = 0;
-        auto const atb = Atb(i_real);
-        for (int j = 0; j < i; j++) {
-          auto const j_real = pulseOffsets(j);
-          T sumsq2{0};
-          auto const m_i_j = M(std::max(i_real, j_real), std::min(i_real, j_real));
-          for (int k = 0; k < j; ++k)
-            sumsq2 += L(i, k) * L(j, k);
-
-          auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
-          L(i, j) = value_i_j;
-
-          sumsq += value_i_j * value_i_j;
-          total += value_i_j * b[j];
-        }
-
-        auto const l_i_i = std::sqrt(M(i_real, i_real) - sumsq);
-        L(i, i) = l_i_i;
-        b[i] = (atb - total) / l_i_i;
-      }
-    }
-
-    template <typename MatrixType1, typename MatrixType2, typename VectorType>
-    __forceinline__ __device__ void update_decomposition_forwardsubst_with_offsets(
-        MatrixType1& L,
-        MatrixType2 const& M,
-        float b[MatrixType1::stride],
-        VectorType const& Atb,
-        int const N,
-        ColumnVector<MatrixType1::stride, int> const& pulseOffsets) {
-      using T = typename MatrixType1::base_type;
-      auto const i = N - 1;
-      auto const i_real = pulseOffsets(i);
-      T sumsq{0};
-      T total = 0;
-      for (int j = 0; j < i; j++) {
-        auto const j_real = pulseOffsets(j);
-        T sumsq2{0};
-        auto const m_i_j = M(std::max(i_real, j_real), std::min(i_real, j_real));
-        for (int k = 0; k < j; ++k)
-          sumsq2 += L(i, k) * L(j, k);
-
-        auto const value_i_j = (m_i_j - sumsq2) / L(j, j);
-        L(i, j) = value_i_j;
-        sumsq += value_i_j * value_i_j;
-
-        total += value_i_j * b[j];
-      }
-
-      auto const l_i_i = std::sqrt(M(i_real, i_real) - sumsq);
-      L(i, i) = l_i_i;
-      b[i] = (Atb(i_real) - total) / l_i_i;
-    }
-
-    template <typename MatrixType1, typename MatrixType2, typename MatrixType3>
-    __device__ void solve_forward_subst_matrix(MatrixType1& A,
-                                               MatrixType2 const& pulseMatrixView,
-                                               MatrixType3 const& matrixL) {
-      // FIXME: this assumes pulses are on columns and samples on rows
-      constexpr auto NPULSES = MatrixType2::ColsAtCompileTime;
-      constexpr auto NSAMPLES = MatrixType2::RowsAtCompileTime;
-
-#pragma unroll
-      for (int icol = 0; icol < NPULSES; icol++) {
-        float reg_b[NSAMPLES];
-        float reg_L[NSAMPLES];
-
-// preload a column and load column 0 of cholesky
-#pragma unroll
-        for (int i = 0; i < NSAMPLES; i++) {
-          reg_b[i] = __ldg(&pulseMatrixView.coeffRef(i, icol));
-          reg_L[i] = matrixL(i, 0);
-        }
-
-        // compute x0 and store it
-        auto x_prev = reg_b[0] / reg_L[0];
-        A(0, icol) = x_prev;
-
-// iterate
-#pragma unroll
-        for (int iL = 1; iL < NSAMPLES; iL++) {
-// update accum
-#pragma unroll
-          for (int counter = iL; counter < NSAMPLES; counter++)
-            reg_b[counter] -= x_prev * reg_L[counter];
-
-// load the next column of cholesky
-#pragma unroll
-          for (int counter = iL; counter < NSAMPLES; counter++)
-            reg_L[counter] = matrixL(counter, iL);
-
-          // compute the next x for M(iL, icol)
-          x_prev = reg_b[iL] / reg_L[iL];
-
-          // store the result value
-          A(iL, icol) = x_prev;
-        }
-      }
-    }
-
-    template <typename MatrixType1, typename MatrixType2>
-    __device__ void solve_forward_subst_vector(float reg_b[MatrixType1::RowsAtCompileTime],
-                                               MatrixType1 inputAmplitudesView,
-                                               MatrixType2 matrixL) {
-      constexpr auto NSAMPLES = MatrixType1::RowsAtCompileTime;
-
-      float reg_b_tmp[NSAMPLES];
-      float reg_L[NSAMPLES];
-
-// preload a column and load column 0 of cholesky
-#pragma unroll
-      for (int i = 0; i < NSAMPLES; i++) {
-        reg_b_tmp[i] = inputAmplitudesView(i);
-        reg_L[i] = matrixL(i, 0);
-      }
-
-      // compute x0 and store it
-      auto x_prev = reg_b_tmp[0] / reg_L[0];
-      reg_b[0] = x_prev;
-
-// iterate
-#pragma unroll
-      for (int iL = 1; iL < NSAMPLES; iL++) {
-// update accum
-#pragma unroll
-        for (int counter = iL; counter < NSAMPLES; counter++)
-          reg_b_tmp[counter] -= x_prev * reg_L[counter];
-
-// load the next column of cholesky
-#pragma unroll
-        for (int counter = iL; counter < NSAMPLES; counter++)
-          reg_L[counter] = matrixL(counter, iL);
-
-        // compute the next x for M(iL, icol)
-        x_prev = reg_b_tmp[iL] / reg_L[iL];
-
-        // store the result value
-        reg_b[iL] = x_prev;
-      }
-    }
 
     // TODO: add active bxs
     template <typename MatrixType, typename VectorType>
@@ -1074,8 +827,8 @@ namespace hcal {
                           VectorType const& Atb,
                           VectorType& solution,
                           int& npassive,
-                          ColumnVector<VectorType::RowsAtCompileTime, int>& pulseOffsets,
-                          MapSymM<float, VectorType::RowsAtCompileTime>& matrixL,
+                          calo::multifit::ColumnVector<VectorType::RowsAtCompileTime, int>& pulseOffsets,
+                          calo::multifit::MapSymM<float, VectorType::RowsAtCompileTime>& matrixL,
                           double const eps,
                           int const maxIterations) {
       // constants
@@ -1103,7 +856,7 @@ namespace hcal {
 
           // compute the gradient
           //w.tail(nactive) = Atb.tail(nactive) - (AtA * solution).tail(nactive);
-          Eigen::Index w_max_idx;
+	  Eigen::Index w_max_idx;
           float w_max = -std::numeric_limits<float>::max();
           for (int icol = npassive; icol < NPULSES; icol++) {
             auto const icol_real = pulseOffsets(icol);
@@ -1112,7 +865,7 @@ namespace hcal {
 #pragma unroll
             for (int counter = 0; counter < NPULSES; counter++)
               sum += counter > icol_real ? AtA(counter, icol_real) * solution(counter)
-                                         : AtA(icol_real, counter) * solution(counter);
+		: AtA(icol_real, counter) * solution(counter);
 
             auto const w = atb - sum;
             if (w > w_max) {
@@ -1134,7 +887,7 @@ namespace hcal {
           // move index to the right part of the vector
           w_max_idx += npassive;
 
-          Eigen::numext::swap(pulseOffsets.coeffRef(npassive), pulseOffsets.coeffRef(w_max_idx));
+	  Eigen::numext::swap(pulseOffsets.coeffRef(npassive), pulseOffsets.coeffRef(w_max_idx));
           ++npassive;
         }
 
@@ -1149,9 +902,9 @@ namespace hcal {
           //        .llt().matrixL();
           //.solve(Atb.head(npassive));
           if (recompute || iter == 0)
-            compute_decomposition_forwardsubst_with_offsets(matrixL, AtA, reg_b, Atb, npassive, pulseOffsets);
+	    calo::multifit::compute_decomposition_forwardsubst_with_offsets(matrixL, AtA, reg_b, Atb, npassive, pulseOffsets);
           else
-            update_decomposition_forwardsubst_with_offsets(matrixL, AtA, reg_b, Atb, npassive, pulseOffsets);
+	    calo::multifit::update_decomposition_forwardsubst_with_offsets(matrixL, AtA, reg_b, Atb, npassive, pulseOffsets);
 
           // run backward substituion
           s(npassive - 1) = reg_b[npassive - 1] / matrixL(npassive - 1, npassive - 1);
@@ -1178,7 +931,7 @@ namespace hcal {
           recompute = true;
 
           auto alpha = std::numeric_limits<float>::max();
-          Eigen::Index alpha_idx = 0, alpha_idx_real = 0;
+	  Eigen::Index alpha_idx = 0, alpha_idx_real = 0;
           for (int i = 0; i < npassive; i++) {
             if (s[i] <= 0.) {
               auto const i_real = pulseOffsets(i);
@@ -1201,7 +954,7 @@ namespace hcal {
           solution[alpha_idx_real] = 0;
           --npassive;
 
-          Eigen::numext::swap(pulseOffsets.coeffRef(npassive), pulseOffsets.coeffRef(alpha_idx));
+	  Eigen::numext::swap(pulseOffsets.coeffRef(npassive), pulseOffsets.coeffRef(alpha_idx));
         }
 
         // as in cpu
@@ -1213,11 +966,11 @@ namespace hcal {
 
     template <int NSAMPLES, int NPULSES>
     __forceinline__ __device__ void update_covariance(
-        ColumnVector<NPULSES> const& resultAmplitudesVector,
-        MapSymM<float, NSAMPLES>& covarianceMatrix,
-        Eigen::Map<const ColMajorMatrix<NSAMPLES, NPULSES>> const& pulseMatrix,
-        Eigen::Map<const ColMajorMatrix<NSAMPLES, NPULSES>> const& pulseMatrixM,
-        Eigen::Map<const ColMajorMatrix<NSAMPLES, NPULSES>> const& pulseMatrixP) {
+        calo::multifit::ColumnVector<NPULSES> const& resultAmplitudesVector,
+        calo::multifit::MapSymM<float, NSAMPLES>& covarianceMatrix,
+        Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> const& pulseMatrix,
+        Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> const& pulseMatrixM,
+        Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> const& pulseMatrixP) {
 #pragma unroll
       for (int ipulse = 0; ipulse < NPULSES; ipulse++) {
         auto const resultAmplitude = resultAmplitudesVector(ipulse);
@@ -1314,9 +1067,9 @@ namespace hcal {
 
       // configure shared mem
       extern __shared__ char shrmem[];
-      float* shrMatrixLFnnlsStorage = reinterpret_cast<float*>(shrmem) + MapSymM<float, NPULSES>::total * threadIdx.x;
+      float* shrMatrixLFnnlsStorage = reinterpret_cast<float*>(shrmem) + calo::multifit::MapSymM<float, NPULSES>::total * threadIdx.x;
       float* shrAtAStorage =
-          reinterpret_cast<float*>(shrmem) + MapSymM<float, NPULSES>::total * (threadIdx.x + blockDim.x);
+	reinterpret_cast<float*>(shrmem) + calo::multifit::MapSymM<float, NPULSES>::total * (threadIdx.x + blockDim.x);
 
       // conditions for pedestal widths
       auto const id = gch < nchannelsf01HE
@@ -1356,23 +1109,23 @@ namespace hcal {
       */
       constexpr float deltaChi2Threashold = 1e-3;
 
-      ColumnVector<NPULSES, int> pulseOffsets;
+      calo::multifit::ColumnVector<NPULSES, int> pulseOffsets;
 #pragma unroll
       for (int i = 0; i < NPULSES; ++i)
         pulseOffsets(i) = i;
       //        pulseOffsets(i) = pulseOffsetValues[i] - pulseOffsetValues[0];
 
       // output amplitudes/weights
-      ColumnVector<NPULSES> resultAmplitudesVector = ColumnVector<NPULSES>::Zero();
+      calo::multifit::ColumnVector<NPULSES> resultAmplitudesVector = calo::multifit::ColumnVector<NPULSES>::Zero();
 
       // map views
-      Eigen::Map<const ColumnVector<NSAMPLES>> inputAmplitudesView{inputAmplitudes + gch * NSAMPLES};
-      Eigen::Map<const ColumnVector<NSAMPLES>> noiseTermsView{noiseTerms + gch * NSAMPLES};
-      Eigen::Map<const ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixMView{pulseMatricesM +
+      Eigen::Map<const calo::multifit::ColumnVector<NSAMPLES>> inputAmplitudesView{inputAmplitudes + gch * NSAMPLES};
+      Eigen::Map<const calo::multifit::ColumnVector<NSAMPLES>> noiseTermsView{noiseTerms + gch * NSAMPLES};
+      Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixMView{pulseMatricesM +
                                                                               gch * NSAMPLES * NPULSES};
-      Eigen::Map<const ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixPView{pulseMatricesP +
+      Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixPView{pulseMatricesP +
                                                                               gch * NSAMPLES * NPULSES};
-      Eigen::Map<const ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixView{pulseMatrices + gch * NSAMPLES * NPULSES};
+      Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> glbPulseMatrixView{pulseMatrices + gch * NSAMPLES * NPULSES};
 
 #ifdef HCAL_MAHI_GPUDEBUG
       for (int i = 0; i < NSAMPLES; i++)
@@ -1405,12 +1158,12 @@ namespace hcal {
         // if does not hold -> slightly rearrange shared mem to still reuse
         // shared memory
         float* covarianceMatrixStorage = shrMatrixLFnnlsStorage;
-        MapSymM<float, NSAMPLES> covarianceMatrix{covarianceMatrixStorage};
+	calo::multifit::MapSymM<float, NSAMPLES> covarianceMatrix{covarianceMatrixStorage};
 #pragma unroll
-        for (int counter = 0; counter < MapSymM<float, NSAMPLES>::total; counter++)
+        for (int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::total; counter++)
           covarianceMatrixStorage[counter] = averagePedestalWidth2;
 #pragma unroll
-        for (int counter = 0; counter < MapSymM<float, NSAMPLES>::stride; counter++)
+        for (int counter = 0; counter < calo::multifit::MapSymM<float, NSAMPLES>::stride; counter++)
           covarianceMatrix(counter, counter) += __ldg(&noiseTermsView.coeffRef(counter));
 
         // update covariance matrix
@@ -1429,9 +1182,9 @@ namespace hcal {
         // compute Cholesky Decomposition L matrix
         //matrixDecomposition.compute(covarianceMatrix);
         //auto const& matrixL = matrixDecomposition.matrixL();
-        float matrixLStorage[MapSymM<float, NSAMPLES>::total];
-        MapSymM<float, NSAMPLES> matrixL{matrixLStorage};
-        compute_decomposition_unrolled(matrixL, covarianceMatrix);
+        float matrixLStorage[calo::multifit::MapSymM<float, NSAMPLES>::total];
+	calo::multifit::MapSymM<float, NSAMPLES> matrixL{matrixLStorage};
+	calo::multifit::compute_decomposition_unrolled(matrixL, covarianceMatrix);
 
         //
         // replace eigen
@@ -1439,8 +1192,8 @@ namespace hcal {
         //auto const& A = matrixDecomposition
         //    .matrixL()
         //    .solve(pulseMatrixView);
-        ColMajorMatrix<NSAMPLES, NPULSES> A;
-        solve_forward_subst_matrix(A, glbPulseMatrixView, matrixL);
+	calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES> A;
+	calo::multifit::solve_forward_subst_matrix(A, glbPulseMatrixView, matrixL);
 
         //
         // remove eigen
@@ -1449,7 +1202,7 @@ namespace hcal {
         //   .solve(inputAmplitudesView);
         //
         float reg_b[NSAMPLES];
-        solve_forward_subst_vector(reg_b, inputAmplitudesView, matrixL);
+	calo::multifit::solve_forward_subst_vector(reg_b, inputAmplitudesView, matrixL);
 
         // TODO: we do not really need to change these matrcies
         // will be fixed in the optimized version
@@ -1457,8 +1210,8 @@ namespace hcal {
         //ColumnVector<NPULSES> Atb = A.transpose() * b;
         //ColMajorMatrix<NPULSES, NPULSES> AtA;
         //float AtAStorage[MapSymM<float, NPULSES>::total];
-        MapSymM<float, NPULSES> AtA{shrAtAStorage};
-        ColumnVector<NPULSES> Atb;
+	calo::multifit::MapSymM<float, NPULSES> AtA{shrAtAStorage};
+	calo::multifit::ColumnVector<NPULSES> Atb;
 #pragma unroll
         for (int icol = 0; icol < NPULSES; icol++) {
           float reg_ai[NSAMPLES];
@@ -1525,11 +1278,11 @@ namespace hcal {
 #endif
 
         // for fnnls
-        MapSymM<float, NPULSES> matrixLForFnnls{shrMatrixLFnnlsStorage};
+	calo::multifit::MapSymM<float, NPULSES> matrixLForFnnls{shrMatrixLFnnlsStorage};
 
         // run fast nnls
         // FIXME: provide values from config
-        fnnls(AtA, Atb, resultAmplitudesVector, npassive, pulseOffsets, matrixLForFnnls, 1e-11, 500);
+	fnnls(AtA, Atb, resultAmplitudesVector, npassive, pulseOffsets, matrixLForFnnls, 1e-11, 500);
 
 #ifdef HCAL_MAHI_GPUDEBUG
         printf("result Amplitudes\n");
@@ -1540,7 +1293,7 @@ namespace hcal {
         // replace pulseMatrixView * result - inputs
         // NOTE:
         float accum[NSAMPLES];
-        Eigen::Map<ColumnVector<NSAMPLES>> mapAccum{accum};
+        Eigen::Map<calo::multifit::ColumnVector<NSAMPLES>> mapAccum{accum};
         {
           float results[NPULSES];
 
@@ -1790,7 +1543,7 @@ namespace hcal {
         // FIXME: provide constants from configuration
         uint32_t threadsPerBlock = configParameters.kernelMinimizeThreads[0];
         uint32_t blocks = threadsPerBlock > totalChannels ? 1 : (totalChannels + threadsPerBlock - 1) / threadsPerBlock;
-        auto const nbytesShared = 2 * threadsPerBlock * MapSymM<float, 8>::total * sizeof(float);
+        auto const nbytesShared = 2 * threadsPerBlock * calo::multifit::MapSymM<float, 8>::total * sizeof(float);
         kernel_minimize<8, 8><<<blocks, threadsPerBlock, nbytesShared, cudaStream>>>(
             outputGPU.recHits.energy.get(),
             outputGPU.recHits.chi2.get(),
