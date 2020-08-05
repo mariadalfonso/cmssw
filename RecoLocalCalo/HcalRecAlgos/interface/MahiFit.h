@@ -135,9 +135,8 @@ private:
   void updateCov(const SampleMatrix& invCovMat) const;
   void resetPulseShapeTemplate(int pulseShapeId, const HcalPulseShapes& ps, unsigned int nSamples);
   void updatePulseShape(const float itQ,
-                        FullSampleVector& pulseShape,
-                        FullSampleVector& pulseDeriv,
-                        FullSampleMatrix& pulseCov) const;
+                        unsigned int offset,
+                        unsigned int iBX) const;
 
   float calculateArrivalTime(const unsigned int iBX) const;
   float calculateChiSq() const;
