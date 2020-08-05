@@ -43,52 +43,51 @@ void MahiFit::setParameters(bool iDynamicPed,
   bxSizeConf_ = activeBXs_.size();
 }
 
-void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
+void MahiFit::phase1Apply(const HBHEChannelInfo* channelData,
                           float& reconstructedEnergy,
                           float& reconstructedTime,
                           bool& useTriple,
                           float& chi2) const {
-  assert(channelData.nSamples() == 8 || channelData.nSamples() == 10);
+  assert(channelData->nSamples() == 8 || channelData->nSamples() == 10);
 
   resetWorkspace();
 
-  nnlsWork_.tsOffset = channelData.soi();
+  nnlsWork_.tsOffset = channelData->soi();
 
   std::array<float, 3> reconstructedVals{{0.0f, -9999.f, -9999.f}};
 
   double tsTOT = 0, tstrig = 0;  // in GeV
   for (unsigned int iTS = 0; iTS < nnlsWork_.tsSize; ++iTS) {
-    auto const amplitude = channelData.tsRawCharge(iTS) - channelData.tsPedestal(iTS);
+    auto const amplitude = channelData->tsCharge(iTS);
 
     nnlsWork_.amplitudes.coeffRef(iTS) = amplitude;
 
     //ADC granularity
-    auto const noiseADC = norm_ * channelData.tsDFcPerADC(iTS);
+    auto const noiseADC = norm_ * channelData->tsDFcPerADC(iTS);
 
     //Electronic pedestal
-    auto const pedWidth = channelData.tsPedestalWidth(iTS);
+    auto const pedWidth = channelData->tsPedestalWidth(iTS);
 
     //Photostatistics
-    auto const noisePhoto = (amplitude > pedWidth) ? std::sqrt(amplitude * channelData.fcByPE()) : 0.f;
+    auto const noisePhotoSq = (amplitude > pedWidth) ? (amplitude * channelData->fcByPE()) : 0.f;
 
     //Total uncertainty from all sources
-    nnlsWork_.noiseTerms.coeffRef(iTS) = noiseADC * noiseADC + noisePhoto * noisePhoto + pedWidth * pedWidth;
+    nnlsWork_.noiseTerms.coeffRef(iTS) = noiseADC * noiseADC + noisePhotoSq + pedWidth * pedWidth;
 
     tsTOT += amplitude;
-    if (iTS == nnlsWork_.tsOffset)
-      tstrig += amplitude;
+
   }
 
-  tsTOT *= channelData.tsGain(0);
-  tstrig *= channelData.tsGain(0);
+  tsTOT *= channelData->tsGain(0);
+  tstrig = channelData->tsEnergy(nnlsWork_.tsOffset);
 
   useTriple = false;
   if (tstrig >= ts4Thresh_ && tsTOT > 0) {
     //Average pedestal width (for covariance matrix constraint)
-    nnlsWork_.pedVal = 0.25f * (channelData.tsPedestalWidth(0) * channelData.tsPedestalWidth(0) +
-                                channelData.tsPedestalWidth(1) * channelData.tsPedestalWidth(1) +
-                                channelData.tsPedestalWidth(2) * channelData.tsPedestalWidth(2) +
-                                channelData.tsPedestalWidth(3) * channelData.tsPedestalWidth(3));
+    nnlsWork_.pedVal = 0.25f * (channelData->tsPedestalWidth(0) * channelData->tsPedestalWidth(0) +
+                                channelData->tsPedestalWidth(1) * channelData->tsPedestalWidth(1) +
+                                channelData->tsPedestalWidth(2) * channelData->tsPedestalWidth(2) +
+                                channelData->tsPedestalWidth(3) * channelData->tsPedestalWidth(3));
 
     // only do pre-fit with 1 pulse if chiSq threshold is positive
     if (chiSqSwitch_ > 0) {
@@ -102,12 +101,12 @@ void MahiFit::phase1Apply(const HBHEChannelInfo& channelData,
       useTriple = true;
     }
   } else {
-    reconstructedVals.at(0) = 0.f;      //energy
-    reconstructedVals.at(1) = -9999.f;  //time
-    reconstructedVals.at(2) = -9999.f;  //chi2
+    reconstructedVals[0] = 0.f;      //energy
+    reconstructedVals[1] = -9999.f;  //time
+    reconstructedVals[2] = -9999.f;  //chi2
   }
 
-  reconstructedEnergy = reconstructedVals[0] * channelData.tsGain(0);
+  reconstructedEnergy = reconstructedVals[0] * channelData->tsGain(0);
   reconstructedTime = reconstructedVals[1];
   chi2 = reconstructedVals[2];
 }
@@ -308,15 +307,14 @@ void MahiFit::updateCov(const SampleMatrix& samplecov) const {
     if (offset == pedestalBX_)
       continue;
     else {
-      auto const ampsq = amp * amp;
-      invCovMat += ampsq * nnlsWork_.pulseCovArray[offset + nnlsWork_.bxOffset];
+      invCovMat.noalias() += amp * amp * nnlsWork_.pulseCovArray[offset + nnlsWork_.bxOffset];
     }
   }
 
   nnlsWork_.covDecomp.compute(invCovMat);
 }
 
-float MahiFit::calculateArrivalTime(unsigned int itIndex) const {
+float MahiFit::calculateArrivalTime(const unsigned int itIndex) const {
   if (nnlsWork_.nPulseTot > 1) {
     SamplePulseMatrix pulseDerivMatTMP = nnlsWork_.pulseDerivMat;
     for (unsigned int iBX = 0; iBX < nnlsWork_.nPulseTot; ++iBX) {
@@ -341,10 +339,11 @@ void MahiFit::nnls() const {
   const unsigned int nsamples = nnlsWork_.tsSize;
 
   PulseVector updateWork;
+  PulseVector ampvecpermtest;
 
   nnlsWork_.invcovp = nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.pulseMat);
-  nnlsWork_.aTaMat = nnlsWork_.invcovp.transpose() * nnlsWork_.invcovp;
-  nnlsWork_.aTbVec = nnlsWork_.invcovp.transpose() * (nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes));
+  nnlsWork_.aTaMat.noalias() = nnlsWork_.invcovp.transpose().lazyProduct(nnlsWork_.invcovp);
+  nnlsWork_.aTbVec.noalias() = nnlsWork_.invcovp.transpose().lazyProduct((nnlsWork_.covDecomp.matrixL().solve(nnlsWork_.amplitudes)));
 
   int iter = 0;
   Index idxwmax = 0;
@@ -361,7 +360,7 @@ void MahiFit::nnls() const {
       if (nActive == 0)
         break;
 
-      updateWork = nnlsWork_.aTbVec - nnlsWork_.aTaMat * nnlsWork_.ampVec;
+      updateWork.noalias() = nnlsWork_.aTbVec - nnlsWork_.aTaMat.lazyProduct(nnlsWork_.ampVec);
 
       Index idxwmaxprev = idxwmax;
       float wmaxprev = wmax;
@@ -384,7 +383,7 @@ void MahiFit::nnls() const {
       if (nnlsWork_.nP == 0)
         break;
 
-      PulseVector ampvecpermtest = nnlsWork_.ampVec.head(nnlsWork_.nP);
+      ampvecpermtest.noalias() = nnlsWork_.ampVec.head(nnlsWork_.nP);
 
       solveSubmatrix(nnlsWork_.aTaMat, nnlsWork_.aTbVec, ampvecpermtest, nnlsWork_.nP);
 
@@ -520,7 +519,7 @@ void MahiFit::nnlsConstrainParameter(Index minratioidx) const {
 void MahiFit::phase1Debug(const HBHEChannelInfo& channelData, MahiDebugInfo& mdi) const {
   float recoEnergy, recoTime, chi2;
   bool use3;
-  phase1Apply(channelData, recoEnergy, recoTime, use3, chi2);
+  phase1Apply(&channelData, recoEnergy, recoTime, use3, chi2);
 
   mdi.nSamples = channelData.nSamples();
   mdi.soi = channelData.soi();

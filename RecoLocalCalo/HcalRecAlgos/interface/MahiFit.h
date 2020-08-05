@@ -108,7 +108,7 @@ public:
                      double iDeltaChiSqThresh,
                      double iNnlsThresh);
 
-  void phase1Apply(const HBHEChannelInfo& channelData,
+  void phase1Apply(const HBHEChannelInfo* channelData,
                    float& reconstructedEnergy,
                    float& reconstructedTime,
                    bool& useTriple,
@@ -139,7 +139,7 @@ private:
                         FullSampleVector& pulseDeriv,
                         FullSampleMatrix& pulseCov) const;
 
-  float calculateArrivalTime(unsigned int iBX) const;
+  float calculateArrivalTime(const unsigned int iBX) const;
   float calculateChiSq() const;
   void nnls() const;
   void resetWorkspace() const;
