@@ -26,6 +26,22 @@ hgcalTowerMapProducer = cms.EDProducer(
     ProcessorParameters = tower_map.clone()
     )
 
+### update the sequence for the HFNose
+
+L1TTriggerTowerConfigHFNose_etaphi = L1TTriggerTowerConfig_etaphi.clone(
+    minEta=cms.double(3.0),
+    maxEta=cms.double(4.2)
+)
+
+towerMap2DHFNose_parValues = towerMap2D_parValues.clone(
+    L1TTriggerTowerConfig = L1TTriggerTowerConfigHFNose_etaphi
+)
+
+
+towerHFNose_map = cms.PSet( ProcessorName  = cms.string('HGCalTowerMapProcessor'),
+                      towermap_parameters = towerMap2DHFNose_parValues.clone()
+                  )
 hgcalTowerMapProducerHFNose = hgcalTowerMapProducer.clone(
-    InputTriggerSums = cms.InputTag('hgcalConcentratorProducerHFNose:HGCalConcentratorProcessorSelection')
+    InputTriggerSums = cms.InputTag('hgcalConcentratorProducerHFNose:HGCalConcentratorProcessorSelection'),
+    ProcessorParameters = towerHFNose_map.clone()
 )
