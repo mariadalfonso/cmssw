@@ -2,6 +2,7 @@ import FWCore.ParameterSet.Config as cms
 import math
 
 L1TTriggerTowerConfig_etaphi = cms.PSet(readMappingFile=cms.bool(False),
+                                        doNose=cms.bool(False),
                                         minEta=cms.double(1.479),
                                         maxEta=cms.double(3.0),
                                         minPhi=cms.double(-1*math.pi),
@@ -29,8 +30,9 @@ hgcalTowerMapProducer = cms.EDProducer(
 ### update the sequence for the HFNose
 
 L1TTriggerTowerConfigHFNose_etaphi = L1TTriggerTowerConfig_etaphi.clone(
-    minEta=cms.double(3.0),
-    maxEta=cms.double(4.2)
+    doNose = True ,
+    minEta = 3.0 ,
+    maxEta = 4.2
 )
 
 towerMap2DHFNose_parValues = towerMap2D_parValues.clone(

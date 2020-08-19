@@ -11,7 +11,8 @@
 #include <algorithm>
 
 HGCalTriggerTowerGeometryHelper::HGCalTriggerTowerGeometryHelper(const edm::ParameterSet& conf)
-    : minEta_(conf.getParameter<double>("minEta")),
+    : doNose_(conf.getParameter<bool>("doNose")),
+      minEta_(conf.getParameter<double>("minEta")),
       maxEta_(conf.getParameter<double>("maxEta")),
       minPhi_(conf.getParameter<double>("minPhi")),
       maxPhi_(conf.getParameter<double>("maxPhi")),
@@ -46,10 +47,19 @@ HGCalTriggerTowerGeometryHelper::HGCalTriggerTowerGeometryHelper(const edm::Para
   for (int zside = -1; zside <= 1; zside += 2) {
     for (unsigned int bin1 = 0; bin1 != nBinsEta_; bin1++) {
       for (unsigned int bin2 = 0; bin2 != nBinsPhi_; bin2++) {
-        l1t::HGCalTowerID towerId(zside, bin1, bin2);
-        tower_coords_.emplace_back(towerId.rawId(),
-                                   zside * ((binsEta_[bin1 + 1] + binsEta_[bin1]) / 2),
-                                   (binsPhi_[bin2 + 1] + binsPhi_[bin2]) / 2);
+
+	if (doNose_) {
+	  l1t::HFNoseTowerID HFNoseTowerId(zside, bin1, bin2);
+	  hfnose_tower_coords_.emplace_back(HFNoseTowerId.rawId(),
+					    zside * ((binsEta_[bin1 + 1] + binsEta_[bin1]) / 2),
+					    (binsPhi_[bin2 + 1] + binsPhi_[bin2]) / 2);
+	} else {
+	  l1t::HGCalTowerID towerId(zside, bin1, bin2);
+	  tower_coords_.emplace_back(towerId.rawId(),
+				     zside * ((binsEta_[bin1 + 1] + binsEta_[bin1]) / 2),
+				     (binsPhi_[bin2 + 1] + binsPhi_[bin2]) / 2);
+	}
+
       }
     }
   }
@@ -73,15 +83,20 @@ HGCalTriggerTowerGeometryHelper::HGCalTriggerTowerGeometryHelper(const edm::Para
             << " to TT iEta: " << iEta << " iPhi: " << iPhi << " when max #bins eta: " << nBinsEta_
             << " phi: " << nBinsPhi_ << std::endl;
       }
-      l1t::HGCalTowerID towerId(triggerTools_.zside(DetId(trigger_cell_id)), iEta, iPhi);
-      cells_to_trigger_towers_[trigger_cell_id] = towerId.rawId();
+
+      if (doNose_) {
+	std::cout << " HGCalTriggerTowerGeometryHelper::isNOSE " << std::endl;
+	l1t::HFNoseTowerID noseTowerId(triggerTools_.zside(DetId(trigger_cell_id)), iEta, iPhi);
+	cells_to_trigger_towers_hfnose_[trigger_cell_id] = noseTowerId.rawId();
+	std::cout << "  noseTowerId.rawId()  = " <<  noseTowerId.rawId() << std::endl;
+      } else {
+	l1t::HGCalTowerID towerId(triggerTools_.zside(DetId(trigger_cell_id)), iEta, iPhi);
+	cells_to_trigger_towers_[trigger_cell_id] = towerId.rawId();
+      }
+
     }
     l1tTriggerTowerMappingStream.close();
   }
-}
-
-const std::vector<l1t::HGCalTowerCoord>& HGCalTriggerTowerGeometryHelper::getTowerCoordinates() const {
-  return tower_coords_;
 }
 
 unsigned short HGCalTriggerTowerGeometryHelper::getTriggerTowerFromEtaPhi(const float& eta, const float& phi) const {
@@ -124,9 +139,17 @@ unsigned short HGCalTriggerTowerGeometryHelper::getTriggerTower(const l1t::HGCal
   // NOTE: if the TC is not found in the map than it is mapped via eta-phi coords.
   // this can be considered dangerous (silent failure of the map) but it actually allows to save
   // memory mapping explicitly only what is actually needed
-  auto tower_id_itr = cells_to_trigger_towers_.find(trigger_cell_id);
-  if (tower_id_itr != cells_to_trigger_towers_.end())
-    return tower_id_itr->second;
+
+  if(triggerTools_.isNose(trigger_cell_id)) {
+    auto tower_id_itr = cells_to_trigger_towers_hfnose_.find(trigger_cell_id);
+    if (tower_id_itr != cells_to_trigger_towers_hfnose_.end())
+      return tower_id_itr->second;
+  } else {
+
+    auto tower_id_itr = cells_to_trigger_towers_.find(trigger_cell_id);
+    if (tower_id_itr != cells_to_trigger_towers_.end())
+      return tower_id_itr->second;
+  }
 
   return getTriggerTowerFromEtaPhi(thecell.position().eta(), thecell.position().phi());
 }

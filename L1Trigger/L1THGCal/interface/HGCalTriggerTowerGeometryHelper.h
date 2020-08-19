@@ -12,6 +12,7 @@
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/L1THGCal/interface/HGCalTowerID.h"
+#include "DataFormats/L1THGCal/interface/HFNoseTowerID.h"
 #include "L1Trigger/L1THGCal/interface/HGCalTriggerTools.h"
 #include "DataFormats/L1THGCal/interface/HGCalTriggerCell.h"
 #include "DataFormats/L1THGCal/interface/HGCalTriggerSums.h"
@@ -22,6 +23,8 @@
 namespace l1t {
   class HGCalTowerID;
   struct HGCalTowerCoord;
+  class HFNoseTowerID;
+  struct HFNoseTowerCoord;
 }  // namespace l1t
 
 class HGCalTriggerTowerGeometryHelper {
@@ -32,7 +35,8 @@ public:
 
   void eventSetup(const edm::EventSetup& es) { triggerTools_.eventSetup(es); }
 
-  const std::vector<l1t::HGCalTowerCoord>& getTowerCoordinates() const;
+  inline const std::vector<l1t::HGCalTowerCoord>& getTowerCoordinates() const { return tower_coords_; }
+  inline const std::vector<l1t::HFNoseTowerCoord>& getHFNoseTowerCoordinates() const { return hfnose_tower_coords_; }
 
   unsigned short getTriggerTowerFromEtaPhi(const float& eta, const float& phi) const;
   unsigned short getTriggerTower(const l1t::HGCalTriggerCell&) const;
@@ -40,7 +44,11 @@ public:
 
 private:
   std::vector<l1t::HGCalTowerCoord> tower_coords_;
+  std::vector<l1t::HFNoseTowerCoord> hfnose_tower_coords_;
   std::unordered_map<unsigned, short> cells_to_trigger_towers_;
+  std::unordered_map<unsigned, short> cells_to_trigger_towers_hfnose_;
+
+  bool doNose_;
 
   double minEta_;
   double maxEta_;
