@@ -1,10 +1,12 @@
 #include "DataFormats/L1THGCal/interface/HGCalTower.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
-using l1t::HGCalTower;
+template class l1t::HGCalTowerT<l1t::HGCalTowerID>;
+template class l1t::HGCalTowerT<l1t::HFNoseTowerID>;
 using l1t::L1Candidate;
 
-HGCalTower::HGCalTower(double etEm,
+template <typename T>
+l1t::HGCalTowerT<T>::HGCalTowerT(double etEm,
                        double etHad,
                        double eta,
                        double phi,
@@ -24,21 +26,26 @@ HGCalTower::HGCalTower(double etEm,
       hwEtHad_(hwEtHad),
       hwEtRatio_(hwEtRatio) {}
 
-HGCalTower::~HGCalTower() {}
+template <typename T>
+l1t::HGCalTowerT<T>::~HGCalTowerT() {}
 
-void HGCalTower::addEtEm(double et) {
+template <typename T>
+void l1t::HGCalTowerT<T>::addEtEm(double et) {
   etEm_ += et;
   addEt(et);
 }
 
-void HGCalTower::addEtHad(double et) {
+template <typename T>
+void l1t::HGCalTowerT<T>::addEtHad(double et) {
   etHad_ += et;
   addEt(et);
 }
 
-void HGCalTower::addEt(double et) { this->setP4(PolarLorentzVector(this->pt() + et, this->eta(), this->phi(), 0.)); }
+template <typename T>
+void l1t::HGCalTowerT<T>::addEt(double et) { this->setP4(PolarLorentzVector(this->pt() + et, this->eta(), this->phi(), 0.)); }
 
-const HGCalTower& HGCalTower::operator+=(const HGCalTower& tower) {
+template <typename T>
+const l1t::HGCalTowerT<T>& l1t::HGCalTowerT<T>::operator+=(const HGCalTowerT<T>& tower) {
   // NOTE: assume same eta and phi -> need an explicit check on the ID
   if (id().rawId() != tower.id().rawId()) {
     throw edm::Exception(edm::errors::StdException, "StdException")
@@ -51,3 +58,4 @@ const HGCalTower& HGCalTower::operator+=(const HGCalTower& tower) {
 
   return *this;
 }
+

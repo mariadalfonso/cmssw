@@ -4,17 +4,16 @@
 #include "DataFormats/L1Trigger/interface/L1Candidate.h"
 #include "DataFormats/L1Trigger/interface/BXVector.h"
 #include "DataFormats/L1THGCal/interface/HGCalTowerID.h"
+#include "DataFormats/L1THGCal/interface/HFNoseTowerID.h"
 
 namespace l1t {
 
-  class HGCalTower;
-  typedef BXVector<HGCalTower> HGCalTowerBxCollection;
-
-  class HGCalTower : public L1Candidate {
+  template <typename T>
+  class HGCalTowerT : public L1Candidate {
   public:
-    HGCalTower() : etEm_(0.), etHad_(0.), id_(0), hwEtEm_(0), hwEtHad_(0), hwEtRatio_(0) {}
+    HGCalTowerT() : etEm_(0.), etHad_(0.), id_(0), hwEtEm_(0), hwEtHad_(0), hwEtRatio_(0) {}
 
-    HGCalTower(double etEm,
+    HGCalTowerT(double etEm,
                double etHad,
                double eta,
                double phi,
@@ -27,7 +26,7 @@ namespace l1t {
                int hwEtHad = 0,
                int hwEtRatio = 0);
 
-    ~HGCalTower() override;
+    ~HGCalTowerT() override;
 
     void addEtEm(double et);
     void addEtHad(double et);
@@ -35,9 +34,9 @@ namespace l1t {
     double etEm() const { return etEm_; };
     double etHad() const { return etHad_; };
 
-    const HGCalTower& operator+=(const HGCalTower& tower);
+    const HGCalTowerT<T>& operator+=(const HGCalTowerT<T> & tower);
 
-    HGCalTowerID id() const { return id_; }
+    T id() const { return id_; }
     short zside() const { return id_.zside(); }
 
     void setHwEtEm(int et) { hwEtEm_ = et; }
@@ -54,12 +53,18 @@ namespace l1t {
     // additional hardware quantities
     double etEm_;
     double etHad_;
-    HGCalTowerID id_;
+    T id_;
 
     int hwEtEm_;
     int hwEtHad_;
     int hwEtRatio_;
   };
+
+  using HGCalTower = HGCalTowerT<HGCalTowerID>;
+  using HFNoseTower = HGCalTowerT<HFNoseTowerID>;
+
+  typedef BXVector<HGCalTower> HGCalTowerBxCollection;
+  typedef BXVector<HFNoseTower> HFNoseTowerBxCollection;
 
 }  // namespace l1t
 
