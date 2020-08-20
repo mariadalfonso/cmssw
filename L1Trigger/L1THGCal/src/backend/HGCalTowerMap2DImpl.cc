@@ -26,3 +26,12 @@ std::unordered_map<int, l1t::HGCalTowerMap> HGCalTowerMap2DImpl::newTowerMaps() 
 
   return towerMaps;
 }
+
+std::unordered_map<int, l1t::HGCalTowerMap> HGCalTowerMap2DImpl::newTowerHFNoseMaps() {
+  std::unordered_map<int, l1t::HGCalTowerMap> towerMaps;
+  for (unsigned layer = 1; layer <= triggerTools_.layers(ForwardSubdetector::HFNose); layer++) {
+    towerMaps[layer] = l1t::HGCalTowerMap(towerGeometryHelper_.getHFNoseTowerCoordinates(), layer);
+  }
+
+  return towerMaps;
+}

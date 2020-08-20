@@ -11,10 +11,16 @@ HGCalTowerMap::HGCalTowerMap(const std::vector<HGCalTowerCoord>& tower_ids, cons
   }
 }
 
+HGCalTowerMap::HGCalTowerMap(const std::vector<HFNoseTowerCoord>& tower_ids, const int layer = 0) : layer_(layer) {
+  for (auto tower_id : tower_ids) {
+    towerHFNoseMap_[tower_id.rawId] = l1t::HFNoseTower(0., 0., tower_id.eta, tower_id.phi, tower_id.rawId);
+  }
+}
+
 const HGCalTowerMap& HGCalTowerMap::operator+=(const HGCalTowerMap& map) {
-  if (nTowers() != map.nTowers()) {
+  if (nTowers(false) != map.nTowers(false)) {
     throw edm::Exception(edm::errors::StdException, "StdException")
-        << "HGCalTowerMap: Trying to add HGCalTowerMaps with different bins: " << nTowers() << " and " << map.nTowers()
+        << "HGCalTowerMap: Trying to add HGCalTowerMaps with different bins: " << nTowers(false) << " and " << map.nTowers(false)
         << endl;
   }
 
@@ -22,20 +28,54 @@ const HGCalTowerMap& HGCalTowerMap::operator+=(const HGCalTowerMap& map) {
     auto this_tower = towerMap_.find(tower.first);
     if (this_tower == towerMap_.end()) {
       throw edm::Exception(edm::errors::StdException, "StdException")
-          << "HGCalTowerMap: Trying to add HGCalTowerMaps but could not find bin: " << tower.first << endl;
+	<< "HGCalTowerMap: Trying to add HGCalTowerMaps but could not find bin: " << tower.first << endl;
     } else {
       this_tower->second += tower.second;
     }
   }
+
+  // doing for HFNose
+
+  if (nTowers(true) != map.nTowers(true)) {
+    throw edm::Exception(edm::errors::StdException, "StdException")
+        << "HGCalTowerMap: Trying to add HGCalTowerMaps with different bins: " << nTowers(true) << " and " << map.nTowers(true)
+        << endl;
+  }
+
+  for (auto tower : map.towersHFNose()) {
+    auto this_tower = towerHFNoseMap_.find(tower.first);
+    if (this_tower == towerHFNoseMap_.end()) {
+      throw edm::Exception(edm::errors::StdException, "StdException")
+	<< "HGCalTowerMap: Trying to add HGCalTowerMaps but could not find bin: " << tower.first << endl;
+    } else {
+      this_tower->second += tower.second;
+    }
+  }
+
   return *this;
 }
 
-bool HGCalTowerMap::addEt(short bin_id, float etEm, float etHad) {
-  auto this_tower = towerMap_.find(bin_id);
-  if (this_tower == towerMap_.end())
-    return false;
-  this_tower->second.addEtEm(etEm);
-  this_tower->second.addEtHad(etHad);
+bool HGCalTowerMap::addEt(short bin_id, float etEm, float etHad, bool isNose = false) {
+
+  if(isNose) {
+    auto this_tower = towerHFNoseMap_.find(bin_id);
+    if (this_tower == towerHFNoseMap_.end())
+      return false;
+    this_tower->second.addEtEm(etEm);
+    this_tower->second.addEtHad(etHad);
+
+  }
+
+
+  if(!isNose) {
+    auto this_tower = towerMap_.find(bin_id);
+    if (this_tower == towerMap_.end())
+      return false;
+    this_tower->second.addEtEm(etEm);
+    this_tower->second.addEtHad(etHad);
+
+  }
 
   return true;
+
 }
