@@ -11,3 +11,5 @@ EDM_REGISTER_PLUGINFACTORY(HGCalBackendLayer2Factory, "HGCalBackendLayer2Factory
 EDM_REGISTER_PLUGINFACTORY(HGCalTowerMapFactory, "HGCalTowerMapFactory");
 
 EDM_REGISTER_PLUGINFACTORY(HGCalTowerFactory, "HGCalTowerFactory");
+
+EDM_REGISTER_PLUGINFACTORY(HFNoseTowerFactory, "HFNoseTowerFactory");

@@ -13,6 +13,10 @@ public:
 
   void buildTowerMap3D(const std::vector<edm::Ptr<l1t::HGCalTowerMap>>& towerMaps2D,
                        l1t::HGCalTowerBxCollection& towerMap);
+
+  void buildTowerMap3D(const std::vector<edm::Ptr<l1t::HGCalTowerMap>>& towerMaps2D,
+		       l1t::HFNoseTowerBxCollection& towerMap);
+
 };
 
 #endif

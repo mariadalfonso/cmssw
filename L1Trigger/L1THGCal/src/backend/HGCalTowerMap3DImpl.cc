@@ -26,3 +26,22 @@ void HGCalTowerMap3DImpl::buildTowerMap3D(const std::vector<edm::Ptr<l1t::HGCalT
       towers.push_back(0, tower.second);
   }
 }
+
+
+void HGCalTowerMap3DImpl::buildTowerMap3D(const std::vector<edm::Ptr<l1t::HGCalTowerMap>>& towerMapsPtrs,
+                                          l1t::HFNoseTowerBxCollection& towers) {
+  l1t::HGCalTowerMap towerMap;
+
+  for (auto map : towerMapsPtrs) {
+    if (towerMap.layer() == 0)
+      towerMap = (*map);
+    else
+      towerMap += (*map);
+  }
+
+  for (auto tower : towerMap.towersHFNose()) {
+    // FIXME: make this threshold configurable
+    if (tower.second.pt() > 0)
+      towers.push_back(0, tower.second);
+  }
+}

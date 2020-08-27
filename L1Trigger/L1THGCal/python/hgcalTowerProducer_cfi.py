@@ -12,11 +12,12 @@ hgcalTowerProducer = cms.EDProducer(
     ProcessorParameters = tower.clone(),
     )
 
-towerHFNose = cms.PSet( ProcessorName  = cms.string('HGCalTowerProcessor'),
+towerHFNose = cms.PSet( ProcessorName  = cms.string('HFNoseTowerProcessor'),
       towermap_parameters = hgcalTowerMapProducer_cfi.towerMap2DHFNose_parValues.clone()
                   )
 
-hgcalTowerProducerHFNose = hgcalTowerProducer.clone(
+hgcalTowerProducerHFNose = cms.EDProducer(
+    "HFNoseTowerProducer",
     InputTowerMaps = cms.InputTag('hgcalTowerMapProducerHFNose:HGCalTowerMapProcessor'),
     InputTriggerCells = cms.InputTag('hgcalBackEndLayer1ProducerHFNose:HGCalBackendLayer1Processor2DClustering'),
     ProcessorParameters = towerHFNose.clone(),

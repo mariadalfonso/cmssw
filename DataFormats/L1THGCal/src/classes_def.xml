@@ -19,11 +19,11 @@
   <class name="l1t::HGCalTower" />
   <class name="l1t::HFNoseTower" />
   <class name="std::vector<l1t::HGCalTower>" />
-  <class name="std::unordered_map<int,l1t::HGCalTower>" />
   <class name="std::vector<l1t::HFNoseTower>" />
   <class name="l1t::HGCalTowerBxCollection"/>
   <class name="edm::Wrapper<l1t::HGCalTowerBxCollection>"/>
-  <class name="unordered_map<int,l1t::HGCalTower>"/>
+  <class name="l1t::HFNoseTowerBxCollection"/>
+  <class name="edm::Wrapper<l1t::HFNoseTowerBxCollection>"/>
 
   <class name="l1t::HGCalTowerMap" />
   <class name="std::vector<l1t::HGCalTowerMap>" />

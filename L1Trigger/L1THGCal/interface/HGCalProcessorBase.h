@@ -33,6 +33,11 @@ typedef HGCalProcessorBaseT<
     l1t::HGCalTowerBxCollection>
     HGCalTowerProcessorBase;
 
+typedef HGCalProcessorBaseT<
+    std::pair<edm::Handle<l1t::HGCalTowerMapBxCollection>, edm::Handle<l1t::HGCalClusterBxCollection> >,
+    l1t::HFNoseTowerBxCollection>
+    HFNoseTowerProcessorBase;
+
 #include "FWCore/PluginManager/interface/PluginFactory.h"
 typedef edmplugin::PluginFactory<HGCalVFEProcessorBase*(const edm::ParameterSet&)> HGCalVFEProcessorBaseFactory;
 typedef edmplugin::PluginFactory<HGCalConcentratorProcessorBase*(const edm::ParameterSet&)> HGCalConcentratorFactory;
@@ -40,5 +45,6 @@ typedef edmplugin::PluginFactory<HGCalBackendLayer1ProcessorBase*(const edm::Par
 typedef edmplugin::PluginFactory<HGCalBackendLayer2ProcessorBase*(const edm::ParameterSet&)> HGCalBackendLayer2Factory;
 typedef edmplugin::PluginFactory<HGCalTowerMapProcessorBase*(const edm::ParameterSet&)> HGCalTowerMapFactory;
 typedef edmplugin::PluginFactory<HGCalTowerProcessorBase*(const edm::ParameterSet&)> HGCalTowerFactory;
+typedef edmplugin::PluginFactory<HFNoseTowerProcessorBase*(const edm::ParameterSet&)> HFNoseTowerFactory;
 
 #endif
