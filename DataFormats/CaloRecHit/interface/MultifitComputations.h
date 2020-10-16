@@ -1,5 +1,5 @@
-#ifndef DataFormats_Math_interface_EigenComputations_h
-#define DataFormats_Math_interface_EigenComputations_h
+#ifndef DataFormats_CaloRecHit_interface_MultifitComputations_h
+#define DataFormats_CaloRecHit_interface_MultifitComputations_h
 
 #include <cmath>
 #include <limits>
@@ -276,7 +276,6 @@ namespace calo {
       }
     }
 
-    /*
     // TODO: add active bxs
     template <typename MatrixType, typename VectorType>
     __device__ void fnnls(MatrixType const& AtA,
@@ -286,7 +285,9 @@ namespace calo {
                           ColumnVector<VectorType::RowsAtCompileTime, int>& pulseOffsets,
                           MapSymM<float, VectorType::RowsAtCompileTime>& matrixL,
                           double const eps,
-                          int const maxIterations) {
+                          int const maxIterations,
+                          int const param1,
+                          int const param2) {
       // constants
       constexpr auto NPULSES = VectorType::RowsAtCompileTime;
 
@@ -428,13 +429,12 @@ namespace calo {
 
         // as in cpu
         ++iter;
-        if (iter % 16 == 0)
-          eps_to_use *= 2;
+        if (iter % param1 == 0)
+          eps_to_use *= param2;
       }
     }
-    */
 
   }  // namespace multifit
 }  // namespace calo
 
-#endif  // DataFormats_Math_interface_EigenComputations_h
+#endif  // DataFormats_CaloRecHit_interface_MultifitComputations_h
