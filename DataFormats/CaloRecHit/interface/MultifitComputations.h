@@ -284,10 +284,10 @@ namespace calo {
                           int& npassive,
                           ColumnVector<VectorType::RowsAtCompileTime, int>& pulseOffsets,
                           MapSymM<float, VectorType::RowsAtCompileTime>& matrixL,
-                          double eps,                   // convergence condition
-                          const int maxIterations,      // maximum number of iterations
-                          const int relaxationPeriod,   // every "relaxationPeriod" iterations
-                          const int relaxationValue) {  // multiply "eps" by "relaxationValue"
+                          double eps,                    // convergence condition
+                          const int maxIterations,       // maximum number of iterations
+                          const int relaxationPeriod,    // every "relaxationPeriod" iterations
+                          const int relaxationFactor) {  // multiply "eps" by "relaxationFactor"
       // constants
       constexpr auto NPULSES = VectorType::RowsAtCompileTime;
 
@@ -429,7 +429,7 @@ namespace calo {
         // as in cpu
         ++iter;
         if (iter % relaxationPeriod == 0)
-          eps *= relaxationValue;
+          eps *= relaxationFactor;
       }
     }
 
