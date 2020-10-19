@@ -287,7 +287,9 @@ namespace ecal {
                                 pulseOffsets,
                                 matrixLForFnnls,
                                 1e-11,
-                                500);
+                                500,
+                                16,
+                                2);
 
           {
             DataType accum[NSAMPLES];
