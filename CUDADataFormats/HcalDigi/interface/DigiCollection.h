@@ -5,7 +5,8 @@
 
 namespace hcal {
 
-  struct Flavor01 {
+  // FLAVOR_HE_QIE11 = 1; Phase1 upgrade
+  struct Flavor1 {
     using adc_type = uint8_t;
     using tdc_type = uint8_t;
     using soibit_type = uint8_t;
@@ -25,6 +26,7 @@ namespace hcal {
     static constexpr int HEADER_WORDS = 1;
   };
 
+  // FLAVOR_HB_QIE11 = 3; Phase1 upgrade
   struct Flavor3 {
     using adc_type = uint8_t;
     using tdc_type = uint8_t;
@@ -47,6 +49,7 @@ namespace hcal {
     static constexpr int HEADER_WORDS = 1;
   };
 
+  // FLAVOR_HB_QIE10 = 5; Phase0
   struct Flavor5 {
     using adc_type = uint8_t;
 

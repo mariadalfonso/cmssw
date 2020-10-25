@@ -120,7 +120,7 @@ namespace hcal {
 
       // get event input quantities
       auto const stride = gch < nchannelsf01HE ? stridef01HE : (gch < nchannelsf015 ? stridef5HB : stridef3HB);
-      auto const nsamples = gch < nchannelsf01HE ? compute_nsamples<Flavor01>(stride)
+      auto const nsamples = gch < nchannelsf01HE ? compute_nsamples<Flavor1>(stride)
                                                  : (gch < nchannelsf015 ? compute_nsamples<Flavor5>(stride)
                                                                         : compute_nsamples<Flavor3>(stride));
 
@@ -134,12 +134,12 @@ namespace hcal {
       auto const did = HcalDetId{id};
       auto const adc =
           gch < nchannelsf01HE
-              ? adc_for_sample<Flavor01>(dataf01HE + stride * gch, sample)
+              ? adc_for_sample<Flavor1>(dataf01HE + stride * gch, sample)
               : (gch < nchannelsf015 ? adc_for_sample<Flavor5>(dataf5HB + stride * (gch - nchannelsf01HE), sample)
                                      : adc_for_sample<Flavor3>(dataf3HB + stride * (gch - nchannelsf015), sample));
       auto const capid =
           gch < nchannelsf01HE
-              ? capid_for_sample<Flavor01>(dataf01HE + stride * gch, sample)
+              ? capid_for_sample<Flavor1>(dataf01HE + stride * gch, sample)
               : (gch < nchannelsf015 ? capid_for_sample<Flavor5>(dataf5HB + stride * (gch - nchannelsf01HE), sample)
                                      : capid_for_sample<Flavor3>(dataf3HB + stride * (gch - nchannelsf015), sample));
 
@@ -198,7 +198,7 @@ namespace hcal {
         // NOTE: assume that soi is high only for a single guy!
         //   which must be the case. cpu version does not check for that
         //   if that is not the case, we will see that with cuda mmecheck
-        auto const soibit = soibit_for_sample<Flavor01>(dataf01HE + stride * gch, sample);
+        auto const soibit = soibit_for_sample<Flavor1>(dataf01HE + stride * gch, sample);
         if (soibit == 1)
           soiSamples[gch] = sampleWithinWindow;
       } else if (gch >= nchannelsf015) {
@@ -252,7 +252,7 @@ namespace hcal {
         rawCharge = (charge - pedestal) * factor + pedestal;
 #ifdef COMPUTE_TDC_TIME
         if (gch < nchannelsf01HE)
-          tdcTime = HcalSpecialTimes::getTDCTime(tdc_for_sample<Flavor01>(dataf01HE + stride * gch, sample));
+          tdcTime = HcalSpecialTimes::getTDCTime(tdc_for_sample<Flavor1>(dataf01HE + stride * gch, sample));
         else if (gch >= nchannelsf015)
           tdcTime =
               HcalSpecialTimes::getTDCTime(tdc_for_sample<Flavor3>(dataf3HB + stride * (gch - nchannelsf015), sample));
@@ -1076,7 +1076,7 @@ namespace hcal {
       // TODO: this can be lifted by implementing a separate kernel
       // similar to the default one, but properly handling the diff in #sample
       // or modifying existing one
-      auto const f01nsamples = compute_nsamples<Flavor01>(inputGPU.f01HEDigis.stride);
+      auto const f01nsamples = compute_nsamples<Flavor1>(inputGPU.f01HEDigis.stride);
       auto const f5nsamples = compute_nsamples<Flavor5>(inputGPU.f5HBDigis.stride);
       auto const f3nsamples = compute_nsamples<Flavor3>(inputGPU.f3HBDigis.stride);
       int constexpr windowSize = 8;

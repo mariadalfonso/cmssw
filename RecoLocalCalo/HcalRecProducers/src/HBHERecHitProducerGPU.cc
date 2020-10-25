@@ -52,7 +52,7 @@ private:
   void acquire(edm::Event const&, edm::EventSetup const&, edm::WaitingTaskWithArenaHolder) override;
   void produce(edm::Event&, edm::EventSetup const&) override;
 
-  using IProductTypef01 = cms::cuda::Product<hcal::DigiCollection<hcal::Flavor01, calo::common::DevStoragePolicy>>;
+  using IProductTypef01 = cms::cuda::Product<hcal::DigiCollection<hcal::Flavor1, calo::common::DevStoragePolicy>>;
   edm::EDGetTokenT<IProductTypef01> digisTokenF01HE_;
 
   using IProductTypef5 = cms::cuda::Product<hcal::DigiCollection<hcal::Flavor5, calo::common::DevStoragePolicy>>;

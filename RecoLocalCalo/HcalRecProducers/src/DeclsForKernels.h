@@ -99,7 +99,7 @@ namespace hcal {
     };
 
     struct InputDataGPU {
-      DigiCollection<Flavor01, ::calo::common::DevStoragePolicy> const& f01HEDigis;
+      DigiCollection<Flavor1, ::calo::common::DevStoragePolicy> const& f01HEDigis;
       DigiCollection<Flavor5, ::calo::common::DevStoragePolicy> const& f5HBDigis;
       DigiCollection<Flavor3, ::calo::common::DevStoragePolicy> const& f3HBDigis;
     };
