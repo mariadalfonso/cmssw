@@ -7,7 +7,7 @@
 #include "HeterogeneousCore/CUDACore/interface/ScopedContext.h"
 #include "HeterogeneousCore/CUDAServices/interface/CUDAService.h"
 
-#include "MahiGPU.h"
+#include "SimpleAlgoGPU.h"
 
 class HBHERecHitProducerGPU : public edm::stream::EDProducer<edm::ExternalWork> {
 public:
@@ -32,8 +32,8 @@ private:
   using OProductType = cms::cuda::Product<RecHitType>;
   edm::EDPutTokenT<OProductType> rechitsM0Token_;
 
-  hcal::mahi::ConfigParameters configParameters_;
-  hcal::mahi::OutputDataGPU outputGPU_;
+  hcal::reconstruction::ConfigParameters configParameters_;
+  hcal::reconstruction::OutputDataGPU outputGPU_;
   cms::cuda::ContextState cudaState_;
 };
 
@@ -116,7 +116,7 @@ void HBHERecHitProducerGPU::acquire(edm::Event const& event,
   auto const& f5HBDigis = ctx.get(f5HBProduct);
   auto const& f3HBDigis = ctx.get(f3HBProduct);
 
-  hcal::mahi::InputDataGPU inputGPU{f01HEDigis, f5HBDigis, f3HBDigis};
+  hcal::reconstruction::InputDataGPU inputGPU{f01HEDigis, f5HBDigis, f3HBDigis};
 
   // conditions
   edm::ESHandle<HcalRecoParamsWithPulseShapesGPU> recoParamsHandle;
@@ -187,7 +187,7 @@ void HBHERecHitProducerGPU::acquire(edm::Event const& event,
   auto const& pulseOffsetsProduct = pulseOffsetsHandle->getProduct(ctx.stream());
 
   // bundle up conditions
-  hcal::mahi::ConditionsProducts conditions{gainWidthsProduct,
+  hcal::reconstruction::ConditionsProducts conditions{gainWidthsProduct,
                                             gainsProduct,
                                             lutCorrsProduct,
                                             pedestalWidthsProduct,
@@ -208,7 +208,7 @@ void HBHERecHitProducerGPU::acquire(edm::Event const& event,
                                             pulseOffsetsHandle->getValues()};
 
   // scratch mem on device
-  hcal::mahi::ScratchDataGPU scratchGPU = {
+  hcal::reconstruction::ScratchDataGPU scratchGPU = {
       cms::cuda::make_device_unique<float[]>(configParameters_.maxChannels * configParameters_.maxTimeSamples,
                                              ctx.stream()),
       cms::cuda::make_device_unique<float[]>(configParameters_.maxChannels * configParameters_.maxTimeSamples,
@@ -228,7 +228,7 @@ void HBHERecHitProducerGPU::acquire(edm::Event const& event,
   // output dev mem
   outputGPU_.allocate(configParameters_, ctx.stream());
 
-  hcal::mahi::entryPoint(inputGPU, outputGPU_, conditions, scratchGPU, configParameters_, ctx.stream());
+  hcal::reconstruction::entryPoint(inputGPU, outputGPU_, conditions, scratchGPU, configParameters_, ctx.stream());
 
 #ifdef HCAL_MAHI_CPUDEBUG
   auto end = std::chrono::high_resolution_clock::now();

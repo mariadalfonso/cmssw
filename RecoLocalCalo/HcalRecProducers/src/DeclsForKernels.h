@@ -46,7 +46,7 @@
 #include "HcalMahiPulseOffsetsGPURecord.h"
 
 namespace hcal {
-  namespace mahi {
+  namespace reconstruction {
 
     struct ConditionsProducts {
       HcalGainWidthsGPU::Product const& gainWidths;
@@ -121,6 +121,6 @@ namespace hcal {
     };
 
   }  // namespace mahi
-}  // namespace hcal
+}  // namespace reconstruction
 
 #endif  // RecoLocalCalo_HcalRecProducers_src_DeclsForKernels_h

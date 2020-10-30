@@ -2,10 +2,9 @@
 #define RecoLocalCalo_HcalRecProducers_src_MahiGPU_h
 
 #include "DeclsForKernels.h"
-#include "KernelHelpers.h"
 
 namespace hcal {
-  namespace mahi {
+  namespace reconstruction {
 
     void entryPoint(InputDataGPU const&,
                     OutputDataGPU&,
