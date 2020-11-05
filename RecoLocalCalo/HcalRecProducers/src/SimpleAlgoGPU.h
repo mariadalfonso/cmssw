@@ -1,5 +1,5 @@
-#ifndef RecoLocalCalo_HcalRecProducers_src_MahiGPU_h
-#define RecoLocalCalo_HcalRecProducers_src_MahiGPU_h
+#ifndef RecoLocalCalo_HcalRecProducers_src_SimpleAlgoGPU_h
+#define RecoLocalCalo_HcalRecProducers_src_SimpleAlgoGPU_h
 
 #include "DeclsForKernels.h"
 
@@ -16,4 +16,4 @@ namespace hcal {
   }
 }  // namespace hcal
 
-#endif  // RecoLocalCalo_HcalRecProducers_src_MahiGPU_h
+#endif  // RecoLocalCalo_HcalRecProducers_src_SimpleAlgoGPU_h
