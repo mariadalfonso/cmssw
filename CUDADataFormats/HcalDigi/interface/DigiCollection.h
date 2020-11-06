@@ -12,18 +12,12 @@ namespace hcal {
     using soibit_type = uint8_t;
 
     static constexpr int WORDS_PER_SAMPLE = 1;
+    static constexpr int SAMPLES_PER_WORD = 1;
     static constexpr int HEADER_WORDS = 1;
 
     static constexpr adc_type adc(uint16_t const* const sample_start) { return (*sample_start & 0xff); }
-
     static constexpr tdc_type tdc(uint16_t const* const sample_start) { return (*sample_start >> 8) & 0x3f; }
-
     static constexpr soibit_type soibit(uint16_t const* const sample_start) { return (*sample_start >> 14) & 0x1; }
-  };
-
-  struct Flavor2 {
-    static constexpr int WORDS_PER_SAMPLE = 2;
-    static constexpr int HEADER_WORDS = 1;
   };
 
   // FLAVOR_HB_QIE11 = 3; Phase1 upgrade
@@ -33,20 +27,13 @@ namespace hcal {
     using soibit_type = uint8_t;
 
     static constexpr int WORDS_PER_SAMPLE = 1;
+    static constexpr int SAMPLES_PER_WORD = 1;
     static constexpr int HEADER_WORDS = 1;
 
     static constexpr adc_type adc(uint16_t const* const sample_start) { return (*sample_start & 0xff); }
-
     static constexpr tdc_type tdc(uint16_t const* const sample_start) { return ((*sample_start >> 8) & 0x3); }
-
     static constexpr soibit_type soibit(uint16_t const* const sample_start) { return ((*sample_start >> 14) & 0x1); }
-
     static constexpr uint8_t capid(uint16_t const* const sample_start) { return ((*sample_start >> 10) & 0x3); }
-  };
-
-  struct Flavor4 {
-    static constexpr int WORDS_PER_SAMPLE = 1;
-    static constexpr int HEADER_WORDS = 1;
   };
 
   // FLAVOR_HB_QIE10 = 5; Phase0
