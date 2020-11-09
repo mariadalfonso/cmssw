@@ -283,13 +283,16 @@ namespace calo {
       }
     }
 
-    template <int NSAMPLES, int NPULSES>
-    __forceinline__ __device__ void calculateChiSq(
-        calo::multifit::MapSymM<float, NSAMPLES> const& matrixL,
-        Eigen::Map<const calo::multifit::ColMajorMatrix<NSAMPLES, NPULSES>> const& glbPulseMatrixView,
-        calo::multifit::ColumnVector<NPULSES> const& resultAmplitudesVector,
-        Eigen::Map<const calo::multifit::ColumnVector<NSAMPLES>> const& inputAmplitudesView,
-        float& chi2) {
+    template <typename MatrixType1, typename MatrixType2, typename MatrixType3, typename MatrixType4>
+    EIGEN_ALWAYS_INLINE EIGEN_DEVICE_FUNC void calculateChiSq(MatrixType1 const& matrixL,
+                                                              MatrixType2 const& pulseMatrixView,
+                                                              MatrixType3 const& resultAmplitudesVector,
+                                                              MatrixType4 const& inputAmplitudesView,
+                                                              float& chi2) {
+      // FIXME: this assumes pulses are on columns and samples on rows
+      constexpr auto NPULSES = MatrixType2::ColsAtCompileTime;
+      constexpr auto NSAMPLES = MatrixType2::RowsAtCompileTime;
+
       // replace pulseMatrixView * resultAmplitudesVector - inputAmplitudesView
       // NOTE:
       float accum[NSAMPLES];
@@ -314,7 +317,7 @@ namespace calo {
           // preload a column of pulse matrix
 #pragma unroll
           for (int counter = 0; counter < NSAMPLES; counter++)
-            pm_col[counter] = __ldg(&glbPulseMatrixView.coeffRef(counter, icol));
+            pm_col[counter] = __ldg(&pulseMatrixView.coeffRef(counter, icol));
 
             // accum
 #pragma unroll
