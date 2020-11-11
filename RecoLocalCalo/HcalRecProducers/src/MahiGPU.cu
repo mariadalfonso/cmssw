@@ -2,8 +2,8 @@
 
 #include "DataFormats/CaloRecHit/interface/MultifitComputations.h"
 
-// nvcc not able to parse this guy (whatever is inlcuded from it)....
-//#include "RecoLocalCalo/HcalRecAlgos/interface/PulseShapeFunctor.h"
+// needed to compile with USER_CXXFLAGS="-DCOMPUTE_TDC_TIME"
+#include "DataFormats/HcalRecHit/interface/HcalSpecialTimes.h"
 
 #include "SimpleAlgoGPU.h"
 #include "KernelHelpers.h"
@@ -21,6 +21,46 @@ namespace hcal {
     constexpr int nMaxItersNNLS = 500;
     constexpr double nnlsThresh = 1e-11;
     constexpr float deltaChi2Threashold = 1e-3;
+
+    // from RecoLocalCalo/HcalRecProducers/src/HBHEPhase1Reconstructor.cc
+    __forceinline__ __device__ float get_raw_charge(double const charge,
+                                                    double const pedestal,
+                                                    float const* shrChargeMinusPedestal,
+                                                    float const* parLin1Values,
+                                                    float const* parLin2Values,
+                                                    float const* parLin3Values,
+                                                    int32_t const nsamplesForCompute,
+                                                    int32_t const soi,
+                                                    int const sipmQTSShift,
+                                                    int const sipmQNTStoSum,
+                                                    int const sipmType,
+                                                    float const fcByPE,
+                                                    bool const isqie11) {
+      float rawCharge;
+
+      if (!isqie11)
+        rawCharge = charge;
+      else {
+        auto const parLin1 = parLin1Values[sipmType - 1];
+        auto const parLin2 = parLin2Values[sipmType - 1];
+        auto const parLin3 = parLin3Values[sipmType - 1];
+
+        int const first = std::max(soi + sipmQTSShift, 0);
+        int const last = std::min(soi + sipmQNTStoSum, nsamplesForCompute);
+        float sipmq = 0.0f;
+        for (auto ts = first; ts < last; ts++)
+          sipmq += shrChargeMinusPedestal[threadIdx.y * nsamplesForCompute + ts];
+        auto const effectivePixelsFired = sipmq / fcByPE;
+        auto const factor =
+            hcal::reconstruction::compute_reco_correction_factor(parLin1, parLin2, parLin3, effectivePixelsFired);
+        rawCharge = (charge - pedestal) * factor + pedestal;
+
+#ifdef HCAL_MAHI_GPUDEBUG
+        printf("first = %d last = %d sipmQ = %f factor = %f rawCharge = %f\n", first, last, sipmq, factor, rawCharge);
+#endif
+      }
+      return rawCharge;
+    }
 
     // Assume: same number of samples for HB and HE
     // TODO: add/validate restrict (will increase #registers in use by the kernel)
@@ -229,46 +269,35 @@ namespace hcal {
       // NOTE: this branch will be divergent only for a single warp that
       // sits on the boundary when flavor 01 channels end and flavor 5 start
       //
-      float rawCharge;
-#ifdef COMPUTE_TDC_TIME
-      float tdcTime;
-#endif  // COMPUTE_TDC_TIME
+      float const rawCharge = get_raw_charge(charge,
+                                             pedestal,
+                                             shrChargeMinusPedestal,
+                                             parLin1Values,
+                                             parLin2Values,
+                                             parLin3Values,
+                                             nsamplesForCompute,
+                                             soi,
+                                             sipmQTSShift,
+                                             sipmQNTStoSum,
+                                             sipmType,
+                                             fcByPE,
+                                             gch < nchannelsf01HE || gch >= nchannelsf015);
+
       auto const dfc = hcal::reconstruction::compute_diff_charge_gain(
           qieType, adc, capid, qieOffsets, qieSlopes, gch < nchannelsf01HE || gch >= nchannelsf015);
-      if (gch >= nchannelsf01HE && gch < nchannelsf015) {
-        // flavor 5
-        rawCharge = charge;
-#ifdef COMPUTE_TDC_TIME
-        tdcTime = HcalSpecialTimes::UNKNOWN_T_NOTDC;
-#endif  // COMPUTE_TDC_TIME
-      } else {
-        // flavor 0 or 1 or 3
-        // conditions needed for sipms
-        auto const parLin1 = parLin1Values[sipmType - 1];
-        auto const parLin2 = parLin2Values[sipmType - 1];
-        auto const parLin3 = parLin3Values[sipmType - 1];
 
-        int const first = std::max(soi + sipmQTSShift, 0);
-        int const last = std::min(soi + sipmQNTStoSum, nsamplesForCompute);
-        float sipmq = 0.0f;
-        for (auto ts = first; ts < last; ts++)
-          sipmq += shrChargeMinusPedestal[threadIdx.y * nsamplesForCompute + ts];
-        auto const effectivePixelsFired = sipmq / fcByPE;
-        auto const factor =
-            hcal::reconstruction::compute_reco_correction_factor(parLin1, parLin2, parLin3, effectivePixelsFired);
-        rawCharge = (charge - pedestal) * factor + pedestal;
 #ifdef COMPUTE_TDC_TIME
+      float tdcTime;
+      if (gch >= nchannelsf01HE && gch < nchannelsf015) {
+        tdcTime = HcalSpecialTimes::UNKNOWN_T_NOTDC;
+      } else {
         if (gch < nchannelsf01HE)
           tdcTime = HcalSpecialTimes::getTDCTime(tdc_for_sample<Flavor1>(dataf01HE + stride * gch, sample));
         else if (gch >= nchannelsf015)
           tdcTime =
               HcalSpecialTimes::getTDCTime(tdc_for_sample<Flavor3>(dataf3HB + stride * (gch - nchannelsf015), sample));
-#endif  // COMPUTE_TDC_TIME
-
-#ifdef HCAL_MAHI_GPUDEBUG
-        printf("first = %d last = %d sipmQ = %f factor = %f rawCharge = %f\n", first, last, sipmq, factor, rawCharge);
-#endif
       }
+#endif  // COMPUTE_TDC_TIME
 
       // compute method 0 quantities
       // TODO: need to apply containment
@@ -377,8 +406,8 @@ namespace hcal {
       //
       auto const amplitude = rawCharge - pedestalToUseForMethod0;
       auto const noiseADC = (1. / std::sqrt(12)) * dfc;
-      auto const noisePhoto = amplitude > pedestalWidth ? std::sqrt(amplitude * fcByPE) : 0.f;
-      auto const noiseTerm = noiseADC * noiseADC + noisePhoto * noisePhoto + pedestalWidth * pedestalWidth;
+      auto const noisePhotoSq = amplitude > pedestalWidth ? (amplitude * fcByPE) : 0.f;
+      auto const noiseTerm = noiseADC * noiseADC + noisePhotoSq + pedestalWidth * pedestalWidth;
 
 #ifdef HCAL_MAHI_GPUDEBUG
       printf(
