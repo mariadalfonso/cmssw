@@ -175,7 +175,7 @@ namespace hcal {
                                                                         : compute_nsamples<Flavor3>(stride));
 
 #ifdef HCAL_MAHI_GPUDEBUG
-      assert(nsamples == nsamplesForCompute || nsamples - startingSample == nsampelsForCompute);
+      assert(nsamples == nsamplesForCompute || nsamples - startingSample == nsamplesForCompute);
 #endif
 
       auto const id = gch < nchannelsf01HE
@@ -389,7 +389,7 @@ namespace hcal {
         // FIXME: KNOWN ISSUE: observed a problem when rawCharge and pedestal
         // are basically equal and generate -0.00000...
         // needs to be treated properly
-        if (!(shrEnergyM0TotalAccum[lch] > 0 && energym0_per_ts_gain0 >= ts4Thresh)) {
+        if (!(shrEnergyM0TotalAccum[lch] > 0 && energym0_per_ts_gain0 > ts4Thresh)) {
           // do not need to run mahi minimization
           //outputEnergy[gch] = 0; energy already inited to 0
           outputChi2[gch] = -9999.f;
@@ -427,7 +427,7 @@ namespace hcal {
           sample,
           noiseADC,
           sample,
-          noisePhoto);
+          noisePhotoSq);
 #endif
 
       // store to global memory
@@ -671,7 +671,7 @@ namespace hcal {
           continue;
 
 #ifdef HCAL_MAHI_GPUDEBUG
-        printf("pulse cov array for ibx = %d and offset %d\n", ipulse, offset);
+        printf("pulse cov array for ibx = %d\n", ipulse);
 #endif
 
         // preload a column
